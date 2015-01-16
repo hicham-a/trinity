@@ -147,17 +147,7 @@ selinux --disabled
 # Reboot after installation
 #
 reboot
-
-# We create duplicate network definitions, so it will work regardless of the actual device locations.
-# For use in eno<nn> conventions
-network  --bootproto=dhcp --device=eno1 --ipv6=auto --activate
-network  --bootproto=static --device=eno2 --gateway=10.141.255.254 --ip=10.141.255.254 --netmask=255.255.0.0 --nodefroute --ipv6=auto --activate
-
-# For use in em<nn> conventions
-network  --bootproto=dhcp --device=em1 --ipv6=auto --activate
-network  --bootproto=static --device=em2 --gateway=10.141.255.254 --ip=10.141.255.254 --netmask=255.255.0.0 --nodefroute --ipv6=auto --activate
-
-network  --hostname=controller.cluster
+%include /tmp/trinity-networking
 
 #
 #end of section
@@ -167,6 +157,16 @@ network  --hostname=controller.cluster
 %end
 %pre
 #INCLUDE:#ENV:XCATROOT#/share/xcat/install/scripts/pre.rh.rhel7#
+
+read ETH1 ETH2 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -2)
+
+cat > /tmp/trinity-networking << EOF
+network  --bootproto=dhcp --device=$ETH1 --ipv6=auto --activate --nodns
+network  --bootproto=static --device=$ETH2 --gateway=10.141.255.254 --ip=10.141.255.254 --netmask=255.255.0.0 --nodefroute --ipv6=auto --activate
+network  --hostname=openstack.cluster
+EOF
+
+
 
 %end
 %post
