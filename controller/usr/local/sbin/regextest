@@ -1,0 +1,12 @@
+#!/bin/python
+
+import sys
+
+s = sys.argv[1]
+start = int(sys.argv[2])
+if len(sys.argv) > 3:
+    end = int(sys.argv[3]) + 1
+else:
+    end = int(start + 1)
+for node in range(start, end):
+    print "node%03d" % node, eval(s.replace('$1', str(node)))
