@@ -65,6 +65,11 @@ dn: cn=uid,dc=cluster
 cn: uid
 objectClass: uidNext
 uidNumber: 1050
+
+dn: cn=gid,dc=cluster
+cn: gid
+objectClass: uidNext
+uidNumber: 150
 EOF
 
 #----------------------------------------------------------------------------
