@@ -32,14 +32,20 @@ class AllocateAction(workflows.Action):
                          required=True, initial=cluster)
     self.fields.update({'name':field})
     cluster_hardware=trinity.cluster_hardware(request,cluster)
+    hardwares_detail=trinity.hardwares_detail(request)
     for hardware in hardwares:
+      for datum in hardwares_detail:
+        if datum["hardware"]==hardware:
+          max_value=datum["total"]-datum["used"]
+          break
+
       initial_nodes=0
       for datum in cluster_hardware:
         if datum.type==hardware:
           initial_nodes=datum.amount
           break
       field =  forms.IntegerField(label=_("Number of "+hardware+" nodes"),
-                         min_value=0,initial=initial_nodes)
+                         min_value=0,max_value=max_value,initial=initial_nodes)
       self.fields.update({hardware:field})
 
 
