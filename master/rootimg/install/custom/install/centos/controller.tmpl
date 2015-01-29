@@ -162,16 +162,16 @@ read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
 
 if [ -z $ETH3 ]; then
 cat > /tmp/trinity-networking << EOF
-network  --bootproto=static --device=$ETH2 --gateway=10.141.255.254 --ip=10.141.255.254 --netmask=255.255.0.0 --ipv6=auto --nodefroute
+network  --bootproto=static --device=$ETH2 --gateway=10.141.255.254 --ip=10.141.255.254 --netmask=255.255.0.0 --ipv6=auto --nodefroute --onboot=yes
 network  --bootproto=dhcp --device=$ETH1 --ipv6=auto --onboot=yes
-network  --hostname=controllera.cluster
+network  --hostname=controller.cluster
 EOF
 else
 cat > /tmp/trinity-networking << EOF
-network  --bootproto=static --device=$ETH2 --gateway=10.141.255.254 --ip=10.141.255.254 --netmask=255.255.0.0 --ipv6=auto --nodefroute
-network  --bootproto=static --device=$ETH3 --gateway=10.148.255.254 --ip=10.148.255.254 --netmask=255.255.0.0 --ipv6=auto --nodefroute
+network  --bootproto=static --device=$ETH2 --gateway=10.141.255.254 --ip=10.141.255.254 --netmask=255.255.0.0 --ipv6=auto --nodefroute --onboot=yes
+network  --bootproto=static --device=$ETH3 --gateway=10.148.255.254 --ip=10.148.255.254 --netmask=255.255.0.0 --ipv6=auto --nodefroute --onboot=yes
 network  --bootproto=dhcp --device=$ETH1 --ipv6=auto --onboot=yes
-network  --hostname=controllerb.cluster
+network  --hostname=controller.cluster
 EOF
 fi
 
