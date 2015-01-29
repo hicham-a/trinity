@@ -1,0 +1,24 @@
+# The Trinity API server init script requires the Linux Standard Base
+yum -y install redhat-lsb
+
+# 1. Hardcoding the dirrectories for now
+# 2. For now, assuming that the xCAT controller, OpenStack controller and the Trinity API 
+#    will run on the same node
+
+cd /trinity/controller/api+dash/trinity_api
+python setup.py install
+sed "s/=127.0.0.1/=$(hostname -I| awk '{print $1}')/g" /etc/trinity/trinity_api.conf > /tmp/trinity_api.conf
+mv /tmp/trinity_api.conf /etc/trinity/trinity_api.conf
+
+cd /trinity/controller/api+dash/trinity_client
+python setup.py install
+sed "s/=127.0.0.1/=$(hostname -I| awk '{print $1}')/g" /etc/trinity/trinity_client.conf > /tmp/trinity_client.conf
+mv /tmp/trinity_client.conf /etc/trinity/trinity_client.conf
+
+cd /trinity/controller/api+dash/trinity_dashboard
+sh setup.sh
+
+
+
+
+
