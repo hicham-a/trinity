@@ -1,0 +1,96 @@
+#!/bin/bash
+#
+# trinity-api Trinity HPC Service API server
+#
+# chkconfig:   - 98 02
+# description: Trinity HPC Service API server
+
+### BEGIN INIT INFO
+# Provides: trinity-api
+# Required-Start: $remote_fs $syslog
+# Required-Stop: $remote_fs  $syslog
+# Default Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: Trinity API server
+# Description: Trinity HPC Service API server
+### END INIT INFO
+
+# Author: Abhishek Mukherjee <abhishek.mukherjee@clustervision.com>
+
+. /lib/lsb/init-functions
+#. /etc/rc.d/init.d/functions
+
+NAME="trinity-api"
+DAEMON="/usr/bin/wrapper-$NAME"
+CONFIG="/etc/trinity/$NAME.conf"
+PIDFILE="/var/run/trinity/$NAME.pid"
+LOGFILE="/var/log/trinity/$NAME.log"
+TIMEOUT=60
+LOCKFILE="/var/lock/subsys/$NAME"
+
+
+test -x $DAEMON || exit 5
+
+start() {
+  echo -n "Starting $NAME:"
+  start_daemon -p $PIDFILE $DAEMON
+  retval=$?
+  if [ $retval -eq 0 ]; then
+    sleep 2
+    echo $( ps -ef | grep $NAME | grep -v grep | grep -v start | awk '{print $2}' ) > $PIDFILE
+    log_success_msg "[OK]"
+  else
+    log_failure_msg "[FAILED]"
+  fi
+  return $retval
+}
+
+stop() {
+  echo -n "Stopping $NAME:"
+  killproc -p $PIDFILE $DAEMON && rm -f $PIDFILE
+  retval=$?
+  if [ $retval -eq 0 ]; then
+    log_success_msg "[OK]"
+  else
+    log_failure_msg "[FAILED]"
+  fi
+  return $retval
+}
+
+status() {
+  pidofproc -p $PIDFILE $DAEMON
+  retval=$?
+  if [ $retval -eq 0 ]; then
+      echo "Running."
+  else
+      echo "Not Running."
+  fi
+  return $retval
+}
+
+case "$1" in
+    start)
+    start
+    ;;
+
+    restart)
+    stop
+    sleep 2
+    start
+    ;;
+
+    stop)
+    stop
+    ;;
+
+    status)
+    status
+    ;;
+
+    *)
+    echo "usage : $0 start|restart|stop|status"
+    ;;
+esac
+
+exit 0
+
