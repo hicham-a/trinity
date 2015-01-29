@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block title %}{% trans "HPC Overview" %}{% endblock %}
+
+{% block page_header %}
+   {% include "horizon/common/_page_header.html" with title=_("HPC Overview") %}
+{% endblock page_header %}
+
+{% block main %}
+  <div id="cluster-hardware">
+      {{ hpc_hardware_table.render }}
+  </div>
+  <div id="cluster-config">
+      {{ hpc_config_table.render }}
+  </div>
+{% endblock %}
+
