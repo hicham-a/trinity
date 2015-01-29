@@ -49,7 +49,7 @@ class DictToObject(object):
       setattr(self,key,value)
 
 def overview(request):
-  excluded_tenants=['admin','services']
+  excluded_tenants=['services']
   c=trinityclient(request)
   hardwares_list=c.hardwares_list()
   clusters_list=c.clusters_list()
