@@ -1,7 +1,0 @@
-setup.py
-bin/trinity-api
-bin/wrapper-trinity-api
-conf/trinity-api.conf
-init/trinity-api
-src/__init__.py
-src/api.py
