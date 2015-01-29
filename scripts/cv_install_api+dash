@@ -5,11 +5,16 @@ yum -y install redhat-lsb
 yum -y install python-pip
 pip install bottle
 
+# The xCAT web service requires the following
+yum install mod_ssl
+service httpd restart
+yum install perl-JSON
 
 # 1. Hardcoding the dirrectories for now
 # 2. For now, assuming that the xCAT controller, OpenStack controller and the Trinity API 
 #    will run on the same node
 
+# Trinity API setup
 cd /trinity/controller/api+dash/trinity_api
 python setup.py install
 sed "s/127.0.0.1/$(hostname -I| awk '{print $1}')/g" /etc/trinity/trinity_api.conf > /tmp/trinity_api.conf
@@ -17,15 +22,24 @@ mv /tmp/trinity_api.conf /etc/trinity/trinity_api.conf
 mkdir -p /var/log/trinity
 mkdir -p /var/run/trinity
 
+# Set up the xCAT web service
+useradd trinity
+echo "trinity" | passwd trinity --stdin
+tabch key=xcat,username=trinity passwd.password=trinity
+mkdef -t policy 6 name=trinity rule=allow
+
+# Trinity python client setup
 cd /trinity/controller/api+dash/trinity_client
 python setup.py install
 sed "s/127.0.0.1/$(hostname -I| awk '{print $1}')/g" /etc/trinity/trinity_client.conf > /tmp/trinity_client.conf
 mv /tmp/trinity_client.conf /etc/trinity/trinity_client.conf
 
+# Trinity dashboard additions
 cd /trinity/controller/api+dash/trinity_dashboard
 sh setup.sh
 
-
+# This is to fix a bug in the httpd configuration needed for Juno
+echo 'Include "/etc/httpd/conf.modules.d/*.conf"' >> /etc/httpd/conf/httpd.conf
 
 
 
