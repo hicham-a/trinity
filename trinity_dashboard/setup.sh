@@ -8,14 +8,17 @@ else
   echo "No such directory: $top_dir"
 fi
 
-# Not adding the Trinity logos right now because of a bug in Horizon (Juno)
-# which causes problems with the CSS rendering
-
-# img="${top_dir}/static/dashboard/img/"
-# if [ ! -d $img ]; then
-#  mkdir -pv $img
-# fi
-# cp -rv ./img/* $img
+img="${top_dir}/static/dashboard/img/"
+if [ ! -d $img ]; then
+ mkdir -pv $img
+fi
+if [ -f ${img}/logo.png ]; then
+  cp  ${img}/logo.png ${img}/logo.png.orig
+fi
+if [ -f ${img}/logo-splash.png ]; then
+  cp  ${img}/logo-splash.png ${img}/logo-splash.png.orig
+fi
+cp -rv ./img/* $img
 
 enabled="${top_dir}/openstack_dashboard/local/enabled/"
 if [ ! -d $enabled ]; then 
