@@ -162,18 +162,18 @@ read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
 
 if [ -z $ETH3 ]; then
 cat > /tmp/trinity-networking << EOF
-network  --bootproto=dhcp --device=$ETH1 --ipv6=auto --activate --nodns
-network  --bootproto=static --device=$ETH2 --gateway=10.141.255.254 --ip=10.141.255.254 --netmask=255.255.0.0 --nodefroute --ipv6=auto --activate
-network  --hostname=controller.cluster
+network  --bootproto=static --device=$ETH2 --gateway=10.141.255.254 --ip=10.141.255.254 --netmask=255.255.0.0 --ipv6=auto --nodefroute
+network  --bootproto=dhcp --device=$ETH1 --ipv6=auto --onboot=yes
+network  --hostname=controllera.cluster
 EOF
 else
 cat > /tmp/trinity-networking << EOF
-network  --bootproto=dhcp --device=$ETH1 --ipv6=auto --activate --nodns
-network  --bootproto=static --device=$ETH2 --gateway=10.141.255.254 --ip=10.141.255.254 --netmask=255.255.0.0 --nodefroute --ipv6=auto --activate
-network  --bootproto=static --device=$ETH3 --gateway=10.148.255.254 --ip=10.148.255.254 --netmask=255.255.0.0 --nodefroute --ipv6=auto --activate
+network  --bootproto=static --device=$ETH2 --gateway=10.141.255.254 --ip=10.141.255.254 --netmask=255.255.0.0 --ipv6=auto --nodefroute
+network  --bootproto=static --device=$ETH3 --gateway=10.148.255.254 --ip=10.148.255.254 --netmask=255.255.0.0 --ipv6=auto --nodefroute
+network  --bootproto=dhcp --device=$ETH1 --ipv6=auto --onboot=yes
+network  --hostname=controllerb.cluster
 EOF
 fi
-
 
 %end
 %post
@@ -184,13 +184,15 @@ cat /tmp/repos > /var/log/repos
 cat /proc/cmdline > /var/log/cmdline
 
 echo setup nat
+read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
+
 # setup NAT, so nodes can access the internet (see manual step 1.f)
 yum -y install iptables-services
 chkconfig iptables on
 service iptables start
 modprobe iptable_nat
-iptables -A FORWARD -i eno2 -j ACCEPT
-iptables -t nat -A POSTROUTING -o eno1 -j MASQUERADE
+iptables -A FORWARD -i $ETH2 -j ACCEPT
+iptables -t nat -A POSTROUTING -o $ETH1 -j MASQUERADE
 service iptables save 
 
 echo install extra rpms
@@ -207,4 +209,10 @@ echo done
 # TODO:
 # we need to download and install the trinity patches (which we basically need to copy from the benchmark/master node
 
+for file in /etc/sysconfig/network-scripts/ifcfg-{$ETH2,$ETH3}; do
+    #cat $file > /var/log/$(basename $file);
+    #echo "adapting $file" >> /var/log/postinstall.log
+    sed -i $file -e "s/DEFROUTE=\(.*\)/DEFROUTE=no/"
+done
+sed -i /etc/sysconfig/network-scripts/ifcfg-$ETH1 -e "s/DEFROUTE=\(.*\)/DEFROUTE=yes/" -e "s/PEERDNS=\(.*\)/PEERDNS=no/"
 %end
