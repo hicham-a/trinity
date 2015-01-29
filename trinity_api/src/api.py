@@ -238,7 +238,6 @@ class TrinityAPI(object):
         elif len(e_nodes) > d_nodes:
           sub_num=len(e_nodes)-d_nodes
           subs=e_nodes[-sub_num:]
-          print hardware, subs
           for node in subs:
             node_list.remove(node)
             subs_list.append(node)
@@ -264,9 +263,27 @@ class TrinityAPI(object):
             adds_list.append(node)
     if adds_list or subs_list:
       ret['change']=True
-      node_string=",".join(node_list)
-      payload={'members': node_string}
-      r=self.xcat(verb='PUT',path='/groups/'+xcat_cluster,payload=payload)
+      if node_list:
+        node_string=",".join(node_list)
+        payload={'members': node_string}
+        r=self.xcat(verb='PUT',path='/groups/'+xcat_cluster,payload=payload)
+      else:
+      # workaround for empty nodelist (deleting cluster)
+      # Note: the group definition will still survive
+        node_string=old_list[0]
+        last_node=old_list[0]
+        payload={'members': node_string}
+        r=self.xcat(verb='PUT',path='/groups/'+xcat_cluster,payload=payload)
+        r=self.xcat(verb='GET',path='/nodes/'+last_node+'/attrs/groups')
+        node_groups=r[last_node]["groups"]
+        node_groups_list=node_groups.strip().split(",")
+        node_groups_list.remove(xcat_cluster)
+        node_groups=",".join(node_groups_list)
+        payload={"groups":node_groups}
+        r=self.xcat(verb='PUT',path='/nodes/'+last_node,payload=payload)
+        
+#        r=self.xcat(verb='DELETE',path='/nodes/'+xcat_cluster)
+        
       if hasattr(r,'status_code'):   
         if r.status_code == requests.codes.ok:
           ret['statusOK']=True
