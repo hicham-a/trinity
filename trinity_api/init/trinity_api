@@ -38,9 +38,9 @@ start() {
   if [ $retval -eq 0 ]; then
     sleep 2
     echo $( ps -ef | grep $NAME | grep -v grep | grep -v start | awk '{print $2}' ) > $PIDFILE
-    log_success_msg "[OK]"
+    log_success_msg ""
   else
-    log_failure_msg "[FAILED]"
+    log_failure_msg ""
   fi
   return $retval
 }
@@ -50,9 +50,9 @@ stop() {
   killproc -p $PIDFILE $DAEMON && rm -f $PIDFILE
   retval=$?
   if [ $retval -eq 0 ]; then
-    log_success_msg "[OK]"
+    log_success_msg ""
   else
-    log_failure_msg "[FAILED]"
+    log_failure_msg ""
   fi
   return $retval
 }
