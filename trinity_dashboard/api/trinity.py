@@ -1,5 +1,5 @@
 #import the trinity-python-client
-from trinityclient import client as trinity_client 
+from trinity_client import client as trinity_client 
 from openstack_dashboard.api import keystone
 #from trinityclient import test as trinity_client
 
