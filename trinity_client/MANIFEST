@@ -1,0 +1,5 @@
+setup.py
+conf/trinity_client.conf
+src/__init__.py
+src/client.py
+src/client.pyc

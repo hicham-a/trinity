@@ -1,0 +1,5 @@
+recursive-include src *
+recursive-include init *
+recursive-include bin *
+recursive-include conf *
+
