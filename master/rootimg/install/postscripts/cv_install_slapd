@@ -3,6 +3,9 @@
 #----------------------------------------------------------------------------
 # Install OpenLDAP on the controller node
 #----------------------------------------------------------------------------
+# wait until the network is ready
+sleep 5
+
 yum -y install openldap openldap-clients openldap-servers
 cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
 chkconfig slapd on
