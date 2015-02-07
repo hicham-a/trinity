@@ -3,6 +3,8 @@ echo "updating master from source code repository"
 HERE="`( cd \"$(dirname "$0")" && pwd )`"
 cp -Lrv $HERE/rootimg/* /
 
+exit 1
+
 source /etc/profile.d/xcat.sh
 mkdir -p /tmp/xcattables
 read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)

@@ -19,9 +19,9 @@ lang en_US
 repo --name=base --baseurl=http://master/install/centos7.0/x86_64/
 url --url="http://master/install/centos7.0/x86_64/"
 
-repo --name=xcat-core --install --baseurl=https://sourceforge.net/projects/xcat/files/yum/2.8/xcat-core
-repo --name=xcat-dep --install --baseurl=https://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64 
-repo --name=epel --install --mirrorlist=https://mirrors.fedoraproject.org/metalink?repo=epel-7&arch=x86_64
+repo --name=xcat-core --baseurl=https://sourceforge.net/projects/xcat/files/yum/2.8/xcat-core
+repo --name=xcat-dep --baseurl=https://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64 
+repo --name=epel --mirrorlist=https://mirrors.fedoraproject.org/metalink?repo=epel-7&arch=x86_64
 
 #device ethernet e100
 keyboard "us"
@@ -153,9 +153,11 @@ fi
 exec < /dev/console > /dev/console
 #INCLUDE:#ENV:XCATROOT#/share/xcat/install/scripts/post.xcat#
 
+# setup the correct network names
+read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
+
 echo setup nat
 # setup NAT, so nodes can access the internet (see manual step 1.f)
-read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
 chkconfig iptables on
 service iptables start
 modprobe iptable_nat
@@ -171,4 +173,5 @@ for file in /etc/sysconfig/network-scripts/ifcfg-{$ETH2,$ETH3}; do
     sed -i $file -e "s/DEFROUTE=\(.*\)/DEFROUTE=no/"
 done
 sed -i /etc/sysconfig/network-scripts/ifcfg-$ETH1 -e "s/DEFROUTE=\(.*\)/DEFROUTE=yes/" -e "s/PEERDNS=\(.*\)/PEERDNS=no/"
+
 %end
