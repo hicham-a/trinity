@@ -5,6 +5,7 @@ HERE="`( cd \"$(dirname "$0")" && pwd )`"
 cp -Lrv $HERE/rootimg/* /
 
 (git branch | grep "*"; git rev-parse --short HEAD) > /trinity/version
+cp /trinity/version /trinity/controller/rootimg/install/postscripts/cv_trinity_version
 
 exit 1
 
