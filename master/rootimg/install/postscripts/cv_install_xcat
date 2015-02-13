@@ -63,6 +63,7 @@ ln -s ../rh/dracut .
 cd /
 cat /tmp/trinity/xcat/patches/*.patch | patch -p0
 makedhcp -n
+makedns -n
 
 #--------------------------------------------------------------------------------------
 # correct any network settings
