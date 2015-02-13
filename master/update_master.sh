@@ -1,7 +1,10 @@
 #!/bin/bash
+
 echo "updating master from source code repository"
 HERE="`( cd \"$(dirname "$0")" && pwd )`"
 cp -Lrv $HERE/rootimg/* /
+
+(git branch | grep "*"; git rev-parse --short HEAD) > /trinity/version
 
 exit 1
 
