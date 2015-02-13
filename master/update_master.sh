@@ -7,7 +7,9 @@ cp -Lrv $HERE/rootimg/* /
 (git branch | grep "*"; git rev-parse --short HEAD) > /trinity/version
 cp /trinity/version /trinity/controller/rootimg/install/postscripts/cv_trinity_version
 
-exit 1
+if [ -z $0 ]; then
+    exit 1
+fi
 
 source /etc/profile.d/xcat.sh
 mkdir -p /tmp/xcattables
