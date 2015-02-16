@@ -27,9 +27,6 @@ cp -r /tmp/trinity/clustervision /trinity
 # copy the files we want to distribute into the compute images
 cp -r /tmp/trinity/compute /trinity 
 
-# HTH: not needed, since we only use these when installing the controller
-# HTH: cp -r /tmp/trinity/controller /trinity
-
 #--------------------------------------------------------------------------------------
 # enable all repositories inside the controller
 # but disable the local repo from master
@@ -43,6 +40,7 @@ cd -
 # copy required files from the master node to the controller node
 #--------------------------------------------------------------------------------------
 cp -r /tmp/trinity/controller/* / 
+cp /tmp/trinity/version /trinity/version
 
 #--------------------------------------------------------------------------------------
 # copy default database configuration
@@ -65,6 +63,7 @@ ln -s ../rh/dracut .
 cd /
 cat /tmp/trinity/xcat/patches/*.patch | patch -p0
 makedhcp -n
+makedns -n
 
 #--------------------------------------------------------------------------------------
 # correct any network settings
