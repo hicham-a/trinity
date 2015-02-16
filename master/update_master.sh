@@ -7,7 +7,7 @@ cp -Lrv $HERE/rootimg/* /
 (git branch | grep "*"; git rev-parse --short HEAD) > /trinity/version
 cp /trinity/version /trinity/controller/rootimg/install/postscripts/cv_trinity_version
 
-if [ -z $0 ]; then
+if [ -z $1 ]; then
     exit 1
 fi
 
