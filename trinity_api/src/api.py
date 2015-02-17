@@ -317,6 +317,16 @@ def welcome(version=1):
 #  req=TrinityAPI(request)
   return "Welcome to the Trinity API"
 
+@trinity.get('/trinity/v<version:float>/version')
+def version(version=1):
+  fop=open('/trinity/version','r')
+  lines=fop.readlines()
+  fop.close()
+  branch=lines[0].strip().split()[1]
+  id=lines[1].strip().split()[0]
+  id_branch = id + ' ('+branch+')'
+  return {'versionID (releaseBranch)':id_branch }
+
 @trinity.post('/trinity/v<version:float>/login')
 def login(version=1):
   req=TrinityAPI(request)

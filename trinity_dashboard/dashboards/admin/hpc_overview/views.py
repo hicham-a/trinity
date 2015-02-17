@@ -24,6 +24,9 @@ class IndexView(tables.DataTableView):
     hardwares_detail=trinity.hardwares_detail(self.request)
     hardwares={'hardwares':hardwares_detail}
     context.update(hardwares)
+    version=trinity.version(self.request)
+    version_dict={"version":version}
+    context.update(version_dict)
     return context
 
 class CreateClusterView(workflows.WorkflowView):

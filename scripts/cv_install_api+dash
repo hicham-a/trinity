@@ -1,3 +1,11 @@
+#! /usr/bin/bash
+##title          : cv_install_api+dash
+##description    : Installs the Trinity API server, the Trinity dashboard and the xCAT web service.
+##                 Please, use this script if and only if all of the above three services will be 
+##                 hosted on the same server.
+##author         : Abhishek Mukherjee
+##email          : abhishek.mukherjee@clustervision.com
+
 # The Trinity API server init script requires the Linux Standard Base
 yum -y install redhat-lsb
 
@@ -10,7 +18,7 @@ yum install mod_ssl
 service httpd restart
 yum install perl-JSON
 
-# 1. Hardcoding the dirrectories for now
+# 1. Hardcoding the directories for now
 # 2. For now, assuming that the xCAT controller, OpenStack controller and the Trinity API 
 #    will run on the same node
 
