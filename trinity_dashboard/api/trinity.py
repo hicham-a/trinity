@@ -48,6 +48,11 @@ class DictToObject(object):
         value=default_value
       setattr(self,key,value)
 
+
+def version(request):
+  c=trinityclient(request)
+  return c.version()
+
 def overview(request):
   excluded_tenants=['services']
   c=trinityclient(request)

@@ -53,6 +53,19 @@ class Client(object):
   def login(self):
     r = requests.post(self.trinity_prefix+'/login', data=json.dumps(self.payload), headers=self.headers)
     return r.json()["token"] 
+
+  def version(self):
+    if os.path.isfile('/trinity/version'):
+      fop=open('/trinity/version','r')
+      lines=fop.readlines()
+      fop.close()
+      branch=lines[0].strip().split()[1]
+      id=lines[1].strip().split()[0]
+      id_branch = id + ' ('+branch+')'
+      return id_branch
+    else:
+      r = requests.get(self.trinity_prefix+'/version', data=json.dumps(self.payload), headers=self.headers)
+      return r.json()["versionID (releaseBranch)"]
  
   def hardwares_list(self):
     r = requests.get(self.trinity_prefix+'/hardwares', data=json.dumps(self.payload), headers=self.headers)
