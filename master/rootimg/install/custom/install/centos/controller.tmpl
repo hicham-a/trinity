@@ -187,13 +187,14 @@ echo setup nat
 read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
 
 # setup NAT, so nodes can access the internet (see manual step 1.f)
-yum -y install iptables-services
-chkconfig iptables on
-service iptables start
-modprobe iptable_nat
-iptables -A FORWARD -i $ETH2 -j ACCEPT
-iptables -t nat -A POSTROUTING -o $ETH1 -j MASQUERADE
-service iptables save 
+# moved to xCAT postinstall script
+#yum -y install iptables-services
+#chkconfig iptables on
+#service iptables start
+#modprobe iptable_nat
+#iptables -A FORWARD -i $ETH2 -j ACCEPT
+#iptables -t nat -A POSTROUTING -o $ETH1 -j MASQUERADE
+#service iptables save 
 
 echo install extra rpms
 # Install required utilities and turn on ntp

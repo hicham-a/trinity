@@ -79,6 +79,15 @@ systemctl disable NetworkManager
 #nameserver 10.141.255.254 8.8.8.8
 #END
 
+# setup NAT, so nodes can access the internet (see manual step 1.f)
+yum -y install iptables-services
+chkconfig iptables on
+service iptables start
+modprobe iptable_nat
+iptables -A FORWARD -i $ETH2 -j ACCEPT
+iptables -t nat -A POSTROUTING -o $ETH1 -j MASQUERADE
+service iptables save
+
 #--------------------------------------------------------------------------------------
 # now setup NFS
 #--------------------------------------------------------------------------------------
@@ -101,6 +110,7 @@ exportfs -a
 # Create installation tree
 #--------------------------------------------------------------------------------------
 copycds /tmp/trinity/iso/*.iso
+reposync -r updates -r extras -p /install/post/otherpkgs/centos7.0/x86_64/
 genimage -o centos7.0 -a x86_64 -p trinity -i ' '
 
 echo "xcat installed" >> /var/log/postinstall.log
