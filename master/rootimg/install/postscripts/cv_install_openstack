@@ -18,6 +18,7 @@ sed "s/=127.0.0.1/=$(hostname -I)/g" //xcatpost/packstack-answers.txt > /tmp/pac
 read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
 sed -e "s/\<eno1\>/$ETH1/g" -e "s/\<eno2\>/$ETH2/g"  -e "s/\<eno3\>/$ETH3/g" -i /tmp/packstack-answers.txt
 
+export HOME=/root
 packstack --answer-file /tmp/packstack-answers.txt
 #packstack --allinone
 # HTH: not required to inject passwords and keys, metadataservice is supposed to handle that.
