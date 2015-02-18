@@ -30,13 +30,6 @@ perl-ExtUtils-MakeMaker
 perl-Switch
 pam-devel
 
-# slurm
-munge*
-slurm*
-
-# environment modules
-environment-modules
-
 # infiniband diagnostic tools
 infiniband-diags
 
