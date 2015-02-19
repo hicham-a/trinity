@@ -20,6 +20,8 @@ rsyslog
 e2fsprogs
 parted
 
+# X fwding
+xorg-x11-xauth
 # a few extra diagnostic tools
 net-tools
 
