@@ -34,7 +34,18 @@ start() {
     IP=$(host ${NAME}.${VC} | awk -F' ' '{print $4}')
     GW=$(echo $IP | awk -F. '{ print $1"."$2".255.254" }')
 
-    docker pull controller:5050/compute
+    # check if there is a cluster specific image
+    if wget http://controller:5050/v1/repositories/library/${VC}/tags -q -O-
+       IMAGE=${VC}
+    else
+       IMAGE=trinity
+    fi
+
+    # if there is a newer image, remove the container
+    if docker pull controller:5050/${IMAGE} | tail -1 | grep "Downloaded newer"; then 
+        docker stop trinity
+        docker rm trinity
+    fi
     state=$(docker inspect --format='{{.State.Running}}' trinity)
     case $state in
         true)
@@ -57,7 +68,7 @@ start() {
                -v /cluster/${VC}/etc/munge:/etc/munge \
                --hostname=${NAME}.${VC} \
                --name=trinity \
-               -d controller:5050/compute
+               -d controller:5050/${IMAGE}
             /usr/local/sbin/pipework eno1 trinity ${IP}/16@${GW}
         ;;
     esac
