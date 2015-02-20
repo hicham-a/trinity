@@ -45,6 +45,7 @@ chroot $installroot chkconfig ntpd on
 chroot $installroot chkconfig docker on
 chroot $installroot chkconfig openvswitch on
 chroot $installroot chkconfig trinity on
+chroot $installroot chkconfig avahi-daemon off
 
 #-- copy security limits from controller node
 install -d $installroot/etc/security/limits.d

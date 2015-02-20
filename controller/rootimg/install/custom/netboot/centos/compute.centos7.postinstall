@@ -41,6 +41,7 @@ chroot $installroot chkconfig rdma on
 chroot $installroot chkconfig ntpd on
 chroot $installroot chkconfig slurm on
 chroot $installroot chkconfig munge on
+chroot $installroot chkconfig avahi-daemon off
 
 #-- copy slurm and munge configuration files
 install -D /etc/munge/munge.key -m600 $installroot/etc/munge/munge.key

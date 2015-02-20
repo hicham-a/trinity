@@ -168,6 +168,7 @@ service iptables save
 echo install extra rpms
 # Install required utilities and turn on ntp
 chkconfig ntpd on
+systemctl disable avahi-daemon
 
 for file in /etc/sysconfig/network-scripts/ifcfg-{$ETH2,$ETH3}; do
     sed -i $file -e "s/DEFROUTE=\(.*\)/DEFROUTE=no/"
