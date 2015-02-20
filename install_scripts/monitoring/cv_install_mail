@@ -1,0 +1,62 @@
+#! /usr/bin/bash
+#title		: cv_install_mail
+#description	: Installs and configures MTA on the monitoring server
+#author		: Abhishek Mukherjee
+#email		: abhishek.mukherjee@clustervision.com
+
+site="dmon"
+yum -y remove sendmail
+yum -y install postfix dovecot
+setsebool -P httpd_can_sendmail on
+
+# edit /etc/postfix/main.cf
+cp /etc/postfix/main.cf /etc/postfix/main.cf.bak
+postconf -e "myhostname = $(hostname)"
+postconf -e "mydomain = $(domainname)"
+postconf -e "myorigin = \$mydomain"
+postconf -e "inet_interfaces = all"
+postconf -e "mydestination = \$myhostname, localhost.\$mydomain, localhost"
+postconf -e "mynetworks = 192.168.0.0/24, 127.0.0.0/8"
+postconf -e "relay_domains = "
+postconf -e "home_mailbox = Maildir/"
+
+
+
+# edit /etc/dovecot/dovecot.conf
+cp /etc/dovecot/dovecot.conf /etc/dovecot/dovecot.conf.bak
+awk  -F = '\
+  BEGIN { \
+    np=0; nm=0;    
+  };\
+  {\
+    split($1,arr,/\s+/);
+    if (arr[1] ~ /protocols/ && !(np)){ \
+       print  "protocols = imap pop3"; \
+       np=1; \
+    } \
+    else if (arr[1] ~ /mail_location/  && !(nm)){ \
+      print  "mail_location = maildir:~/Maildir"; \
+      nm=1; \
+    }
+    else { \
+      print $0; \
+    }
+  }' \
+/etc/dovecot/dovecot.conf.bak > /etc/dovecot/dovecot.conf
+
+# Setup the mail directory for root
+mon_home=$(eval echo ~${site})
+mail_dir="$mon_home/Maildir"
+mkdir ${mail_dir}
+chown -R ${site}:${site} ${mail_dir}
+chmod -R u+rwx ${mail_dir}
+
+# Start postfix and dovecot
+service postfix restart
+service dovecot restart
+chkconfig postfix on
+chkconfig dovecot on
+
+
+
+
