@@ -48,7 +48,6 @@ cp /tmp/trinity/version /trinity/version
 # and patch the installation
 #--------------------------------------------------------------------------------------
 source /etc/profile.d/xcat.sh
-copycds /tmp/trinity/iso/*.iso
 mkdir -p /tmp/xcattables
 read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
 for table in $(ls /tmp/trinity/controller/xcat/tables); do
@@ -113,6 +112,7 @@ exportfs -a
 #--------------------------------------------------------------------------------------
 echo "Creating installation tree"
 reposync -n -r updates -r extras -p /install/post/otherpkgs/centos7.0/x86_64/
+copycds -o /tmp/trinity/iso/*.iso
 createrepo /install/post/otherpkgs/centos7.0/x86_64/
 genimage centos7.0-x86_64-netboot-trinity
 
