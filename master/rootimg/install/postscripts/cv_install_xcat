@@ -49,7 +49,7 @@ cp /tmp/trinity/version /trinity/version
 source /etc/profile.d/xcat.sh
 mkdir -p /tmp/xcattables
 read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
-for table in $(ls /tmp/trinity/xcat/tables); do
+for table in $(ls /tmp/trinity/controller/xcat/tables); do
     sed -e "s/\<eno1\>/$ETH1/g" -e "s/\<eno2\>/$ETH2/g"  -e "s/\<eno3\>/$ETH3/g" /tmp/trinity/controller/xcat/tables/$table > /tmp/xcattables/$table;
 done
 
@@ -61,7 +61,7 @@ ln -s ../rh/dracut_033 .
 ln -s ../rh/dracut .
 
 cd /
-cat /tmp/trinity/xcat/controller/patches/*.patch | patch -p0
+cat /tmp/trinity/controller/xcat/patches/*.patch | patch -p0
 makedhcp -n
 makedns -n
 
