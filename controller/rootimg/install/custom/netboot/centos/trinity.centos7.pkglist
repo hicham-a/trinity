@@ -67,5 +67,3 @@ urw-fonts
 # needed for the trinity startup script
 which
 bind-utils
-docker
-openvswitch

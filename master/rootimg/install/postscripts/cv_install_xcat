@@ -44,9 +44,11 @@ cp /tmp/trinity/version /trinity/version
 
 #--------------------------------------------------------------------------------------
 # copy default database configuration
+# copy the cd first, as otherwise copycds will overwrite the linuximage table
 # and patch the installation
 #--------------------------------------------------------------------------------------
 source /etc/profile.d/xcat.sh
+copycds /tmp/trinity/iso/*.iso
 mkdir -p /tmp/xcattables
 read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
 for table in $(ls /tmp/trinity/controller/xcat/tables); do
@@ -110,10 +112,9 @@ exportfs -a
 # Create installation tree
 #--------------------------------------------------------------------------------------
 echo "Creating installation tree"
-copycds /tmp/trinity/iso/*.iso
 reposync -n -r updates -r extras -p /install/post/otherpkgs/centos7.0/x86_64/
 createrepo /install/post/otherpkgs/centos7.0/x86_64/
-genimage -o centos7.0 -a x86_64 -p trinity -i ' '
+genimage centos7.0-x86_64-netboot-trinity
 
 echo "xcat installed" >> /var/log/postinstall.log
 #--------------------------------------------------------------------------------------
