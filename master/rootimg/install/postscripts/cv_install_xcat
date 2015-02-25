@@ -111,7 +111,8 @@ exportfs -a
 #--------------------------------------------------------------------------------------
 echo "Creating installation tree"
 copycds /tmp/trinity/iso/*.iso
-reposync -r updates -r extras -p /install/post/otherpkgs/centos7.0/x86_64/
+reposync -n -r updates -r extras -p /install/post/otherpkgs/centos7.0/x86_64/
+createrepo /install/post/otherpkgs/centos7.0/x86_64/
 genimage -o centos7.0 -a x86_64 -p trinity -i ' '
 
 echo "xcat installed" >> /var/log/postinstall.log
