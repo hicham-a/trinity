@@ -12,3 +12,5 @@
 "centos7.0-x86_64-statelite-xen",,"xen","linux",,"statelite",,"centos7.0-x86_64",,,"Linux","centos7.0","x86_64",,,,,,,,
 "centos7.0-x86_64-statelite-kvm",,"kvm","linux",,"statelite",,"centos7.0-x86_64",,,"Linux","centos7.0","x86_64",,,,,,,,
 "centos7.0-x86_64-statelite-trinity",,"trinity","linux",,"statelite",,"centos7.0-x86_64",,,"Linux","centos7.0","x86_64",,,,,,,,
+"centos7.0-x86_64-install-controller",,"controller","linux",,"install",,"centos7.0-x86_64",,,"Linux","centos7.0","x86_64",,,"cv_install_slapd,cv_install_xcat,cv_install_docker",,,,,
+"centos7.0-x86_64-install-openstack",,"openstack","linux",,"install",,"centos7.0-x86_64",,,"Linux","centos7.0","x86_64",,,"cv_install_slapd,cv_install_openstack",,,,,
