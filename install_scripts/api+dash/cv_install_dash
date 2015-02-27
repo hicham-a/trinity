@@ -6,8 +6,9 @@
 ##author         : Abhishek Mukherjee
 ##email          : abhishek.mukherjee@clustervision.com
 
+file_root=""
 # Trinity python client setup
-cd /trinity/controller/api+dash/trinity_client
+cd ${file_root}/api+dash/trinity_client
 python setup.py install
 sed "s/127.0.0.1/$(hostname -I| awk '{print $1}')/g" /etc/trinity/trinity_client.conf > /tmp/trinity_client.conf
 mv /tmp/trinity_client.conf /etc/trinity/trinity_client.conf
