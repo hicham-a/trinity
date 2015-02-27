@@ -4,7 +4,7 @@
 #author		: Abhishek Mukherjee
 #email		: abhishek.mukherjee@clustervision.com
 
-site="dmon"
+site="monitoring"
 yum -y remove sendmail
 yum -y install postfix dovecot
 setsebool -P httpd_can_sendmail on
@@ -16,7 +16,7 @@ postconf -e "mydomain = $(domainname)"
 postconf -e "myorigin = \$mydomain"
 postconf -e "inet_interfaces = all"
 postconf -e "mydestination = \$myhostname, localhost.\$mydomain, localhost"
-postconf -e "mynetworks = 192.168.0.0/24, 127.0.0.0/8"
+postconf -e "mynetworks = 10.141.0.0/16, 127.0.0.0/8"
 postconf -e "relay_domains = "
 postconf -e "home_mailbox = Maildir/"
 
