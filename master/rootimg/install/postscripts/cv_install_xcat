@@ -122,6 +122,7 @@ yum -y install --downloadonly --downloaddir=/install/post/otherpkgs/centos7.0/x8
 createrepo /install/post/otherpkgs/centos7.0/x86_64/
 # generate the image
 genimage centos7.0-x86_64-netboot-trinity
+packimage centos7.0-x86_64-netboot-trinity
 
 echo "xcat installed" >> /var/log/postinstall.log
 #--------------------------------------------------------------------------------------
