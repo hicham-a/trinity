@@ -7,6 +7,10 @@ cd -
 
 systemctl stop NetworkManager
 systemctl disable NetworkManager
+# Workaround for bug #67
+killall dhclient
+systemctl start network
+
 yum -y install epel-release
 yum -y install https://rdo.fedorapeople.org/rdo-release.rpm
 yum -y install openstack-packstack
