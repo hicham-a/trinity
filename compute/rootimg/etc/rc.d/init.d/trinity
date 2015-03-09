@@ -28,10 +28,15 @@ start() {
     NAME=$(hostname -s | sed s/node/c/)
 
     # Determine in which virtual cluster this node is active
-    # FIXME: add an error message in case we do not find anything
     for VC in vc-{a..l}; do
-        if host $NAME.$VC; then break; fi
+        if host $NAME.$VC; then found=1; break; fi
     done
+
+    # Fix for #90
+    if [ ! $found ]; then
+        echo "Error, could not determine cluster membership for this node"
+        exit 1
+    fi
 
     IP=$(host ${NAME}.${VC} | awk -F' ' '{print $4}')
     GW=$(echo $IP | awk -F. '{ print $1"."$2".255.254" }')
