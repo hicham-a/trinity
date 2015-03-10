@@ -209,7 +209,7 @@ done
 sed -i /etc/sysconfig/network-scripts/ifcfg-$ETH1 -e "s/DEFROUTE=\(.*\)/DEFROUTE=yes/" -e "s/PEERDNS=\(.*\)/PEERDNS=no/"
 
 # Fix for #85
-cat >> /etc/sysconfig/network-scripts/ifcfg-eth2 << EOF
+cat >> /etc/sysconfig/network-scripts/ifcfg-$ETH2 << EOF
 IPADDR1=10.148.255.254
 PREFIX1=16
 GATEWAY1=10.148.255.254
