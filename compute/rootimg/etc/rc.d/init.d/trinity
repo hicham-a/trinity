@@ -29,13 +29,20 @@ start() {
 
     # Determine in which virtual cluster this node is active
     for VC in vc-{a..l}; do
-        if host $NAME.$VC; then break; fi
+        if host $NAME.$VC; then found=1; break; fi
     done
+
+    # Fix for #90
+    if [ ! $found ]; then
+        echo "Error, could not determine cluster membership for this node"
+        exit 1
+    fi
+
     IP=$(host ${NAME}.${VC} | awk -F' ' '{print $4}')
     GW=$(echo $IP | awk -F. '{ print $1"."$2".255.254" }')
 
     # check if there is a cluster specific image
-    if wget http://controller:5050/v1/repositories/library/${VC}/tags -q -O-
+    if wget http://controller:5050/v1/repositories/library/${VC}/tags -q -O-; then
        IMAGE=${VC}
     else
        IMAGE=trinity

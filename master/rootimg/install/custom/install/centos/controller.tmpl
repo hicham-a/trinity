@@ -160,20 +160,11 @@ reboot
 
 read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
 
-if [ -z $ETH3 ]; then
 cat > /tmp/trinity-networking << EOF
 network  --bootproto=static --device=$ETH2 --gateway=10.141.255.254 --ip=10.141.255.254 --netmask=255.255.0.0 --ipv6=auto --nodefroute --onboot=yes
 network  --bootproto=dhcp --device=$ETH1 --ipv6=auto --onboot=yes
 network  --hostname=controller.cluster
 EOF
-else
-cat > /tmp/trinity-networking << EOF
-network  --bootproto=static --device=$ETH2 --gateway=10.141.255.254 --ip=10.141.255.254 --netmask=255.255.0.0 --ipv6=auto --nodefroute --onboot=yes
-network  --bootproto=static --device=$ETH3 --gateway=10.148.255.254 --ip=10.148.255.254 --netmask=255.255.0.0 --ipv6=auto --nodefroute --onboot=yes
-network  --bootproto=dhcp --device=$ETH1 --ipv6=auto --onboot=yes
-network  --hostname=controller.cluster
-EOF
-fi
 
 %end
 %post
@@ -216,6 +207,13 @@ for file in /etc/sysconfig/network-scripts/ifcfg-{$ETH2,$ETH3}; do
     sed -i $file -e "s/DEFROUTE=\(.*\)/DEFROUTE=no/"
 done
 sed -i /etc/sysconfig/network-scripts/ifcfg-$ETH1 -e "s/DEFROUTE=\(.*\)/DEFROUTE=yes/" -e "s/PEERDNS=\(.*\)/PEERDNS=no/"
+
+# Fix for #85
+cat >> /etc/sysconfig/network-scripts/ifcfg-$ETH2 << EOF
+IPADDR1=10.148.255.254
+PREFIX1=16
+GATEWAY1=10.148.255.254
+EOF
 
 echo done
 %end

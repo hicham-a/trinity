@@ -63,6 +63,7 @@ ln -s ../rh/dracut .
 
 cd /
 cat /tmp/trinity/controller/xcat/patches/*.patch | patch -p0
+systemctl restart xcat
 makedhcp -n
 makedns -n
 
@@ -87,6 +88,7 @@ service iptables start
 modprobe iptable_nat
 iptables -A FORWARD -i $ETH2 -j ACCEPT
 iptables -t nat -A POSTROUTING -o $ETH1 -j MASQUERADE
+iptables -D FORWARD 4
 service iptables save
 
 #--------------------------------------------------------------------------------------
