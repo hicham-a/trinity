@@ -4,7 +4,7 @@ from ConfigParser import SafeConfigParser
 import json
 import requests
 
-#conf_file=os.path.join(os.path.dirname(os.path.abspath(__file__)),'trinity-client.conf')
+#conf_file=os.path.join(os.path.dirname(os.path.abspath(__file__)),'trinity_client.conf')
 conf_file='/etc/trinity/trinity_client.conf'
 class Client(object):
 
@@ -78,10 +78,11 @@ class Client(object):
   def hardwares_detail(self):
     hardwares=self.hardwares_list()
     data=[]
-    for hardware in hardwares:
+    r = requests.get(self.trinity_prefix+'/overview/hardwares', data=json.dumps(self.payload), headers=self.headers).json()
+    for hardware in  r: 
       r = requests.get(self.trinity_prefix+'/hardwares/'+hardware, data=json.dumps(self.payload), headers=self.headers)
       datum={}
-      res=r.json()
+      res=r[hardware]
       datum['total']=res['total']
       datum['used']=res['allocated']
       datum['hardware']=hardware
@@ -91,11 +92,12 @@ class Client(object):
   def clusters_detail(self):
     clusters=self.clusters_list()
     data=[]
-    for cluster in clusters:
-      hardwares=self.cluster_hardware(cluster)
+    r = requests.get(self.trinity_prefix+'/overview/clusters', data=json.dumps(self.payload), headers=self.headers).json()
+    for cluster in r: 
+      hardwares=r[cluster]['hardware']
       datum={'cluster':cluster}
       for hardware in hardwares: 
-        datum[hardware['type']]=hardware['amount']
+        datum[hardware]=r[cluster]['hardware'][hardware]
       data.append(datum)
     return data
 

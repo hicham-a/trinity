@@ -14,6 +14,7 @@ config.read(conf_file)
 trinity_host=config.get('trinity','trinity_host')
 trinity_port=config.getint('trinity','trinity_port')
 trinity_debug=config.getboolean('trinity','trinity_debug')
+trinity_server=config.get('trinity','trinity_server')
 
 class TrinityAPI(object):
   def __init__(self,request):
@@ -82,6 +83,7 @@ class TrinityAPI(object):
   
     r = requests.post(self.keystone_host+'/tokens', data=json.dumps(payload), headers=self.headers)
     self.has_access = (r.status_code  == requests.codes.ok )
+    self.is_admin=False
     if self.has_access: 
       self.has_authenticated=True
       body = r.json()
@@ -112,7 +114,37 @@ class TrinityAPI(object):
           groups.append(group[l:])  
       status_ok=True
     return {'statusOK':status_ok, name:groups}
-   
+  
+  def detailed_overview(self):
+    xcat_groups=self.xcat('GET','/groups')
+    hc_list=[]
+    for group in xcat_groups:
+      if group.startswith(self.hw): hc_list.append(group)
+      if group.startswith(self.vc): hc_list.append(group)
+    hc_string=",".join(hc_list)
+    xcat_overview=self.xcat('GET','/groups/'+hc_string+'/attrs/members')
+    hc_overview={'hardware':{},'cluster':{}}
+    lhw=len(self.hw)
+    lvc=len(self.vc)
+    for hc in xcat_overview:
+      if hc.startswith(self.hw): 
+        hardware=hc[lhw:]
+        members=xcat_overview[hc]['members'].strip()
+        node_list=[]
+        # Hack because of unicode
+        if members: node_list=[x.strip() for x in members.split(',')]
+        hc_overview['hardware'][hardware]=node_list
+      if hc.startswith(self.vc): 
+        cluster=hc[lvc:]
+        members=xcat_overview[hc]['members'].strip()
+        node_list=[]
+        # Hack because of unicode
+        if members: node_list=[x.strip() for x in members.split(',')]
+        hc_overview['cluster'][cluster]=node_list
+    self.overview=hc_overview
+    return hc_overview
+
+ 
   def nodes(self):
     self.authenticate()
     status_ok=False
@@ -142,6 +174,26 @@ class TrinityAPI(object):
       status_ok=True
       info['statusOK']=status_ok
     return info
+   
+  def nodes_info(self, node_list):
+    node_string=",".join(node_list)
+    xcat_nodes=self.xcat('GET','/nodes/'+node_string)
+#    info={'hardware': None, 'cluster': None}
+    lhw=len(self.hw)
+    lvc=len(self.vc)
+    info_dict={}
+    for node,info in xcat_nodes.items():
+      info_dict[node]={'hardware':None,'cluster':None}
+      members=info['groups'].strip()
+      groups=[]
+      if members: groups=[x.strip() for x in members.split(',')]
+      for group in groups:
+      # Assumes that the node is only a part of one hw and one vc 
+        if group.startswith(self.hw): 
+          info_dict[node]['hardware']=group[lhw:] 
+        if group.startswith(self.vc): 
+          info_dict[node]['cluster']=group[lvc:]
+    return info_dict
      
   def group_nodes(self,name,startkey=''):
     self.authenticate()
@@ -160,58 +212,48 @@ class TrinityAPI(object):
   def cluster_nodes(self,cluster):
     self.authenticate()
     ret={}
-    ret['statusOK']=False
+    ret['statusOK']=True
     if not (self.is_admin or self.tenant==cluster):
       return ret
-    nodes=self.group_nodes(startkey=self.vc,name=cluster)
-    ret['statusOK']=nodes['statusOK']
-    if not ret['statusOK']:
-      return ret
-    ret['hardware']=defaultdict(int)
-    for node in nodes['nodes']:
-      info=self.node_info(node)
-      if info['statusOK']:
-        ret['hardware'][info['hardware']]+=1
+    ret['hardware']=  {} 
+    hc_overview=self.detailed_overview()
+    all_nodes=set(hc_overview['cluster'][cluster])
+    for hardware in hc_overview['hardware']:
+      overlap=len(all_nodes.intersection(set(hc_overview['hardware'][hardware])))
+      ret['hardware'][hardware]=overlap
     return ret    
 
   # this is not DRY
   def cluster_details(self,cluster): 
     self.authenticate()
     ret={}
-    ret['statusOK']=False
+    ret['statusOK']=True
     if not (self.is_admin or self.tenant==cluster):
       return ret
-    nodes=self.group_nodes(startkey=self.vc,name=cluster)
-    ret['statusOK']=nodes['statusOK']
-    if not ret['statusOK']:
-      return ret
-    ret['hardware']=defaultdict(list)
-    for node in nodes['nodes']:
-      info=self.node_info(node)
-      if info['statusOK']:
-        ret['hardware'][info['hardware']].append(node)
+    ret['hardware']={}
+    hc_overview=self.detailed_overview()
+    all_nodes=set(hc_overview['cluster'][cluster])
+    for hardware in hc_overview['hardware']:
+      overlap=list(all_nodes.intersection(set(hc_overview['hardware'][hardware])))
+      ret['hardware'][hardware]=overlap
+ 
     return ret    
 
   def hardware_nodes(self,hardware):
     self.authenticate()
     ret={}
-    ret['statusOK']=False
+    ret['statusOK']=True
     if not (self.is_admin):
       return ret
-    nodes=self.group_nodes(startkey=self.hw,name=hardware)
-    ret['statusOK']=nodes['statusOK']
-    if not ret['statusOK']:
-      return ret
-    ret['total']=len(nodes['nodes'])
-    ret['allocated']=0
-    ret['list_unallocated']=[]
-    for node in nodes['nodes']:
-      info=self.node_info(node)
-      if info['cluster']:
-        ret['allocated']+=1
-      else:
-        ret['list_unallocated'].append(node)
-    ret['unallocated']=ret['total']-ret['allocated']
+    hc_overview=self.detailed_overview()
+    c_nodes=set()
+    for cluster in hc_overview['cluster']:
+      c_nodes=c_nodes.union(set(hc_overview['cluster'][cluster]))
+    ret['total']=len(hc_overview['hardware'][hardware])
+    ret['list_unallocated']=list(set(hc_overview['hardware'][hardware])-c_nodes)
+    ret['unallocated']=len(ret['list_unallocated'])  
+    ret['allocated']=ret['total']-ret['unallocated']   
+
     return ret    
 
   def cluster_change_nodes(self,cluster,old_list,hw_dict):
@@ -337,6 +379,53 @@ def login(version=1):
     response.status=401
     return
 
+@trinity.get('/trinity/v<version:float>/overview')
+def total_overview(version=1):
+  req=TrinityAPI(request)
+  if not req.is_admin:
+    ret={'error':req.not_admin}
+    return ret
+  return req.detailed_overview()
+ 
+
+@trinity.get('/trinity/v<version:float>/overview/hardwares')
+def hardware_overview(version=1):
+  req=TrinityAPI(request)
+  if not req.is_admin:
+    ret={'error':req.not_admin}
+    return ret
+  hc_overview=req.detailed_overview()
+  c_nodes=set()
+  for cluster in hc_overview['cluster']:
+    c_nodes=c_nodes.union(set(hc_overview['cluster'][cluster]))
+  
+  h_overview={}
+  for hardware in hc_overview['hardware']: 
+    h_overview[hardware]={} 
+    h_overview[hardware]['total']=len(hc_overview['hardware'][hardware])
+    h_overview[hardware]['list_unallocated']=list(set(hc_overview['hardware'][hardware])-c_nodes)
+    h_overview[hardware]['unallocated']=len(h_overview[hardware]['list_unallocated'])  
+    h_overview[hardware]['allocated']=h_overview[hardware]['total']-h_overview[hardware]['unallocated']   
+  return h_overview    
+  
+@trinity.get('/trinity/v<version:float>/overview/clusters')
+def cluster_overview(version=1):
+  req=TrinityAPI(request)
+  if not req.is_admin:
+    ret={'error':req.not_admin}
+    return ret
+  hc_overview=req.detailed_overview()
+  c_overview={}
+  for cluster in hc_overview['cluster']:
+    c_overview[cluster]={}
+    c_overview[cluster]['hardware']={}
+    for hardware in hc_overview['hardware']:
+      amount=len(set(hc_overview['cluster'][cluster]).intersection(set(hc_overview['hardware'][hardware])))
+      c_overview[cluster]['hardware'][hardware]=amount
+  return c_overview   
+
+
+
 @trinity.get('/trinity/v<version:float>/clusters')
 def list_clusters(version=1):
   req=TrinityAPI(request)
@@ -366,12 +455,35 @@ def show_node(node,version=1):
 @trinity.get('/trinity/v<version:float>/clusters/<cluster>')
 def show_cluster(cluster,version=1):
   req=TrinityAPI(request)
-  return req.cluster_nodes(cluster)    
+  if not (req.is_admin or req.tenant==cluster):
+    ret={'error':req.no_access}
+    return ret
+  hc_overview=req.detailed_overview()
+  c_overview={'hardware':{}}
+  for hardware in hc_overview['hardware']:
+    amount=len(set(hc_overview['cluster'][cluster]).intersection(set(hc_overview['hardware'][hardware])))
+    c_overview['hardware'][hardware]=amount
+  return c_overview   
+#  return req.cluster_nodes(cluster)    
 
 @trinity.get('/trinity/v<version:float>/hardwares/<hardware>')
 def show_hardware(hardware,version=1):
   req=TrinityAPI(request)
-  return req.hardware_nodes(hardware)
+  if not req.is_admin:
+    ret={'error':req.not_admin}
+    return ret
+  hc_overview=req.detailed_overview()
+  c_nodes=set()
+  for cluster in hc_overview['cluster']:
+    c_nodes=c_nodes.union(set(hc_overview['cluster'][cluster]))
+  h_overview={}
+  h_overview={} 
+  h_overview['total']=len(hc_overview['hardware'][hardware])
+  h_overview['list_unallocated']=list(set(hc_overview['hardware'][hardware])-c_nodes)
+  h_overview['unallocated']=len(h_overview['list_unallocated'])  
+  h_overview['allocated']=h_overview['total']-h_overview['unallocated']   
+  return h_overview    
+#  return req.hardware_nodes(hardware)
 
 @trinity.get('/trinity/v<version:float>/clusters/<cluster>/hardware')
 def show_hardware_details(cluster,version=1):
@@ -496,4 +608,4 @@ def conf_update(conf_file,key,value,sep='='):
 
 
 if __name__=="__main__":
-  trinity.run(host=trinity_host, port=trinity_port, debug=trinity_debug)
+  trinity.run(host=trinity_host, port=trinity_port, debug=trinity_debug, server=trinity_server)
