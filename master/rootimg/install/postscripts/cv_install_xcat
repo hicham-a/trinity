@@ -89,6 +89,7 @@ modprobe iptable_nat
 iptables -A FORWARD -i $ETH2 -j ACCEPT
 iptables -t nat -A POSTROUTING -o $ETH1 -j MASQUERADE
 iptables -D FORWARD -j REJECT --reject-with icmp-host-prohibited
+iptables -D INPUT -j REJECT --reject-with icmp-host-prohibited
 service iptables save
 
 #--------------------------------------------------------------------------------------
