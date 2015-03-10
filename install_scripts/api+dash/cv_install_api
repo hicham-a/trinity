@@ -12,8 +12,14 @@ yum -y install redhat-lsb
 yum -y install epel-release
 yum -y install python-pip
 pip install bottle
+pip install cherrypy
 
-file_root=""
+remote_host="controller"
+remote_file_root="trinity"
+remote_nfs="${remote_host}:$remote_file_root"
+file_root="/tmp/${remote_file_root}"
+mkdir -p ${file_root}
+mount ${remote_nfs} ${file_root} 
 # Trinity API setup
 cd ${file_root}/api+dash/trinity_api
 python setup.py install
@@ -21,4 +27,13 @@ sed "s/127.0.0.1/$(hostname -I| awk '{print $1}')/g" /etc/trinity/trinity_api.co
 mv /tmp/trinity_api.conf /etc/trinity/trinity_api.conf
 mkdir -p /var/log/trinity
 mkdir -p /var/run/trinity
+umount ${file_root}
+
+cluster="/cluster"
+remote_cluster="${remote_host}:${cluster}"
+mount ${remote_cluster} ${cluster}
+
+service trinity_api start
+chkconfig trinity_api on
+
 

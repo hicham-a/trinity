@@ -6,7 +6,13 @@
 ##author         : Abhishek Mukherjee
 ##email          : abhishek.mukherjee@clustervision.com
 
-file_root=""
+remote_host="controller"
+remote_file_root="trinity"
+remote_nfs="${remote_host}:$remote_file_root"
+file_root="/tmp/${remote_file_root}"
+mkdir -p ${file_root}
+mount ${remote_nfs} ${file_root} 
+
 # Trinity python client setup
 cd ${file_root}/api+dash/trinity_client
 python setup.py install
@@ -20,4 +26,6 @@ sh setup.sh
 # This is to fix a bug in the httpd configuration needed for Juno
 echo 'Include "/etc/httpd/conf.modules.d/*.conf"' >> /etc/httpd/conf/httpd.conf
 
+umount ${file_root}
 
+service httpd restart
