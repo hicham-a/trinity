@@ -88,7 +88,7 @@ service iptables start
 modprobe iptable_nat
 iptables -A FORWARD -i $ETH2 -j ACCEPT
 iptables -t nat -A POSTROUTING -o $ETH1 -j MASQUERADE
-iptables -D FORWARD 4
+iptables -D FORWARD -j REJECT --reject-with icmp-host-prohibited
 service iptables save
 
 #--------------------------------------------------------------------------------------
@@ -124,6 +124,7 @@ yum -y install --downloadonly --downloaddir=/install/post/otherpkgs/centos7.0/x8
 createrepo /install/post/otherpkgs/centos7.0/x86_64/
 # generate the image
 genimage centos7.0-x86_64-netboot-trinity
+packimage centos7.0-x86_64-netboot-trinity
 
 echo "xcat installed" >> /var/log/postinstall.log
 #--------------------------------------------------------------------------------------
