@@ -65,6 +65,7 @@ cd /
 cat /tmp/trinity/controller/xcat/patches/*.patch | patch -p0
 systemctl restart xcatd
 makedhcp -n
+makehosts -n
 makedns -n
 
 #--------------------------------------------------------------------------------------
