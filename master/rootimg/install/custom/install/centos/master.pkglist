@@ -14,6 +14,7 @@ createrepo
 bind-utils
 net-snmp-utils 
 xCAT
+sssd
 
 # X fwding
 xorg-x11-xauth
