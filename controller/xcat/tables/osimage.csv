@@ -7,7 +7,7 @@
 "centos7.0-x86_64-netboot-compute",,"compute","linux",,"netboot",,"centos7.0-x86_64",,,"Linux","centos7.0","x86_64",,,,,,,,
 "centos7.0-x86_64-netboot-xen",,"xen","linux",,"netboot",,"centos7.0-x86_64",,,"Linux","centos7.0","x86_64",,,,,,,,
 "centos7.0-x86_64-netboot-kvm",,"kvm","linux",,"netboot",,"centos7.0-x86_64",,,"Linux","centos7.0","x86_64",,,,,,,,
-"centos7.0-x86_64-netboot-trinity",,"trinity","linux",,"netboot",,"centos7.0-x86_64",,,"Linux","centos7.0","x86_64",,,,,,,,
+"centos7.0-x86_64-netboot-trinity",,"trinity","linux",,"netboot",,"centos7.0-x86_64",,,"Linux","centos7.0","x86_64",,,"cv_configure_prinic",,,,,
 "centos7.0-x86_64-statelite-compute",,"compute","linux",,"statelite",,"centos7.0-x86_64",,,"Linux","centos7.0","x86_64",,,,,,,,
 "centos7.0-x86_64-statelite-xen",,"xen","linux",,"statelite",,"centos7.0-x86_64",,,"Linux","centos7.0","x86_64",,,,,,,,
 "centos7.0-x86_64-statelite-kvm",,"kvm","linux",,"statelite",,"centos7.0-x86_64",,,"Linux","centos7.0","x86_64",,,,,,,,
