@@ -23,7 +23,10 @@
 . /etc/rc.d/init.d/functions
 
 start() {
-    echo -n "Starting Trinity"
+    echo "Starting Trinity"
+    # Make sure the file systems are mounted
+    mount -a
+
     # Determine our container name
     NAME=$(hostname -s | sed s/node/c/)
 
@@ -40,6 +43,17 @@ start() {
 
     IP=$(host ${NAME}.${VC} | awk -F' ' '{print $4}')
     GW=$(echo $IP | awk -F. '{ print $1"."$2".255.254" }')
+ 
+    # Check a few directories and files
+    if [ ! -d /cluster/${VC} ]; then
+        logger -p syslog.err "No cluster directory found for ${VC}, exiting."; exit 1
+    fi
+    if [ ! -f /cluster/${VC}/etc/slurm/slurm.conf ]; then
+        logger -p syslog.err "No slurm.conf found, exiting."; exit 1
+    fi
+    if [ ! -f /cluster/${VC}/etc/munge/munge.key ]; then
+        logger -p syslog.err "No munge.key found, exiting."; exit 1
+    fi
 
     # check if there is a cluster specific image
     if wget http://controller:5050/v1/repositories/library/${VC}/tags -q -O-; then
@@ -53,13 +67,17 @@ start() {
         docker stop trinity
         docker rm trinity
     fi
+
+    # determine the ethernet device name
+    read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
+
     state=$(docker inspect --format='{{.State.Running}}' trinity)
     case $state in
         true)
             ;;
         false)
             docker start trinity
-            /usr/local/sbin/pipework eno1 trinity ${IP}/16@${GW}
+            /usr/local/sbin/pipework ${ETH1} trinity ${IP}/16@${GW}
             ;;
         *)
             docker run \
@@ -76,7 +94,7 @@ start() {
                --hostname=${NAME}.${VC} \
                --name=trinity \
                -d controller:5050/${IMAGE}
-            /usr/local/sbin/pipework eno1 trinity ${IP}/16@${GW}
+            /usr/local/sbin/pipework ${ETH1} trinity ${IP}/16@${GW}
         ;;
     esac
 }
