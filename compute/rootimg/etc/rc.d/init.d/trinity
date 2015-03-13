@@ -24,8 +24,6 @@
 
 start() {
     echo "Starting Trinity"
-    # Make sure the file systems are mounted
-    mount -a
 
     # Determine our container name
     NAME=$(hostname -s | sed s/node/c/)

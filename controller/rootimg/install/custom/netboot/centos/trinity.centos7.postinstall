@@ -38,6 +38,7 @@ sed -i 's/OPTIONS=\(.*\)/OPTIONS=--insecure-registry controller:5050 \1/' $insta
 install -D /trinity/compute/rootimg/etc/rc.d/init.d/trinity $installroot/etc/rc.d/init.d/trinity
 install -D /trinity/compute/rootimg/usr/local/sbin/pipework $installroot/usr/local/sbin/pipework
 install -D /trinity/compute/rootimg/usr/local/sbin/docker-enter $installroot/usr/local/sbin/docker-enter
+install -D /trinity/compute/rootimg/lib/systemd/system/docker.service $installroot/lib/systemd/system/docker.service
 
 #-- Enable services
 chroot $installroot chkconfig rdma on
