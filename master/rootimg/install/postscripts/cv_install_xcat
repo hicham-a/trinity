@@ -44,6 +44,14 @@ cp -r /tmp/trinity/controller/rootimg/* /
 cp /tmp/trinity/version /trinity/version
 
 #--------------------------------------------------------------------------------------
+# create runimages
+#--------------------------------------------------------------------------------------
+for file in $(ls /install/runimages/); do
+    tar cf /install/runimages/${file}.tgz /install/runimages/${file}/
+done
+
+
+#--------------------------------------------------------------------------------------
 # copy default database configuration
 # copy the cd first, as otherwise copycds will overwrite the linuximage table
 # and patch the installation
