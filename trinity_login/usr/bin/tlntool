@@ -1,5 +1,5 @@
 #! /bin/bash
-#title		: create_login
+#title		: tlntool
 #description	: Tool to automate login node creation.
 #author		: Abhishek Mukherjee
 #email		: abhishek.mukherjee@clustervision.com
