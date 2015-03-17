@@ -11,6 +11,14 @@ systemctl disable NetworkManager
 killall dhclient
 systemctl start network
 
+if [ ! grep controller:/cluster /etc/fstab > /dev/null ]; then
+cat << END >> /etc/fstab
+controller:/cluster /cluster nfs rsize=8192,wsize=8192,timeo=14,intr
+controller:/trinity /trinity nfs rsize=8192,wsize=8192,timeo=14,intr
+controller:/home /home nfs rsize=8192,wsize=8192,timeo=14,intr
+END
+fi
+
 yum -y install epel-release
 yum -y install https://rdo.fedorapeople.org/rdo-release.rpm
 yum -y install openstack-packstack
