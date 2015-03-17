@@ -137,6 +137,12 @@ createrepo /install/post/otherpkgs/centos7.0/x86_64/
 genimage centos7.0-x86_64-netboot-trinity
 packimage centos7.0-x86_64-netboot-trinity
 
+#---------------------------------------------------------------------------------------
+# Workaround: create a default munge key for vc-a cluster
+#---------------------------------------------------------------------------------------
+dd if=/dev/urandom bs=1 count=1024 >/cluster/vc-a/etc/munge/munge.key
+chmod 400 /cluster/vc-a/etc/munge/munge.key
+
 echo "xcat installed" >> /var/log/postinstall.log
 #--------------------------------------------------------------------------------------
 # cleanup
