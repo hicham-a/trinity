@@ -103,6 +103,15 @@ iptables -D INPUT -j REJECT --reject-with icmp-host-prohibited
 service iptables save
 
 #--------------------------------------------------------------------------------------
+# setup routing for the virtual clusters
+#--------------------------------------------------------------------------------------
+ip route add 172.16.0.0/12 dev $ETH2
+cat << END > /etc/sysconfig/network-scripts/route-$ETH2 
+ADDRESS0=172.16.0.0
+NETMASK0=255.240.0.0
+END
+
+#--------------------------------------------------------------------------------------
 # now setup NFS
 #--------------------------------------------------------------------------------------
 yum -y install nfs-utils nfs-utils-lib
