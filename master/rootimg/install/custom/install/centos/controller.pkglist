@@ -12,3 +12,4 @@ net-tools
 # X fwding
 xorg-x11-xauth
 yum-utils
+bind-utils
