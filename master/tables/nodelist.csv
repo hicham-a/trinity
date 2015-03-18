@@ -1,4 +1,3 @@
 #node,groups,status,statustime,appstatus,appstatustime,primarysn,hidden,updatestatus,updatestatustime,zonename,comments,disable
 "switch-controllers","xcat",,,,,,,,,,,
 "master","xcat",,,,,,,,,,,
-"login-a","vc-a"
