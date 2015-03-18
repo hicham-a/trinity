@@ -106,7 +106,7 @@ class TrinityAPI(object):
     self.authenticate()
     status_ok=False
     groups=[]
-    if self.has_access and self.is_admin:
+    if self.has_access: # and self.is_admin:
       xcat_groups=self.xcat('GET','/groups')
       l=len(startkey)
       for group in xcat_groups:
@@ -510,9 +510,13 @@ def modify_cluster(cluster,version=1):
     ret=create_cluster(req,cluster)
     if ret['statusOK']:
       src_root=req.cluster_path
+      vc_cluster=req.vc + cluster
+#      dest_root=os.path.join(req.cluster_path,
+#                             req.clusters_dir,
+#                             cluster)
       dest_root=os.path.join(req.cluster_path,
                              req.clusters_dir,
-                             cluster)
+                             vc_cluster)
       excludes=[req.clusters_dir]
       copy_with_excludes(src_root,dest_root,excludes)
       slurm_needs_update=True 
@@ -523,9 +527,14 @@ def modify_cluster(cluster,version=1):
       cont=node.replace(req.node_pref,req.cont_pref)
       cont_list.append(cont) 
     cont_string=','.join(cont_list)
+    vc_cluster=req.vc + cluster
+#    slurm=os.path.join(req.cluster_path,
+#                       req.clusters_dir,
+#                       cluster,
+#                       req.slurm_node_file)
     slurm=os.path.join(req.cluster_path,
                        req.clusters_dir,
-                       cluster,
+                       vc_cluster,
                        req.slurm_node_file)
     part_string='PartitionName='+req.cont_part+' Nodes='+cont_string+' Default=Yes'
     changes={'NodeName':'NodeName='+cont_string,

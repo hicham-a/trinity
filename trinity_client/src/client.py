@@ -80,7 +80,7 @@ class Client(object):
     data=[]
     r = requests.get(self.trinity_prefix+'/overview/hardwares', data=json.dumps(self.payload), headers=self.headers).json()
     for hardware in  r: 
-      r = requests.get(self.trinity_prefix+'/hardwares/'+hardware, data=json.dumps(self.payload), headers=self.headers)
+#      r = requests.get(self.trinity_prefix+'/hardwares/'+hardware, data=json.dumps(self.payload), headers=self.headers)
       datum={}
       res=r[hardware]
       datum['total']=res['total']
