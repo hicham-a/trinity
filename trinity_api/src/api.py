@@ -131,14 +131,12 @@ class TrinityAPI(object):
         hardware=hc[lhw:]
         members=xcat_overview[hc]['members'].strip()
         node_list=[]
-        # Hack because of unicode
         if members: node_list=[x.strip() for x in members.split(',')]
         hc_overview['hardware'][hardware]=node_list
       if hc.startswith(self.vc): 
         cluster=hc[lvc:]
         members=xcat_overview[hc]['members'].strip()
         node_list=[]
-        # Hack because of unicode
         if members: node_list=[x.strip() for x in members.split(',')]
         hc_overview['cluster'][cluster]=node_list
     self.overview=hc_overview
@@ -501,23 +499,27 @@ def modify_cluster(cluster,version=1):
   if not clusters['statusOK']:
     return ret
   if cluster in clusters['clusters']:
+    cluster_exists = True
     ret=update_cluster(req,cluster)
     slurm_needs_update=False
     if ret['statusOK']:
       if ret['change']:
         slurm_needs_update=True
   else:
+    cluster_exists = False
     ret=create_cluster(req,cluster)
     if ret['statusOK']:
-      src_root=req.cluster_path
+#      src_root=req.cluster_path
+      src_root=req.template_dir
       vc_cluster=req.vc + cluster
 #      dest_root=os.path.join(req.cluster_path,
 #                             req.clusters_dir,
 #                             cluster)
       dest_root=os.path.join(req.cluster_path,
-                             req.clusters_dir,
+#                             req.clusters_dir,
                              vc_cluster)
-      excludes=[req.clusters_dir]
+#      excludes=[req.clusters_dir]
+      excludes=[]
       copy_with_excludes(src_root,dest_root,excludes)
       slurm_needs_update=True 
   
@@ -533,7 +535,7 @@ def modify_cluster(cluster,version=1):
 #                       cluster,
 #                       req.slurm_node_file)
     slurm=os.path.join(req.cluster_path,
-                       req.clusters_dir,
+#                       req.clusters_dir,
                        vc_cluster,
                        req.slurm_node_file)
     part_string='PartitionName='+req.cont_part+' Nodes='+cont_string+' Default=Yes'
@@ -542,6 +544,69 @@ def modify_cluster(cluster,version=1):
     replace_lines(slurm,changes)
 #    conf_update(slurm,'NodeName',cont_string,sep='=')
 #    conf_update(slurm,'PartitionName',req.cont_part+' Nodes='+cont_string+' Default=Yes',sep='=')
+
+##---------------------------------------------------------------------
+## In this part we update makehosts, makedns etc for the cluster
+## We assume that the cluster name is a,b,c...l
+##---------------------------------------------------------------------
+  vc_cluster=req.vc + cluster
+
+#should not hardcoded!!!
+  vc_net='vc_'+cluster+'_net'
+  login_cluster='login-'+cluster
+# This will not work if cluster is not a single char!!!!!  
+  second_octet=str(16+ord(cluster)-ord('a'))
+ 
+  if not cluster_exists :
+    # create vc-<cluster> entry in the hosts table
+    # The verb is PUT because the nodes already exist
+    verb='PUT' 
+    path='/tables/hosts/rows/node='+vc_cluster
+    payload={
+      "ip" : "|\D+(\d+)$|172."+second_octet+".((($1-1)/255)).(($1-1)%255+1)|", 
+      "hostnames" : "|\D+(\d+)$|c($1)|"
+    }
+    req.xcat(verb=verb,path=path,payload=payload)
+    verb='PUT'
+    # create login-<cluster> entry in the hosts table
+    path='/tables/hosts/rows/node='+login_cluster
+    payload={
+      "ip" : "172."+second_octet+".255.254",
+      "hostnames" : "login."+vc_cluster
+    }
+    req.xcat(verb=verb,path=path,payload=payload)
+    # create the entry in the networks table
+    verb='POST'
+    path='/networks/'+vc_net
+    payload={
+      "domain" : vc_cluster,
+      "gateway" : "<xcatmaster>",
+      "mask" : "255.255.0.0",
+      "mgtifname" : "eno2",
+      "net" : "172."+second_octet+".0.0"
+    }
+    req.xcat(verb=verb,path=path,payload=payload)
+    # create a login node entry in the xCATdb
+    verb='POST'
+    path='/nodes/'+login_cluster
+    payload={
+      "groups" : "login"
+    }
+    req.xcat(verb=verb,path=path,payload=payload)
+    # makehost and makedns for login node
+    verb='POST'
+    payload={}
+    path='/nodes/'+login_cluster+'/host' 
+    req.xcat(verb=verb,path=path,payload=payload)
+    path='/nodes/'+login_cluster+'/dns' 
+    req.xcat(verb=verb,path=path,payload=payload)
+  # makehost and makedns for cluster
+  verb='POST'
+  payload={}
+  path='/nodes/'+vc_cluster+'/host' 
+  req.xcat(verb=verb,path=path,payload=payload)
+  path='/nodes/'+vc_cluster+'/dns' 
+  req.xcat(verb=verb,path=path,payload=payload)
   return ret
 
 
