@@ -75,9 +75,9 @@ login_create(){
   # Try to create the security groups, if they exist ignore the error messages
   nova secgroup-add-rule default tcp 1 65535 0.0.0.0/0 > /dev/null 2>&1
   nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0 > /dev/null 2>&1
-  sed -e 's/controller=10.141.255.254/controller=${CONTROLLER}/g' \
-      -e 's/FLOATING_IP=127.0.0.1/FLOATING_IP=${FLOATING_IP}/g' \
-      -e 's/vc-a/${VC_NAME}/g' \
+  sed -e "s/controller=10.141.255.254/controller=${CONTROLLER}/g" \
+      -e "s/FLOATING_IP=127.0.0.1/FLOATING_IP=${FLOATING_IP}/g" \
+      -e "s/vc-a/${VC_NAME}/g" \
       -i "${LOGIN_DATA}"
   # login_flavor=login.host
   nova boot --flavor ${LOGIN_FLAVOR}  \
@@ -119,7 +119,7 @@ case $1 in
   ;;
 
   create)
-    if (("$#" >= "2")); then
+    if (("$#" >= "3")); then
       login_create $2 $3
     else
       login_create $2
