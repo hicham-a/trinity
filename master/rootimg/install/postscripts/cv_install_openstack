@@ -7,18 +7,6 @@ cd -
 
 systemctl stop NetworkManager
 systemctl disable NetworkManager
-# Workaround for bug #67
-killall dhclient
-systemctl start network
-
-if [ ! grep controller:/cluster /etc/fstab > /dev/null ]; then
-cat << END >> /etc/fstab
-controller:/cluster /cluster nfs rsize=8192,wsize=8192,timeo=14,intr
-controller:/trinity /trinity nfs rsize=8192,wsize=8192,timeo=14,intr
-controller:/home /home nfs rsize=8192,wsize=8192,timeo=14,intr
-END
-fi
-mount -a
 
 yum -y install epel-release
 yum -y install https://rdo.fedorapeople.org/rdo-release.rpm
@@ -43,7 +31,21 @@ systemctl restart openstack-nova-compute
 systemctl restart openstack-nova-api
 source ~/keystonerc_admin
 nova floating-ip-bulk-delete 10.3.4.0/22
+
+# Workaround for bug #67
+killall dhclient
+systemctl start network
+
+mkdir -p /home
+mkdir -p /cluster
+mkdir -p /trinity
+
+if ! grep controller:/cluster /etc/fstab > /dev/null; then
+cat << END >> /etc/fstab
+controller:/cluster /cluster nfs rsize=8192,wsize=8192,timeo=14,intr
+controller:/trinity /trinity nfs rsize=8192,wsize=8192,timeo=14,intr
+controller:/home /home nfs rsize=8192,wsize=8192,timeo=14,intr
+END
+fi
+mount -a
 echo "openstack installation finished" >> /var/log/postinstall.log
-
-
-
