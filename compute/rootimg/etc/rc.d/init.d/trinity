@@ -89,7 +89,7 @@ start() {
                -v /trinity/clustervision:/trinity/clustervision \
                -v /usr/share/Modules/init/.modulespath:/usr/share/Modules/init/.modulespath \
                -v /root:/root \
-               -v /home:/home \
+               -v /home/${VC}:/home \
                -v /cluster/${VC}:/cluster \
                -v /cluster/${VC}/etc/slurm:/etc/slurm \
                -v /cluster/${VC}/etc/munge:/etc/munge \

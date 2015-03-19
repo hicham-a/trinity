@@ -48,13 +48,15 @@ login_init(){
 login_setup(){
   TENANT=$1
   FLOATING_POOL="login_${TENANT}"
+  VC_NAME="vc-${TENANT}"
 #  SECOND_OCTET=$3
 #  FLOATING_IP="172.${SECOND_OCTET}.255.254"
   FLOATING_IP=$2
   # In order to create a single IP we should not provide the prefix
   nova floating-ip-bulk-create \
        --pool "${FLOATING_POOL}" \
-      "${FLOATING_IP}" 
+      "${FLOATING_IP}"
+  mkdir -p "/cluster/${VC_NAME}" 
 }
 
 login_create(){
