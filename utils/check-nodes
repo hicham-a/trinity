@@ -10,14 +10,14 @@ def hexmac(s):
    return ':'.join(['%02x' % int(c) for c in s.split('.')])
 
 def get_arp_mac(node):
-    mac = subprocess.check_output('arp %s | head -2 | tail -1' % node, shell=True).strip()
+    mac = subprocess.check_output('arp %s 2> /dev/null | head -2 | tail -1' % node, shell=True).strip()
     if mac.find('no entry') != -1:
         return None
     else:
         return mac[33:50]
 
 def get_xcat_mac(node):
-    result = subprocess.check_output('lsdef %s -i mac' % node, shell=True)
+    result = subprocess.check_output('lsdef %s -i mac 2>/dev/null' % node, shell=True)
     result = result.split('\n')[1].strip()
     m = mac_p.search(result)
     return m.group(1) if m.group(1) else None
@@ -58,6 +58,6 @@ for line in csv.reader(filter(lambda row: row[0]!='#', p.stdout)):
     elif check_port(node, port):
         print node, xcat_mac, port, "OK"
     else:
-        print node, xcat_mac, port, "ports do not match name"
+        print node, xcat_mac, port, "WARNING: port number does not match host name"
 
    
