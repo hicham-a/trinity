@@ -138,7 +138,8 @@ def main():
   
 if __name__ == "__main__":
   c=Client(username='admin',password='system',tenant='admin')
-  print c.token
+  print c.hardwares_list()
+#  print c.token
 #  print c.clusters_detail() 
 #  print c.cluster_modify(cluster='bio',specs={'gpu':1}) 
      
