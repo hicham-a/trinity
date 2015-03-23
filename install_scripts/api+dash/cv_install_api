@@ -33,6 +33,11 @@ cluster="/cluster"
 remote_cluster="${remote_host}:${cluster}"
 mount ${remote_cluster} ${cluster}
 
+remote_home="${remote_host}:/home"
+virtual_home="/vhome"
+mkdir -p ${virtual_home}
+mount ${remote_home} ${virtual_home}
+
 service trinity_api start
 chkconfig trinity_api on
 
