@@ -120,7 +120,7 @@ force_reload() {
 }
 
 rh_status() {
-    return test $(docker inspect --format='{{.State.Running}}' trinity) = true
+    test $(docker inspect --format='{{.State.Running}}' trinity) = true
 }
 
 rh_status_q() {
