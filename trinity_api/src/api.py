@@ -509,6 +509,11 @@ def modify_cluster(cluster,version=1):
     cluster_exists = False
     ret=create_cluster(req,cluster)
     if ret['statusOK']:
+      # Create the cluster home directories    
+      vc_cluster=req.vc + cluster
+      cluster_home=os.path.join(vhome,vc_cluster) 
+      if not os.path.isdir(cluster_home):
+        os.makedirs(cluster_home) 
 #      src_root=req.cluster_path
       src_root=req.template_dir
       vc_cluster=req.vc + cluster
@@ -582,7 +587,7 @@ def modify_cluster(cluster,version=1):
       "domain" : vc_cluster,
       "gateway" : "<xcatmaster>",
       "mask" : "255.255.0.0",
-      "mgtifname" : "eno2",
+      "mgtifname" : req.xcat_mgtifname,
       "net" : "172."+second_octet+".0.0"
     }
     req.xcat(verb=verb,path=path,payload=payload)
