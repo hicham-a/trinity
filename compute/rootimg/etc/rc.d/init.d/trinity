@@ -94,6 +94,7 @@ start() {
                -v /cluster/${VC}/etc/slurm:/etc/slurm \
                -v /cluster/${VC}/etc/munge:/etc/munge \
                --hostname=${NAME}.${VC} \
+               --dns-search=${VC} \
                --name=trinity \
                -d controller:5050/${IMAGE}
             /usr/local/sbin/pipework ${ETH1} trinity ${IP}/16@${GW}
@@ -116,6 +117,8 @@ reload() {
 }
 
 force_reload() {
+    docker stop trinity
+    docker rm trinity
     restart
 }
 
