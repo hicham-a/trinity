@@ -18,7 +18,8 @@ fi
 if [ -f ${img}/logo-splash.png ]; then
   cp  ${img}/logo-splash.png ${img}/logo-splash.png.orig
 fi
-cp -rv ./img/* $img
+# removing the trinity logos for now, because of the formatting issue
+# cp -rv ./img/* $img
 
 enabled="${top_dir}/openstack_dashboard/local/enabled/"
 if [ ! -d $enabled ]; then 
