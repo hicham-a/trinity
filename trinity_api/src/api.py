@@ -500,6 +500,14 @@ def modify_cluster(cluster,version=1):
     return ret
   if cluster in clusters['clusters']:
     cluster_exists = True
+    # Remove the cluster containers from the dns table 
+    # otherwise we will be left with stale entries
+    vc_cluster=req.vc+cluster
+    verb='DELETE'
+    payload={}
+    path='/nodes/'+vc_cluster+'/dns' 
+    req.xcat(verb=verb,path=path,payload=payload)
+
     ret=update_cluster(req,cluster)
     slurm_needs_update=False
     if ret['statusOK']:
