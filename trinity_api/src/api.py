@@ -622,7 +622,8 @@ def modify_cluster(cluster,version=1):
   req.xcat(verb=verb,path=path,payload=payload)
   # restart containers 
   verb='POST'
-  payload={"command":["service trinity force-reload"]}
+  # payload={"command":["service trinity force-reload"]}
+  payload={"command":["docker stop trinity; docker rm trinity; service trinity restart"]}
   path='/nodes/'+vc_cluster+'/nodeshell'
   req.xcat(verb=verb,path=path,payload=payload)
   return ret
