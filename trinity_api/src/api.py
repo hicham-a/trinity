@@ -500,6 +500,14 @@ def modify_cluster(cluster,version=1):
     return ret
   if cluster in clusters['clusters']:
     cluster_exists = True
+    # Remove the cluster containers from the dns table 
+    # otherwise we will be left with stale entries
+    vc_cluster=req.vc+cluster
+    verb='DELETE'
+    payload={}
+    path='/nodes/'+vc_cluster+'/dns' 
+    req.xcat(verb=verb,path=path,payload=payload)
+
     ret=update_cluster(req,cluster)
     slurm_needs_update=False
     if ret['statusOK']:
@@ -611,6 +619,11 @@ def modify_cluster(cluster,version=1):
   path='/nodes/'+vc_cluster+'/host' 
   req.xcat(verb=verb,path=path,payload=payload)
   path='/nodes/'+vc_cluster+'/dns' 
+  req.xcat(verb=verb,path=path,payload=payload)
+  # restart containers 
+  verb='POST'
+  payload={"command":["service trinity force-reload"]}
+  path='/nodes/'+vc_cluster+'/nodeshell'
   req.xcat(verb=verb,path=path,payload=payload)
   return ret
 
