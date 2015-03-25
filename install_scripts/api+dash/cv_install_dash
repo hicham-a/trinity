@@ -1,5 +1,5 @@
 #! /usr/bin/bash
-##title          : cv_install_api+dash
+##title          : cv_install_dash
 ##description    : Installs the Trinity dashboard (and client).
 ##                 You will need to edit the conf file under /etc/trinity/ 
 ##                 and then restart httpd
