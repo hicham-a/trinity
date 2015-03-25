@@ -335,7 +335,9 @@ class TrinityAPI(object):
     else:
       ret['statusOK']=True
       ret['change']=False
-    ret['nodeList']= node_list   
+    ret['nodeList']= node_list  
+    ret['subsList']=subs_list
+    ret['addsList']=adds_list 
     return ret
    
 #  def cluster_update_containers(cluster,new_container_image):
@@ -539,7 +541,9 @@ def modify_cluster(cluster,version=1):
   cont_list=[]
   if slurm_needs_update:
     for node in ret['nodeList']:
-      cont=node.replace(req.node_pref,req.cont_pref)
+#      containers are nodes 
+#      cont=node.replace(req.node_pref,req.cont_pref)
+      cont=node
       cont_list.append(cont) 
     cont_string=','.join(cont_list)
     vc_cluster=req.vc + cluster
@@ -620,11 +624,16 @@ def modify_cluster(cluster,version=1):
   req.xcat(verb=verb,path=path,payload=payload)
   path='/nodes/'+vc_cluster+'/dns' 
   req.xcat(verb=verb,path=path,payload=payload)
-  # restart containers 
+  # restart containers
+  changed_nodes_list=[]
+  for cont in adds_list+subs_list:
+    changed_node=cont.replace(req.cont_pref,req.node_pref,1)
+  changed_nodes_string=",".join(changed_nodes_list)  
   verb='POST'
   # payload={"command":["service trinity force-reload"]}
   payload={"command":["docker stop trinity; docker rm trinity; service trinity restart"]}
-  path='/nodes/'+vc_cluster+'/nodeshell'
+  # limited by the max url length supported by Triniy API and xCAT API
+  path='/nodes/'+changed_nodes_string+'/nodeshell'
   req.xcat(verb=verb,path=path,payload=payload)
   return ret
 
