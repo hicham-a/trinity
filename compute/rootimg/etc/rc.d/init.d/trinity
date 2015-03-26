@@ -94,6 +94,7 @@ start() {
                -v /cluster/${VC}/etc/slurm:/etc/slurm \
                -v /cluster/${VC}/etc/munge:/etc/munge \
                --hostname=${NAME}.${VC} \
+               --dns-search=${VC} \
                --name=trinity \
                -d controller:5050/${IMAGE}
             /usr/local/sbin/pipework ${ETH1} trinity ${IP}/16@${GW}
@@ -115,12 +116,14 @@ reload() {
     restart
 }
 
-force_reload() {
-    restart
+force-reload() {
+    docker stop trinity
+    docker rm trinity
+    start
 }
 
 rh_status() {
-    return test $(docker inspect --format='{{.State.Running}}' trinity) = true
+    test $(docker inspect --format='{{.State.Running}}' trinity) = true
 }
 
 rh_status_q() {
@@ -141,10 +144,10 @@ case "$1" in
         ;;
     reload)
         rh_status_q || exit 7
-        $1
+        force-reload
         ;;
     force-reload)
-        force_reload
+        force-reload
         ;;
     status)
         rh_status

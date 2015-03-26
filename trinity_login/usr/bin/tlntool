@@ -23,6 +23,7 @@ login_help(){
   echo "    tlntool setup <tenant_name> <floating_ip>"
   echo "  tenant"
   echo "    tlntool create <vc_name> [<login_node_name>]" 
+  echo "    tlntool update <vc_name>" 
 
 }
 
@@ -88,7 +89,12 @@ login_create(){
             --user-data ${LOGIN_DATA} \
             "${LOGIN_NODE}"
   nova floating-ip-associate ${LOGIN_NODE} "${FLOATING_IP}"
-  rm -f "${LOGIN_DATA}"
+#  rm -f "${LOGIN_DATA}"
+}
+
+login_update(){
+  VC_NAME=$1
+  ssh root@login.${VC_NAME} "service slurm restart"  
 }
 
 case $1 in
@@ -126,6 +132,10 @@ case $1 in
     else
       login_create $2
     fi
+  ;;
+
+  update)
+    login_update $2
   ;;
 
   *)
