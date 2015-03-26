@@ -2,7 +2,7 @@
 
 echo "updating master from source code repository"
 HERE="`( cd \"$(dirname "$0")" && pwd )`"
-cp -Lrv $HERE/rootimg/* /
+cp -Lrv --preserve $HERE/rootimg/* /
 
 (git branch | grep "*"; git rev-parse --short HEAD; git status --porcelain) > /trinity/version
 cp /trinity/version /trinity/controller/rootimg/install/postscripts/cv_trinity_version

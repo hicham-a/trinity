@@ -17,6 +17,7 @@ bind-utils
 net-snmp-utils 
 sssd
 git
+yum-utils
 
 # X fwding
 xorg-x11-xauth
