@@ -95,7 +95,6 @@ mkdir /trinity/iso
 wget http://master:/trinity/iso/CentOS-7.0-1406-x86_64-Everything.iso -q -O /trinity/iso/CentOS-7.0-1406-x86_64-Everything.iso
 copycds -o /trinity/iso/*.iso
 
-mkdir -p /install/post/otherpkgs/centos7.0/x86_64
 /root/trinity/master/create_repo_snapshot.sh
 
 exit 0
