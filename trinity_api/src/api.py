@@ -6,6 +6,7 @@ import json
 import requests
 from collections import defaultdict
 import re
+import subprocess
 #from config import *
 
 conf_file='/etc/trinity/trinity_api.conf'
@@ -28,7 +29,8 @@ class TrinityAPI(object):
     if (not (self.token or hasattr(self,'password'))) and self.request.auth:
       (self.username,self.password)=self.request.auth
     self.errors()
-    self.query = {'userName':self.trinity_user, 'password':self.trinity_password, 'pretty':'1'}
+#    self.query = {'userName':self.trinity_user, 'password':self.trinity_password, 'pretty':'1'}
+    self.query = {'userName':self.trinity_user, 'password':self.trinity_password}
     self.headers={"Content-Type":"application/json", "Accept":"application/json"} # setting this by hand for now
     self.authenticate()    
 
@@ -335,7 +337,7 @@ class TrinityAPI(object):
     else:
       ret['statusOK']=True
       ret['change']=False
-    ret['nodeList']= node_list  
+    ret['nodeList']= node_list 
     ret['subsList']=subs_list
     ret['addsList']=adds_list 
     return ret
@@ -504,11 +506,11 @@ def modify_cluster(cluster,version=1):
     cluster_exists = True
     # Remove the cluster containers from the dns table 
     # otherwise we will be left with stale entries
-    vc_cluster=req.vc+cluster
-    verb='DELETE'
-    payload={}
-    path='/nodes/'+vc_cluster+'/dns' 
-    req.xcat(verb=verb,path=path,payload=payload)
+#    vc_cluster=req.vc+cluster
+#    verb='DELETE'
+#    payload={}
+#    path='/nodes/'+vc_cluster+'/dns' 
+#    req.xcat(verb=verb,path=path,payload=payload)
 
     ret=update_cluster(req,cluster)
     slurm_needs_update=False
@@ -536,6 +538,16 @@ def modify_cluster(cluster,version=1):
 #      excludes=[req.clusters_dir]
       excludes=[]
       copy_with_excludes(src_root,dest_root,excludes)
+      # create munge user on the physical node it does not exist
+      # then create a munge key
+      subprocess.call('! id munge && useradd -u 1002 -U munge',shell=True)
+      munge_key_path=os.path.join(req.cluster_path,vc_cluster,req.munge_key_file)
+      if os.path.isfile(munge_key_path):
+        os.remove(munge_key_path)
+      subprocess.call('dd if=/dev/urandom bs=1 count=1024 > '+munge_key_path,shell=True)       
+      subprocess.call('chmod uga-rwx '+munge_key_path,shell=True)
+      subprocess.call('chmod u+r '+munge_key_path,shell=True)
+      subprocess.call('chown munge:munge '+munge_key_path,shell=True)
       slurm_needs_update=True 
   
   cont_list=[]
@@ -618,23 +630,66 @@ def modify_cluster(cluster,version=1):
     path='/nodes/'+login_cluster+'/dns' 
     req.xcat(verb=verb,path=path,payload=payload)
   # makehost and makedns for cluster
-  verb='POST'
-  payload={}
-  path='/nodes/'+vc_cluster+'/host' 
-  req.xcat(verb=verb,path=path,payload=payload)
-  path='/nodes/'+vc_cluster+'/dns' 
-  req.xcat(verb=verb,path=path,payload=payload)
-  # restart containers
-  changed_nodes_list=[]
-  for cont in adds_list+subs_list:
-    changed_node=cont.replace(req.cont_pref,req.node_pref,1)
-  changed_nodes_string=",".join(changed_nodes_list)  
-  verb='POST'
-  # payload={"command":["service trinity force-reload"]}
-  payload={"command":["docker stop trinity; docker rm trinity; service trinity restart"]}
-  # limited by the max url length supported by Triniy API and xCAT API
-  path='/nodes/'+changed_nodes_string+'/nodeshell'
-  req.xcat(verb=verb,path=path,payload=payload)
+  cont_subs_list=[]
+  node_subs_list=[]
+  for cont in ret["subsList"]:
+     cont_subs_list.append(cont)
+     subtracted_node=cont.replace(req.cont_pref,req.node_pref,1)
+     node_subs_list.append(subtracted_node)
+  cont_subs_string=",".join(cont_subs_list)
+  node_subs_string=",".join(node_subs_list)
+  if cont_subs_list:
+    verb='DELETE'
+    payload={}
+    path='/nodes/'+cont_subs_string+'/dns' 
+#    req.xcat(verb=verb,path=path,payload=payload)
+    r=requests.delete(req.xcat_host+path,verify=False,params=req.query)
+#    cmd="curl -k -X DELETE \'"+req.xcat_host+path+"?userName="+req.trinity_user+"&password="+req.trinity_password+"\'"
+#    subprocess.call(cmd,shell=True)
+    verb='POST'
+    payload={"command":["docker stop trinity; docker rm trinity"]}
+    path='/nodes/'+node_subs_string+'/nodeshell'
+    req.xcat(verb=verb,path=path,payload=payload)
+
+  cont_adds_list=[]
+  node_adds_list=[]
+  for cont in ret["addsList"]:
+     cont_adds_list.append(cont)
+     added_node=cont.replace(req.cont_pref,req.node_pref,1)
+     node_adds_list.append(added_node)
+  cont_adds_string=",".join(cont_adds_list)
+  node_adds_string=",".join(node_adds_list)
+
+  if cont_adds_list:
+    verb='POST'
+    payload={}
+    path='/nodes/'+cont_adds_string+'/host' 
+    req.xcat(verb=verb,path=path,payload=payload)
+    path='/nodes/'+cont_adds_string+'/dns' 
+    req.xcat(verb=verb,path=path,payload=payload)
+    verb='POST'
+    payload={"command":["docker stop trinity; docker rm trinity; service trinity restart"]}
+    path='/nodes/'+node_adds_string+'/nodeshell'
+    req.xcat(verb=verb,path=path,payload=payload)
+
+
+#  verb='POST'
+#  payload={}
+#  path='/nodes/'+vc_cluster+'/host' 
+#  req.xcat(verb=verb,path=path,payload=payload)
+#  path='/nodes/'+vc_cluster+'/dns' 
+#  req.xcat(verb=verb,path=path,payload=payload)
+#  # restart containers
+#  changed_nodes_list=[]
+#  for cont in adds_list+subs_list:
+#    changed_node=cont.replace(req.cont_pref,req.node_pref,1)
+#  changed_nodes_string=",".join(changed_nodes_list)  
+#  verb='POST'
+#  # payload={"command":["service trinity force-reload"]}
+#  payload={"command":["docker stop trinity; docker rm trinity; service trinity restart"]}
+#  # limited by the max url length supported by Triniy API and xCAT API
+#  path='/nodes/'+changed_nodes_string+'/nodeshell'
+#  req.xcat(verb=verb,path=path,payload=payload)
   return ret
 
 
