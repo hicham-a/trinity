@@ -63,7 +63,7 @@ done
 restorexCATdb -p /tmp/xcattables  
 
 # Fix for #149
-ip a 10.141.255.254/16 dev $ETH2
+ip addr a 10.141.255.254/16 dev $ETH2
 cd /opt/xcat/share/xcat/netboot/centos
 ln -s ../rh/dracut_033 .
 ln -s ../rh/dracut .
