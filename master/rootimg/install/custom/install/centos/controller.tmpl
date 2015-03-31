@@ -10,16 +10,8 @@ lang en_US
 #
 #nfs --server #XCATVAR:INSTALL_NFS# --dir #XCATVAR:INSTALL_SRC_DIR#
 
-#repo --name=base --baseurl=http://mirror.cogentco.com/pub/linux/centos/7/os/x86_64/
-#url --url="http://mirror.cogentco.com/pub/linux/centos/7/os/x86_64/"
+%include /tmp/repos
 
-# HTH: our own repos do not work. Apparently just doing copycds does not create a proper repository.
-# %include /tmp/repos
-
-repo --name=base --baseurl=http://master/install/centos7.0/x86_64/
-url --url="http://master/install/centos7.0/x86_64/"
-
-#device ethernet e100
 keyboard "us"
 
 #
@@ -171,21 +163,8 @@ EOF
 exec < /dev/console > /dev/console
 #INCLUDE:#ENV:XCATROOT#/share/xcat/install/scripts/post.xcat#
 
-cat /tmp/repos > /var/log/repos
-cat /proc/cmdline > /var/log/cmdline
-
 echo setup nat
 read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
-
-# setup NAT, so nodes can access the internet (see manual step 1.f)
-# moved to xCAT postinstall script
-#yum -y install iptables-services
-#chkconfig iptables on
-#service iptables start
-#modprobe iptable_nat
-#iptables -A FORWARD -i $ETH2 -j ACCEPT
-#iptables -t nat -A POSTROUTING -o $ETH1 -j MASQUERADE
-#service iptables save 
 
 echo install extra rpms
 # Install required utilities and turn on ntp
@@ -194,9 +173,8 @@ chkconfig ntpd on
 systemctl disable avahi-daemon
 
 echo install xcat repositories
-wget --no-check-certificate #COMMAND:cat /etc/yum.repos.d/xCAT-core.repo | grep baseurl | awk -F= '{print $2}'#/xCAT-core.repo -O /etc/yum.repos.d/xCAT-core.repo
-wget --no-check-certificate #COMMAND:cat /etc/yum.repos.d/xCAT-dep.repo | grep baseurl | awk -F= '{print $2}'#/xCAT-dep.repo -O /etc/yum.repos.d/xCAT-dep.repo
-
+#wget --no-check-certificate #COMMAND:cat /etc/yum.repos.d/xCAT-core.repo | grep baseurl | awk -F= '{print $2}'#/xCAT-core.repo -O /etc/yum.repos.d/xCAT-core.repo
+#wget --no-check-certificate #COMMAND:cat /etc/yum.repos.d/xCAT-dep.repo | grep baseurl | awk -F= '{print $2}'#/xCAT-dep.repo -O /etc/yum.repos.d/xCAT-dep.repo
 
 # TODO:
 # we need to download and install the trinity patches (which we basically need to copy from the benchmark/master node

@@ -2,20 +2,22 @@
 wget
 ntp
 nfs-utils
+nfs-utils-lib
 net-snmp
 rsync
 yp-tools
 openssh-server
 util-linux-ng
 net-tools
+
 # HTH added for master
 iptables-services
 createrepo
 bind-utils
 net-snmp-utils 
-xCAT
 sssd
+git
+yum-utils
 
 # X fwding
 xorg-x11-xauth
-

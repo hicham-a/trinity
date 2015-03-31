@@ -13,3 +13,5 @@ net-tools
 xorg-x11-xauth
 yum-utils
 bind-utils
+createrepo
+net-snmp-utils

@@ -13,15 +13,7 @@ lang en_US
 #repo --name=base --baseurl=http://mirror.cogentco.com/pub/linux/centos/7/os/x86_64/
 #url --url="http://mirror.cogentco.com/pub/linux/centos/7/os/x86_64/"
 
-# HTH: our own repos do not work. Apparently just doing copycds does not create a proper repository.
-# %include /tmp/repos
-
-repo --name=base --baseurl=http://master/install/centos7.0/x86_64/
-url --url="http://master/install/centos7.0/x86_64/"
-
-repo --name=xcat-core --baseurl=https://sourceforge.net/projects/xcat/files/yum/2.8/xcat-core
-repo --name=xcat-dep --baseurl=https://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64 
-repo --name=epel --mirrorlist=https://mirrors.fedoraproject.org/metalink?repo=epel-7&arch=x86_64
+%include /tmp/repos
 
 #device ethernet e100
 keyboard "us"
@@ -133,54 +125,33 @@ reboot
 
 read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
 
-if [ -z $ETH3 ]; then
 cat > /tmp/trinity-networking << EOF
 network  --bootproto=static --device=$ETH2 --gateway=192.168.2.254 --ip=192.168.2.254 --netmask=255.255.255.0 --ipv6=auto --nodefroute --onboot=yes
 network  --bootproto=dhcp --device=$ETH1 --ipv6=auto --onboot=yes
-network  --hostname=newmaster.cluster
+network  --hostname=mastermaster.cluster
 EOF
-else
-cat > /tmp/trinity-networking << EOF
-network  --bootproto=static --device=$ETH2 --gateway=192.168.2.254 --ip=192.168.2.254 --netmask=255.255.255.0 --ipv6=auto --nodefroute --onboot=yes
-network  --bootproto=static --device=$ETH2 --gateway=192.168.8.254 --ip=192.168.8.254 --netmask=255.255.255.0 --ipv6=auto --nodefroute --onboot=yes
-network  --bootproto=dhcp --device=$ETH1 --ipv6=auto --onboot=yes
-network  --hostname=newmaster.cluster
-EOF
-fi
 
 %end
 %post
 exec < /dev/console > /dev/console
 #INCLUDE:#ENV:XCATROOT#/share/xcat/install/scripts/post.xcat#
 
+#--------------------------------------------------------------------------------------------------------------------------
+# Setup some networking configuration
+#--------------------------------------------------------------------------------------------------------------------------
 # setup the correct network names
 read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
-
-echo setup nat
-# setup NAT, so nodes can access the internet (see manual step 1.f)
-chkconfig iptables on
-service iptables start
-modprobe iptable_nat
-iptables -A FORWARD -i $ETH2 -j ACCEPT
-iptables -t nat -A POSTROUTING -o $ETH1 -j MASQUERADE
-service iptables save 
-
-echo install extra rpms
-# Install required utilities and turn on ntp
-chkconfig ntpd on
-systemctl disable avahi-daemon
 
 for file in /etc/sysconfig/network-scripts/ifcfg-{$ETH2,$ETH3}; do
     sed -i $file -e "s/DEFROUTE=\(.*\)/DEFROUTE=no/"
 done
 sed -i /etc/sysconfig/network-scripts/ifcfg-$ETH1 -e "s/DEFROUTE=\(.*\)/DEFROUTE=yes/" -e "s/PEERDNS=\(.*\)/PEERDNS=no/"
 
-echo "syn1:/volume1/shared/home  /home  nfs  defaults  0  0" >> /etc/fstab
-mount -a
-wget http://rt.clustervision.com/sssd.conf -O /etc/sssd/sssd.conf
-chmod 600 /etc/sssd/sssd.conf
-systemctl enable sssd
-systemctl start sssd
-authconfig --enablesssd --enablesssdauth --update
+# Fix for #85
+cat >> /etc/sysconfig/network-scripts/ifcfg-$ETH2 << EOF
+IPADDR1=192.168.8.254
+PREFIX1=24
+GATEWAY1=192.168.8.254
+EOF
 
 %end
