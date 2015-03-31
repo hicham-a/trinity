@@ -19,7 +19,7 @@ remote_file_root="trinity"
 remote_nfs="${remote_host}:$remote_file_root"
 file_root="/tmp/${remote_file_root}"
 mkdir -p ${file_root}
-mount ${remote_nfs} ${file_root} 
+mountpoint -q ${file_root} && echo "${file_root} is already mounted" || mount ${remote_nfs} ${file_root} 
 # Trinity API setup
 cd ${file_root}/api+dash/trinity_api
 python setup.py install
@@ -31,12 +31,14 @@ umount ${file_root}
 
 cluster="/cluster"
 remote_cluster="${remote_host}:${cluster}"
-mount ${remote_cluster} ${cluster}
+mkdir -p ${cluster}
+mountpoint -q ${cluster} && echo "${cluster} is already mounted" || mount ${remote_cluster} ${cluster}
 
 remote_home="${remote_host}:/home"
-virtual_home="/vhome"
+# virtual_home="/vhome"
+virtual_home="/home"
 mkdir -p ${virtual_home}
-mount ${remote_home} ${virtual_home}
+mountpoint -q ${virtual_home} && echo "${virtual_home} is already mounted" || mount ${remote_home} ${virtual_home}
 
 service trinity_api start
 chkconfig trinity_api on
