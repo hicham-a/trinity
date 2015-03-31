@@ -20,6 +20,8 @@ rsyslog
 e2fsprogs
 parted
 
+# X fwding
+xorg-x11-xauth
 # a few extra diagnostic tools
 net-tools
 
@@ -65,5 +67,4 @@ urw-fonts
 # needed for the trinity startup script
 which
 bind-utils
-docker
-openvswitch
+bridge-utils

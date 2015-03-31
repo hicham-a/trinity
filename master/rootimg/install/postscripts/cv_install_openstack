@@ -7,6 +7,7 @@ cd -
 
 systemctl stop NetworkManager
 systemctl disable NetworkManager
+
 yum -y install epel-release
 yum -y install https://rdo.fedorapeople.org/rdo-release.rpm
 yum -y install openstack-packstack
@@ -15,16 +16,36 @@ yum -y install openstack-packstack
 # to here.
 
 sed "s/=127.0.0.1/=$(hostname -I)/g" //xcatpost/packstack-answers.txt > /tmp/packstack-answers.txt
+read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
+sed -e "s/\<eno1\>/$ETH1/g" -e "s/\<eno2\>/$ETH2/g"  -e "s/\<eno3\>/$ETH3/g" -i /tmp/packstack-answers.txt
+
+export HOME=/root
 packstack --answer-file /tmp/packstack-answers.txt
 #packstack --allinone
 # HTH: not required to inject passwords and keys, metadataservice is supposed to handle that.
 #sed -i "s/^#\?inject_password=.*/inject_password=true/g" /etc/nova/nova.conf
 #sed -i "s/^#\?inject_key=.*/inject_key=true/g" /etc/nova/nova.conf
-sed -i "s/^#\?service_metadata_proxy=.*/service_metadata_proxy=True/g" /etc/nova/nova.conf
+sed -i "s/^#\?service_metadata_proxy=.*/service_metadata_proxy=False/g" /etc/nova/nova.conf
 sed -i "s/'can_set_password':.*/'can_set_password': False,/g" /etc/openstack-dashboard/local_settings
+systemctl restart openstack-nova-compute
+systemctl restart openstack-nova-api
 source ~/keystonerc_admin
 nova floating-ip-bulk-delete 10.3.4.0/22
+
+# Workaround for bug #67
+killall dhclient
+systemctl start network
+
+mkdir -p /home
+mkdir -p /cluster
+mkdir -p /trinity
+
+if ! grep controller:/cluster /etc/fstab > /dev/null; then
+cat << END >> /etc/fstab
+controller:/cluster /cluster nfs rsize=8192,wsize=8192,timeo=14,intr
+controller:/trinity /trinity nfs rsize=8192,wsize=8192,timeo=14,intr
+controller:/home /home nfs rsize=8192,wsize=8192,timeo=14,intr
+END
+fi
+mount -a
 echo "openstack installation finished" >> /var/log/postinstall.log
-
-
-

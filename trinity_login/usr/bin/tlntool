@@ -1,0 +1,146 @@
+#! /bin/bash
+#title		: tlntool
+#description	: Tool to automate login node creation.
+#author		: Abhishek Mukherjee
+#email		: abhishek.mukherjee@clustervision.com
+
+
+
+LOGIN_CONF="/etc/trinity/login.conf"
+CLOUD_IMAGE="CentOS-7-x86_64-GenericCloud.qcow2"
+CLOUD_IMAGE_URL="http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2"
+CLOUD_IMAGE_FORMAT="qcow2"
+CLOUD_CONTAINER_FORMAT="bare"
+LOGIN_IMAGE="login"
+# This should be grabbed dynamically
+LOGIN_HOSTNAME="openstack.cluster"
+
+LOGIN_FLAVOR="2"  # will change this to aggr
+login_help(){
+  echo "Usage:"
+  echo "  admin"
+  echo "    tlntool init"
+  echo "    tlntool setup <tenant_name> <floating_ip>"
+  echo "  tenant"
+  echo "    tlntool create <vc_name> [<login_node_name>]" 
+  echo "    tlntool update <vc_name>" 
+
+}
+
+login_init(){
+  wget ${CLOUD_IMAGE_URL}
+  glance image-create \
+         --name "${LOGIN_IMAGE}" \
+         --disk-format "${CLOUD_IMAGE_FORMAT}" \
+         --container-format "${CLOUD_CONTAINER_FORMAT}" \
+         --is-public True \
+         --file "${CLOUD_IMAGE}" 
+#  if  [ $1 == "aggr" ]; then
+#    nova aggregate-create login nova
+#    nova aggregate-set-metadata login login=true
+#    HOSTNAME=$(hostname -I | awk '{print $1}')
+#    nova aggregate-add-host login ${LOGIN_HOSTNAME}
+#    nova flavor-create login.host auto 2048 20 1
+#    nova flavor-key login.host set login=true
+#    LOGIN_FLAVOR="login.host"
+#  fi 
+}
+
+login_setup(){
+  TENANT=$1
+  FLOATING_POOL="login_${TENANT}"
+  VC_NAME="vc-${TENANT}"
+#  SECOND_OCTET=$3
+#  FLOATING_IP="172.${SECOND_OCTET}.255.254"
+  FLOATING_IP=$2
+  # In order to create a single IP we should not provide the prefix
+  nova floating-ip-bulk-create \
+       --pool "${FLOATING_POOL}" \
+      "${FLOATING_IP}"
+  mkdir -p "/cluster/${VC_NAME}" 
+}
+
+login_create(){
+  TENANT=${OS_TENANT_NAME}
+  FLOATING_POOL="login_${TENANT}" 
+  CONTROLLER=$(host controller | awk '{ print $4}')
+  LOGIN_DATA=~/.login_data
+  VC_NAME=$1
+  cp ${LOGIN_CONF} ${LOGIN_DATA}
+  if (("$#" >= "2")); then 
+    LOGIN_NODE="$2"
+  else
+    LOGIN_NODE="${TENANT}_login"
+  fi
+  nova floating-ip-create "${FLOATING_POOL}"
+  # Assume that the tenant has only one floating ip in the login pool
+  FLOATING_IP=$(nova floating-ip-list | awk -v pool=${FLOATING_POOL} '{if ($8 == pool) print $2;}')
+  # Try to create the security groups, if they exist ignore the error messages
+  nova secgroup-add-rule default tcp 1 65535 0.0.0.0/0 > /dev/null 2>&1
+  nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0 > /dev/null 2>&1
+  sed -e "s/controller=10.141.255.254/controller=${CONTROLLER}/g" \
+      -e "s/FLOATING_IP=127.0.0.1/FLOATING_IP=${FLOATING_IP}/g" \
+      -e "s/vc-a/${VC_NAME}/g" \
+      -i "${LOGIN_DATA}"
+  # login_flavor=login.host
+  nova boot --flavor ${LOGIN_FLAVOR}  \
+            --image ${LOGIN_IMAGE}    \
+            --security-groups default \
+            --user-data ${LOGIN_DATA} \
+            "${LOGIN_NODE}"
+  nova floating-ip-associate ${LOGIN_NODE} "${FLOATING_IP}"
+#  rm -f "${LOGIN_DATA}"
+}
+
+login_update(){
+  VC_NAME=$1
+  ssh root@login.${VC_NAME} "service slurm restart"  
+}
+
+case $1 in
+  help)
+    login_help
+    ;;
+
+  init) 
+    if [ "${OS_TENANT_NAME}" != 'admin' ] ; then
+      echo "Only admin can use this command"
+      exit 1
+    fi
+    if (("$#" < "2")); then
+      login_init
+    else
+      login_init $2
+    fi
+  ;;
+
+  setup)
+    if [ "${OS_TENANT_NAME}" != 'admin' ] ; then
+      echo "Only admin can use this command"
+      exit 1
+    fi
+    if (("$#" < "3")); then
+      login_help
+      exit 1
+    fi
+    login_setup $2 $3
+  ;;
+
+  create)
+    if (("$#" >= "3")); then
+      login_create $2 $3
+    else
+      login_create $2
+    fi
+  ;;
+
+  update)
+    login_update $2
+  ;;
+
+  *)
+    login_help
+  ;;
+esac
+
+ 

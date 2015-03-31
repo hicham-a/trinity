@@ -41,6 +41,17 @@ class Node():
             for key in node.allitems(lineage + ch):
                 yield key
 
+    def allitems(self, lineage = ''):
+        """return all the keys in this trie"""
+        stack = []
+        stack.append((lineage, self))
+
+        while stack:
+            lineage, node = stack.pop()
+            yield (lineage, node)
+            for child in node.children:
+                stack.append((lineage + child, node.children[child]))
+
     def lcp(self):
         """find the longest most common prefix"""
         best = 0

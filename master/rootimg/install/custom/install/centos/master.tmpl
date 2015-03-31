@@ -168,10 +168,19 @@ service iptables save
 echo install extra rpms
 # Install required utilities and turn on ntp
 chkconfig ntpd on
+systemctl disable avahi-daemon
 
 for file in /etc/sysconfig/network-scripts/ifcfg-{$ETH2,$ETH3}; do
     sed -i $file -e "s/DEFROUTE=\(.*\)/DEFROUTE=no/"
 done
 sed -i /etc/sysconfig/network-scripts/ifcfg-$ETH1 -e "s/DEFROUTE=\(.*\)/DEFROUTE=yes/" -e "s/PEERDNS=\(.*\)/PEERDNS=no/"
+
+echo "syn1:/volume1/shared/home  /home  nfs  defaults  0  0" >> /etc/fstab
+mount -a
+wget http://rt.clustervision.com/sssd.conf -O /etc/sssd/sssd.conf
+chmod 600 /etc/sssd/sssd.conf
+systemctl enable sssd
+systemctl start sssd
+authconfig --enablesssd --enablesssdauth --update
 
 %end

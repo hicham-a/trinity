@@ -1,0 +1,18 @@
+#! /usr/bin/bash
+#title		: cv_install_rsa
+#description	: Installs the monitoring service from OMD on the monitoring server
+#author		: Abhishek Mukherjee
+#email		: abhishek.mukherjee@clustervision.com
+
+yum install -y epel-release 
+yum install -y wget telnet net-tools
+# This is a temporary measure 
+# The rpm should either be in the local repo 
+# or we should make sure that we download a consistent version of the rpm
+wget http://files.omdistro.org/releases/centos_rhel/omd-1.20.rhel7.x86_64.rpm
+yum install -y --nogpgcheck omd-1.20.rhel7.x86_64.rpm
+omd create monitoring
+omd config monitoring set DEFAULT_GUI check_mk
+omd config monitoring set APACHE_TCP_PORT 5003
+omd config monitoring set APACHE_TCP_ADDR $(hostname -I | awk '{print $1}')
+omd start monitoring

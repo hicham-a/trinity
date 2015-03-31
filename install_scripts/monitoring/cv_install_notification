@@ -1,0 +1,70 @@
+#! /usr/bin/bash
+#title		: cv_install_notification
+#description	: Sets up a notification system from the monitoring server
+#author		: Abhishek Mukherjee
+#email		: abhishek.mukherjee@clustervision.com
+
+cv_email="rsa@clustervision.com"
+echo -n "Enter the RSA email [${cv_email}]: "
+read cv_email
+site="monitoring"
+sites="/omd/sites"
+check_mk="${sites}/${site}/etc/check_mk"
+wato="${check_mk}/conf.d/wato"
+mul_wato="${check_mk}/multisite.d/wato"
+groups="${wato}/groups.mk"
+contacts="${wato}/contacts.mk"
+rules="${wato}/rules.mk"
+users="${mul_wato}/users.mk"
+
+# Create the admin contact group
+cat >> ${groups} << EOF
+ 
+# Create the admin contact group
+if type(define_contactgroups) != dict:
+    define_contactgroups = {}
+define_contactgroups.update({'admin': u'Admin'})
+
+EOF
+
+
+# Add all hosts to the admin contact group
+cat >> ${rules} << EOF
+
+# Add all hosts to the admin contact group
+host_contactgroups = [
+  ( 'admin', [], ALL_HOSTS, {'comment': u'Put all hosts into the contact group "admin"'} ),
+] + host_contactgroups
+
+EOF
+
+# Create the clustervision user and add it to the admin contact group
+cat >> ${users} << EOF
+
+# Create the clustervision user
+multisite_users.update(
+{'clustervision': {'alias': u'ClusterVision',
+              'force_authuser': False,
+              'force_authuser_webservice': False,
+              'locked': False,
+              'roles': ['admin']}}
+)
+
+EOF
+cat >> ${contacts} << EOF 
+
+# Create the clustervision contact and enable notifications for it 
+contacts.update(
+{'clustervision': {'alias': u'ClusterVision',
+              'contactgroups': ['admin'],
+              'email': '${cv_email}',
+              'host_notification_options': 'durfs',
+              'notification_method': 'email',
+              'notification_period': '24X7',
+              'notifications_enabled': True,
+              'pager': '',
+              'service_notification_options': 'wucrfs'}}
+)
+
+EOF
+

@@ -160,20 +160,11 @@ reboot
 
 read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
 
-if [ -z $ETH3 ]; then
 cat > /tmp/trinity-networking << EOF
 network  --bootproto=static --device=$ETH2 --gateway=10.141.255.254 --ip=10.141.255.254 --netmask=255.255.0.0 --ipv6=auto --nodefroute --onboot=yes
 network  --bootproto=dhcp --device=$ETH1 --ipv6=auto --onboot=yes
 network  --hostname=controller.cluster
 EOF
-else
-cat > /tmp/trinity-networking << EOF
-network  --bootproto=static --device=$ETH2 --gateway=10.141.255.254 --ip=10.141.255.254 --netmask=255.255.0.0 --ipv6=auto --nodefroute --onboot=yes
-network  --bootproto=static --device=$ETH3 --gateway=10.148.255.254 --ip=10.148.255.254 --netmask=255.255.0.0 --ipv6=auto --nodefroute --onboot=yes
-network  --bootproto=dhcp --device=$ETH1 --ipv6=auto --onboot=yes
-network  --hostname=controller.cluster
-EOF
-fi
 
 %end
 %post
@@ -187,24 +178,25 @@ echo setup nat
 read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
 
 # setup NAT, so nodes can access the internet (see manual step 1.f)
-yum -y install iptables-services
-chkconfig iptables on
-service iptables start
-modprobe iptable_nat
-iptables -A FORWARD -i $ETH2 -j ACCEPT
-iptables -t nat -A POSTROUTING -o $ETH1 -j MASQUERADE
-service iptables save 
+# moved to xCAT postinstall script
+#yum -y install iptables-services
+#chkconfig iptables on
+#service iptables start
+#modprobe iptable_nat
+#iptables -A FORWARD -i $ETH2 -j ACCEPT
+#iptables -t nat -A POSTROUTING -o $ETH1 -j MASQUERADE
+#service iptables save 
 
 echo install extra rpms
 # Install required utilities and turn on ntp
 yum -y install createrepo net-snmp-utils bind-utils wget ntp
 chkconfig ntpd on
+systemctl disable avahi-daemon
 
 echo install xcat repositories
 wget --no-check-certificate #COMMAND:cat /etc/yum.repos.d/xCAT-core.repo | grep baseurl | awk -F= '{print $2}'#/xCAT-core.repo -O /etc/yum.repos.d/xCAT-core.repo
 wget --no-check-certificate #COMMAND:cat /etc/yum.repos.d/xCAT-dep.repo | grep baseurl | awk -F= '{print $2}'#/xCAT-dep.repo -O /etc/yum.repos.d/xCAT-dep.repo
 
-echo done
 
 # TODO:
 # we need to download and install the trinity patches (which we basically need to copy from the benchmark/master node
@@ -215,4 +207,13 @@ for file in /etc/sysconfig/network-scripts/ifcfg-{$ETH2,$ETH3}; do
     sed -i $file -e "s/DEFROUTE=\(.*\)/DEFROUTE=no/"
 done
 sed -i /etc/sysconfig/network-scripts/ifcfg-$ETH1 -e "s/DEFROUTE=\(.*\)/DEFROUTE=yes/" -e "s/PEERDNS=\(.*\)/PEERDNS=no/"
+
+# Fix for #85
+cat >> /etc/sysconfig/network-scripts/ifcfg-$ETH2 << EOF
+IPADDR1=10.148.255.254
+PREFIX1=16
+GATEWAY1=10.148.255.254
+EOF
+
+echo done
 %end

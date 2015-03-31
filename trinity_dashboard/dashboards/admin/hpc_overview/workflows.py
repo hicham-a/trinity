@@ -43,6 +43,7 @@ class AllocateAction(workflows.Action):
       for datum in cluster_hardware:
         if datum.type==hardware:
           initial_nodes=datum.amount
+          max_value=max_value+initial_nodes
           break
       field =  forms.IntegerField(label=_("Number of "+hardware+" nodes"),
                          min_value=0,max_value=max_value,initial=initial_nodes)
