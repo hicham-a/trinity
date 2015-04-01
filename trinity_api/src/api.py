@@ -549,6 +549,15 @@ def modify_cluster(cluster,version=1):
       subprocess.call('chmod u+r '+munge_key_path,shell=True)
       subprocess.call('chown munge:munge '+munge_key_path,shell=True)
       slurm_needs_update=True 
+
+#     Create the cluster modules and apps directories
+      apps=os.path.join(cluster_home,'apps')
+      modules=os.path.join(cluster_home,'modules')
+      if not os.path.isdir(apps):
+        os.makedirs(apps)
+      if not os.path.isdir(modules):
+        os.makedirs(modules)
+
   
   cont_list=[]
   if slurm_needs_update:
