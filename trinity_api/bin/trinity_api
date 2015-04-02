@@ -2,5 +2,5 @@
 import trinity_api.api as api 
 
 if __name__=="__main__":
-  api.trinity.run(host=api.trinity_host, port=api.trinity_port, debug=api.trinity_debug)
-
+#  api.trinity.run(host=api.trinity_host, port=api.trinity_port, debug=api.trinity_debug)
+  api.startup()
