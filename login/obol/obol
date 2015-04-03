@@ -156,9 +156,7 @@ def group_addusers(groupname, username):
     dn = 'cn=%s,ou=Group,dc=cluster' % groupname
     mod_attrs = []
     for name in username:
-        uidNumber = user_uidNumber(name)
-        print name, uidNumber
-        mod_attrs.append((ldap.MOD_ADD, 'memberuid', uidNumber))
+        mod_attrs.append((ldap.MOD_ADD, 'memberuid', name))
     conn.modify_s(dn, mod_attrs)
                      
 
