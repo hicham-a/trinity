@@ -1,0 +1,28 @@
+echo $PROFILE
+echo $0
+if [ $(lvs --noheadings | awk -F' ' '{print $1}') == $PROFILE ]; then
+   echo "Cool"
+else
+   umount -a -t ext4
+   for vg in $(vgs --noheadings | grep -v "No Volumes" | awk -F' ' '{print $1}'); do 
+      vgchange -a n $vg
+      vgremove -f $vg
+   done
+   disks=$(lsblk | grep disk | awk -F' ' '{print $1}')
+   for disk in $disks; do
+      dd if=/dev/zero of=/dev/$disk bs=1k count=1
+      blockdev --rereadpt /dev/$disk
+      pvcreate /dev/$disk
+   done
+   vgcreate -f storage $(for d in $disks; do echo -n /dev/$disk; echo -n " " ; done)
+   vgchange -a y storage
+   lvcreate -l 90%VG -n $PROFILE storage
+   mkfs -t ext4 /dev/storage/$PROFILE
+   mkdir /tmp/var
+   mount /dev/storage/$PROFILE /tmp/var
+   cp -r /var/* /tmp/var
+   umount /tmp/var
+fi
+echo "/dev/storage/$PROFILE	/var/ 	ext4	defaults,errors=remount-ro  0  2" >> /etc/fstab 
+mount -a
+
