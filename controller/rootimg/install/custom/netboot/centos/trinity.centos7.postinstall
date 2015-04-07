@@ -57,6 +57,11 @@ cp -r /etc/security/limits.d/* $installroot/etc/security/limits.d
 install -d $installroot/etc/yum.repos.d
 cp -r /etc/yum.repos.d/* $installroot/etc/yum.repos.d
 
+#-- Fix for #163. #FIXME: remove once merged with master_installer.
+chroot $installroot yum -y update device-mapper
+chroot $installroot yum -y install device-mapper-event-libs
+
+
 #-- copy modules environment config file
 #install -D /usr/share/Modules/init/.modulespath $installroot/usr/share/Modules/init/.modulespath
 mkdir -p $installroot/usr/share/Modules/init/
