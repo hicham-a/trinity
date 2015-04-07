@@ -3,6 +3,8 @@
 # install docker and docker-registry
 # and create the trinity image for the compute nodes
 #--------------------------------------------------------------------------------------
+yum -y install device-mapper-event-libs
+yum -y update device-mapper-event-libs
 yum -y install docker docker-registry
 sed -i 's/REGISTRY_PORT=.*/REGISTRY_PORT=5050/' /etc/sysconfig/docker-registry
 sed -i 's/OPTIONS=\(.*\)/OPTIONS=--insecure-registry controller:5050 \1/' /etc/sysconfig/docker

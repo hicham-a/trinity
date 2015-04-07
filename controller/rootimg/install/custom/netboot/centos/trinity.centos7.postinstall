@@ -47,6 +47,7 @@ chroot $installroot chkconfig docker on
 chroot $installroot chkconfig openvswitch on
 chroot $installroot chkconfig trinity on
 chroot $installroot chkconfig avahi-daemon off
+echo "mlx4_ib" > $installroot/etc/modules-load.d/mlx4_ib.conf
 
 #-- copy security limits from controller node
 install -d $installroot/etc/security/limits.d
