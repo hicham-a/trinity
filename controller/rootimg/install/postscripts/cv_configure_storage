@@ -1,22 +1,33 @@
-echo $PROFILE
-echo $0
+#!/usr/bin/bash
+##title          : cv_configure_storage
+##description    : This script will format all available disks into a single logical volume.
+##                 It will only reformat the disk in case the profile of the node has changed.
+##                 To check this the logical volume will be named /dev/storage/<profile>,
+##                 where profile is the name of the xCAT profile.
+##                 The volume group will always be mounted under /var.
+##email          : Hans Then <hans.then@clustervision.com>
+
 if [ $(lvs --noheadings | awk -F' ' '{print $1}') == $PROFILE ]; then
-   echo "Cool"
+   echo "Already initialized"
 else
+   # remove existing volume groups
    umount -a -t ext4
    for vg in $(vgs --noheadings | grep -v "No Volumes" | awk -F' ' '{print $1}'); do 
       vgchange -a n $vg
       vgremove -f $vg
    done
+   # create new physical volumes
    disks=$(lsblk | grep disk | awk -F' ' '{print $1}')
    for disk in $disks; do
       dd if=/dev/zero of=/dev/$disk bs=1k count=1
       blockdev --rereadpt /dev/$disk
       pvcreate /dev/$disk
    done
+   # create a volume group and logical volumes
    vgcreate -f storage $(for d in $disks; do echo -n /dev/$disk; echo -n " " ; done)
    vgchange -a y storage
    lvcreate -l 90%VG -n $PROFILE storage
+   # create a file system and initialize it from the image
    mkfs -t ext4 /dev/storage/$PROFILE
    mkdir /tmp/var
    mount /dev/storage/$PROFILE /tmp/var
