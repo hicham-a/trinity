@@ -164,6 +164,7 @@ packimage centos7.0-x86_64-netboot-trinity
 #---------------------------------------------------------------------------------------
 dd if=/dev/urandom bs=1 count=1024 >/cluster/vc-a/etc/munge/munge.key
 chmod 400 /cluster/vc-a/etc/munge/munge.key
+chown 1002:1002 /cluster/vc-a/etc/munge/munge.key
 
 echo "xcat installed" >> /var/log/postinstall.log
 #--------------------------------------------------------------------------------------
