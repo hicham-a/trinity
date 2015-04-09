@@ -588,7 +588,7 @@ def modify_cluster(cluster,version=1):
  
 #     Create the cluster modules and apps directories
       apps=os.path.join(req.cluster_path,vc_cluster,'apps')
-      modules=os.path.join(req.cluster_path,vc_cluster,'modules')
+      modules=os.path.join(req.cluster_path,vc_cluster,'modulefiles')
       if not os.path.isdir(apps):
         os.makedirs(apps)
       if not os.path.isdir(modules):
