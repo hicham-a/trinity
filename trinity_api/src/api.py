@@ -577,13 +577,20 @@ def modify_cluster(cluster,version=1):
       # create munge user on the physical node it does not exist
       # then create a munge key
       subprocess.call('! id munge && useradd -u 1002 -U munge',shell=True)
-      munge_key_path=os.path.join(req.cluster_path,vc_cluster,req.munge_key_file)
+      munge_dir_path=os.path.join(req.cluster_path,vc_cluster,req.munge_key_dir)
+#      munge_key_path=os.path.join(req.cluster_path,vc_cluster,req.munge_key_file)
+      munge_key_path=os.path.join(munge_dir_path,req.munge_key_file)
       if os.path.isfile(munge_key_path):
         os.remove(munge_key_path)
+      if not os.path.isdir(munge_dir_path):
+        os.makedirs(munge_dir_path)
       subprocess.call('dd if=/dev/urandom bs=1 count=1024 > '+munge_key_path,shell=True)       
+      subprocess.call('chown munge:munge '+munge_dir_path,shell=True)
+      subprocess.call('chmod uga-rwx '+munge_dir_path,shell=True)
+      subprocess.call('chmod u+rw '+munge_key_path,shell=True)
+      subprocess.call('chown munge:munge '+munge_key_path,shell=True)
       subprocess.call('chmod uga-rwx '+munge_key_path,shell=True)
       subprocess.call('chmod u+r '+munge_key_path,shell=True)
-      subprocess.call('chown munge:munge '+munge_key_path,shell=True)
       slurm_needs_update=True 
  
 #     Create the cluster modules and apps directories
