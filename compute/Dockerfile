@@ -18,13 +18,6 @@ ADD nsswitch.conf /etc/nsswitch.conf
 ADD pam_ldap.conf /etc/pam_ldap.conf
 ADD nslcd.conf /etc/nslcd.conf
 ADD pam.d/ /etc/pam.d
-#-- setup ldap authentication against the controller
-#install -D /etc/nslcd.conf $installroot/etc/nslcd.conf
-#install -D /etc/nsswitch.conf $installroot/etc/nsswitch.conf
-#chroot $installroot chkconfig nslcd on
-#install -d $installroot/etc/pam.d
-#cp -r /etc/pam.d/* $installroot/etc/pam.d
-#install -D /etc/pam_ldap.conf $installroot/etc/pam_ldap.conf
 
 RUN mkdir /var/run/slurm /var/spool/slurm /var/log/slurm; 
 #RUN chown slurm:slurm /var/run/slurm /var/spool/slurm /var/log/slurm
