@@ -25,9 +25,6 @@ mkdir /trinity
 # FIXME: this takes an awful amount of time
 cp -r /tmp/trinity/clustervision /trinity &
 
-# copy the files we want to distribute into the compute images
-cp -r /tmp/trinity/compute /trinity 
-
 #--------------------------------------------------------------------------------------
 # enable all repositories inside the controller
 # but disable the local repo from master
