@@ -6,7 +6,8 @@ sed -i 's/enabled=1/enabled=0/g' local-repository.repo
 cd -
 
 #FIXME: hack to fix #163. Should be removed when merging master_installer branch.
-rm /etc/yum.repos.d/CentOS-Vault.repo
+rm /etc/yum.repos.d/CentOS-Vault.repo || true
+yum update
 
 systemctl stop NetworkManager
 systemctl disable NetworkManager
