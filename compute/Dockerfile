@@ -7,11 +7,11 @@ RUN yum -y install openssh-server openssh-clients python-pip vim-minimal infinib
 RUN yum -y install openldap-clients nss-pam-ldapd authconfig environment-modules
 RUN yum -y install infinipath-psm
 RUN yum -y groupinstall "Infiniband Support"
-RUN echo "root:system" | chpasswd && pip install supervisor
+RUN pip install supervisor
 RUN mkdir -p /var/run/sshd ; chmod -rx /var/run/sshd
 RUN ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key
 RUN ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key
-RUN sed -ri 's/^#PermitRootLogin yes/PermitRootLogin yes/g' /etc/ssh/sshd_config 
+#RUN sed -ri 's/^#PermitRootLogin yes/PermitRootLogin yes/g' /etc/ssh/sshd_config 
 #RUN sed -ri 's/UsePAM yes/#UsePAM yes/g' /etc/ssh/sshd_config
 #RUN sed -ri 's/#UsePAM no/UsePAM no/g' /etc/ssh/sshd_config
 RUN sed -ri 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/g' /etc/ssh/sshd_config
