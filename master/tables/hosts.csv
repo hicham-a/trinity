@@ -1,4 +1,4 @@
 #node,ip,hostnames,otherinterfaces,comments,disable
-"controllers","|\D+(\d+)$|192.168.1.($1+0)|","|\D+(\d+)$|controller($1)|","|\D+(\d+)$|controller($1)-bmc:192.168.8.($1+0)|",,
-"switch-controllers","192.168.1.250","switch-controllers",,,
+"compute","|\D+(\d+)$|192.168.1.($1+0)|","|\D+(\d+)$|node($1)|","|\D+(\d+)$|node($1)-bmc:192.168.8.($1+0)|",,
+"switch","192.168.192.168","switch",,,
 "master","192.168.1.254","master",,,
