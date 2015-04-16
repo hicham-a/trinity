@@ -13,3 +13,18 @@ net-tools
 xorg-x11-xauth
 yum-utils
 bind-utils
+
+# OpenStack packages
+openstack-keystone
+python-keystoneclient
+openstack-glance
+python-glanceclient
+openstack-nova-compute
+sysfsutils
+openstack-nova-network
+openstack-nova-api
+openstack-dashboard
+httpd
+mod_wsgi
+memcached
+python-memcached

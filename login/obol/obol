@@ -154,12 +154,13 @@ def group_add(groupname):
 def group_addusers(groupname, username):
     """Add users to a group"""
     dn = 'cn=%s,ou=Group,dc=cluster' % groupname
-    mod_attrs = []
     for name in username:
-        uidNumber = user_uidNumber(name)
-        print name, uidNumber
-        mod_attrs.append((ldap.MOD_ADD, 'memberuid', uidNumber))
-    conn.modify_s(dn, mod_attrs)
+        try:
+            mod_attrs = []
+            mod_attrs.append((ldap.MOD_ADD, 'memberuid', name))
+            conn.modify_s(dn, mod_attrs)
+        except Exception, error:
+            print "Error adding %s to %s: %s" % (name, groupname, error)
                      
 
 def group_delusers(groupname, username):

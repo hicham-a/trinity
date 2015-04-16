@@ -47,6 +47,7 @@ chroot $installroot chkconfig docker on
 chroot $installroot chkconfig openvswitch on
 chroot $installroot chkconfig trinity on
 chroot $installroot chkconfig avahi-daemon off
+echo "mlx4_ib" > $installroot/etc/modules-load.d/mlx4_ib.conf
 
 #-- copy security limits from controller node
 install -d $installroot/etc/security/limits.d
@@ -55,6 +56,11 @@ cp -r /etc/security/limits.d/* $installroot/etc/security/limits.d
 #-- copy repositories from controller node
 install -d $installroot/etc/yum.repos.d
 cp -r /etc/yum.repos.d/* $installroot/etc/yum.repos.d
+
+#-- Fix for #163. #FIXME: remove once merged with master_installer.
+chroot $installroot yum -y update device-mapper
+chroot $installroot yum -y install device-mapper-event-libs
+
 
 #-- copy modules environment config file
 #install -D /usr/share/Modules/init/.modulespath $installroot/usr/share/Modules/init/.modulespath

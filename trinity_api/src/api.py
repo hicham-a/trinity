@@ -16,6 +16,15 @@ trinity_host=config.get('trinity','trinity_host')
 trinity_port=config.getint('trinity','trinity_port')
 trinity_debug=config.getboolean('trinity','trinity_debug')
 trinity_server=config.get('trinity','trinity_server')
+xcat_host=config.get('xcat','xcat_host')
+trinity_user=config.get('xcat','trinity_user')
+trinity_password=config.get('xcat','trinity_password')
+node_pref=config.get('cluster','node_pref')
+cont_pref=config.get('cluster','cont_pref')
+
+# Globals here
+# state_has_changed = False
+# cached_detailed_overview = {}
 
 class TrinityAPI(object):
   def __init__(self,request):
@@ -118,6 +127,12 @@ class TrinityAPI(object):
     return {'statusOK':status_ok, name:groups}
   
   def detailed_overview(self):
+    global state_has_changed
+    global cached_detailed_overview
+#    print state_has_changed 
+    if not state_has_changed:
+      return cached_detailed_overview
+ 
     xcat_groups=self.xcat('GET','/groups')
     hc_list=[]
     for group in xcat_groups:
@@ -142,6 +157,8 @@ class TrinityAPI(object):
         if members: node_list=[x.strip() for x in members.split(',')]
         hc_overview['cluster'][cluster]=node_list
     self.overview=hc_overview
+    cached_detailed_overview=hc_overview
+    state_has_changed=False
     return hc_overview
 
  
@@ -341,6 +358,15 @@ class TrinityAPI(object):
     ret['subsList']=subs_list
     ret['addsList']=adds_list 
     return ret
+
+#  def create_login_node(self):
+  # First add admin as a user to the project
+
+
+      
+
+
+ 
    
 #  def cluster_update_containers(cluster,new_container_image):
 #    self.authenticate()
@@ -431,12 +457,16 @@ def cluster_overview(version=1):
 @trinity.get('/trinity/v<version:float>/clusters')
 def list_clusters(version=1):
   req=TrinityAPI(request)
-  return req.groups(name='clusters',startkey=req.vc)
+  clusters=req.detailed_overview()['cluster'].keys()
+  return {'statusOK': True, 'clusters': clusters}
+#  return req.groups(name='clusters',startkey=req.vc)
 
 @trinity.get('/trinity/v<version:float>/hardwares')
 def list_hardwares(version=1):
   req=TrinityAPI(request)
-  return req.groups(name='hardwares',startkey=req.hw)
+  hardwares=req.detailed_overview()['hardware'].keys()
+  return {'statusOK': True, 'hardwares': hardwares}
+#  return req.groups(name='hardwares',startkey=req.hw)
 
 @trinity.get('/trinity/v<version:float>/nodes')
 def list_nodes(version=1):
@@ -496,13 +526,19 @@ def show_hardware_details(cluster,version=1):
 # This is used for both create and modify
 @trinity.put('/trinity/v<version:float>/clusters/<cluster>')
 def modify_cluster(cluster,version=1):
+  global state_has_changed
+  global all_nodes_info
+  state_has_changed=True
   req=TrinityAPI(request)
   ret={}
-  ret['statusOK']=False
-  clusters=req.groups(name='clusters',startkey=req.vc)
-  if not clusters['statusOK']:
-    return ret
-  if cluster in clusters['clusters']:
+#  ret['statusOK']=False
+#  clusters=req.groups(name='clusters',startkey=req.vc)
+#  if not clusters['statusOK']:
+#    return ret
+  ret['statusOK']=True
+  clusters=req.detailed_overview()['cluster'].keys()
+#  if cluster in clusters['clusters']:
+  if cluster in clusters:
     cluster_exists = True
     # Remove the cluster containers from the dns table 
     # otherwise we will be left with stale entries
@@ -549,28 +585,57 @@ def modify_cluster(cluster,version=1):
       subprocess.call('chmod u+r '+munge_key_path,shell=True)
       subprocess.call('chown munge:munge '+munge_key_path,shell=True)
       slurm_needs_update=True 
+ 
+#     Create the cluster modules and apps directories
+      apps=os.path.join(req.cluster_path,vc_cluster,'apps')
+      modules=os.path.join(req.cluster_path,vc_cluster,'modules')
+      if not os.path.isdir(apps):
+        os.makedirs(apps)
+      if not os.path.isdir(modules):
+        os.makedirs(modules)
+
   
-  cont_list=[]
-  if slurm_needs_update:
-    for node in ret['nodeList']:
+##  cont_list=[]
+##  if slurm_needs_update:
+##    for node in ret['nodeList']:
 #      containers are nodes 
 #      cont=node.replace(req.node_pref,req.cont_pref)
-      cont=node
-      cont_list.append(cont) 
-    cont_string=','.join(cont_list)
-    vc_cluster=req.vc + cluster
+##      cont=node
+##      cont_list.append(cont) 
+##    cont_string=','.join(cont_list)
+##    vc_cluster=req.vc + cluster
 #    slurm=os.path.join(req.cluster_path,
 #                       req.clusters_dir,
 #                       cluster,
 #                       req.slurm_node_file)
-    slurm=os.path.join(req.cluster_path,
+##    slurm=os.path.join(req.cluster_path,
 #                       req.clusters_dir,
+##                       vc_cluster,
+##                       req.slurm_node_file)
+##    part_string='PartitionName='+req.cont_part+' Nodes='+cont_string+' Default=Yes MaxTime=INFINITE State=UP'
+##    part_string='PartitionName='+req.cont_part+' Nodes='+cont_string+' Default=Yes'
+##    changes={'NodeName':'NodeName='+cont_string,
+##             'PartitionName':part_string}
+##    replace_lines(slurm,changes)
+
+  if slurm_needs_update:    
+    vc_cluster=req.vc + cluster
+    slurm=os.path.join(req.cluster_path,
                        vc_cluster,
                        req.slurm_node_file)
-    part_string='PartitionName='+req.cont_part+' Nodes='+cont_string+' Default=Yes'
-    changes={'NodeName':'NodeName='+cont_string,
-             'PartitionName':part_string}
-    replace_lines(slurm,changes)
+    fop=open(slurm,'w')
+    for cont in ret['nodeList']:
+      node_name=cont
+      cpu_count=all_nodes_info[cont]['cpucount']
+      slurm_string='NodeName='+node_name+' CPUS='+cpu_count+' State=UNKNOWN'
+      fop.write(slurm_string+'\n')
+    cont_string=','.join(ret['nodeList'])
+    part_string='PartitionName='+req.cont_part+' Nodes='+cont_string+' Default=Yes MaxTime=INFINITE State=UP'
+    fop.write(part_string+'\n')
+    fop.close()   
+      
+
+    
 #    conf_update(slurm,'NodeName',cont_string,sep='=')
 #    conf_update(slurm,'PartitionName',req.cont_part+' Nodes='+cont_string+' Default=Yes',sep='=')
 
@@ -671,7 +736,7 @@ def modify_cluster(cluster,version=1):
     payload={"command":["docker stop trinity; docker rm trinity; service trinity restart"]}
     path='/nodes/'+node_adds_string+'/nodeshell'
     req.xcat(verb=verb,path=path,payload=payload)
-
+  
 
 #  verb='POST'
 #  payload={}
@@ -690,6 +755,8 @@ def modify_cluster(cluster,version=1):
 #  # limited by the max url length supported by Triniy API and xCAT API
 #  path='/nodes/'+changed_nodes_string+'/nodeshell'
 #  req.xcat(verb=verb,path=path,payload=payload)
+#  req.create_login_node()
+  state_has_changed=True
   return ret
 
 
@@ -763,6 +830,56 @@ def conf_update(conf_file,key,value,sep='='):
   fop.close()
 
 
+def startup():
+  global state_has_changed
+  global cached_detailed_overview
+  global all_nodes_info
+  hw='hw-'
+  vc='vc-'
+  headers={"Content-Type":"application/json", "Accept":"application/json"} # setting this by hand for now
+  query = {'userName':trinity_user, 'password':trinity_password}
+
+  # Get the cpucount for all the nodes
+  # asuming that all nodes belong to the group compute
+  path='/nodes/compute'
+  xcat_node_info=requests.get(xcat_host+path,verify=False,params=query,headers=headers).json()
+  all_nodes_info={}
+  for node in xcat_node_info:
+    cont=node.replace(node_pref,cont_pref,1)
+    all_nodes_info[cont]=xcat_node_info[node]
+
+  path='/groups'
+  xcat_groups=requests.get(xcat_host+path,verify=False,params=query,headers=headers).json()
+  hc_list=[]
+  for group in xcat_groups:
+    if group.startswith(hw): hc_list.append(group)
+    if group.startswith(vc): hc_list.append(group)
+  hc_string=",".join(hc_list)
+  path='/groups/'+hc_string+'/attrs/members'
+  xcat_overview=requests.get(xcat_host+path,verify=False,params=query,headers=headers).json()
+  hc_overview={'hardware':{},'cluster':{}}
+  lhw=len(hw)
+  lvc=len(vc)
+  for hc in xcat_overview:
+    if hc.startswith(hw): 
+      hardware=hc[lhw:]
+      members=xcat_overview[hc]['members'].strip()
+      node_list=[]
+      if members: node_list=[x.strip() for x in members.split(',')]
+      hc_overview['hardware'][hardware]=node_list
+    if hc.startswith(vc): 
+      cluster=hc[lvc:]
+      members=xcat_overview[hc]['members'].strip()
+      node_list=[]
+      if members: node_list=[x.strip() for x in members.split(',')]
+      hc_overview['cluster'][cluster]=node_list
+  cached_detailed_overview=hc_overview
+  state_has_changed=False
+
+#  print hc_overview
+  trinity.run(host=trinity_host, port=trinity_port, debug=trinity_debug, server=trinity_server)
+  
 
 if __name__=="__main__":
-  trinity.run(host=trinity_host, port=trinity_port, debug=trinity_debug, server=trinity_server)
+   startup()
+#  trinity.run(host=trinity_host, port=trinity_port, debug=trinity_debug, server=trinity_server)

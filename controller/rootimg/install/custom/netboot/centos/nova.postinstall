@@ -25,14 +25,12 @@ cat <<END >$installroot/etc/fstab
 proc            /proc    proc   rw 0 0
 sysfs           /sys     sysfs  rw 0 0
 devpts          /dev/pts devpts rw,gid=5,mode=620 0 0
-#/dev/sda1	/srv/nfs 	ext4	defaults,errors=remount-ro  0  2
+#/dev/sda3	/var/ 	ext4	defaults,errors=remount-ro  0  2
 END
 
-# Setup exports
-chroot $installroot mkdir -p /srv/nfs
 
-#-- Enable services
-chroot $installroot systemctl enable rdma
-chroot $installroot systemctl enable ntpd
-chroot $installroot systemctl enable nfs-server
+# -- FIXME: HTH the location needs to point to a better location. Also the
+# addresses in the copied /etc/nova/nova.conf are hard-coded.
+cp /root/files/etc/nova/nova.conf $installroot/etc/nova/nova.conf
+chroot $installroot systemctl enable libvirtd.service openstack-nova-compute.service
 

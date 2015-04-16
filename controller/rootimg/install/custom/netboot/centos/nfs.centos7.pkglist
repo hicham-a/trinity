@@ -75,3 +75,6 @@ urw-fonts
 openldap-clients
 nss-pam-ldapd
 authconfig
+
+# Required for NFS and LVM
+lvm2

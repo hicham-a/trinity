@@ -1,0 +1,12 @@
+# generic required packages
+ntp
+openstack-selinux
+
+# required for nova compute
+openstack-nova-compute
+sysfsutils
+
+# required for cinder
+openstack-cinder
+lvm2
+targetcli python-oslo-db MySQL-python
