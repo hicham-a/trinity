@@ -46,7 +46,7 @@ ifup $ETH3
 #---------------------------------------------------------------------------------------
 # Copy files
 #---------------------------------------------------------------------------------------
-cp -r /root/trinity/master/rootimg/* /
+cp -rL /root/trinity/master/rootimg/* /
 
 # FIXME: this mount should be an rsync with the clustervision master environment modules
 # cp -r /tmp/trinity/clustervision /trinity
@@ -103,7 +103,7 @@ yum -y install --enablerepo=extras epel-release
 wget http://sourceforge.net/projects/xcat/files/yum/2.8/xcat-core/xCAT-core.repo -O /etc/yum.repos.d/xCAT-core.repo
 wget http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo -O /etc/yum.repos.d/xCAT-dep.repo
 mkdir /trinity/iso
-wget http://master:/trinity/iso/CentOS-7.0-1406-x86_64-Everything.iso -q -O /trinity/iso/CentOS-7.0-1406-x86_64-Everything.iso
+wget http://dmaster:/trinity/iso/CentOS-7.0-1406-x86_64-Everything.iso -q -O /trinity/iso/CentOS-7.0-1406-x86_64-Everything.iso
 copycds -o /trinity/iso/*.iso
 
 /root/trinity/master/create_repo_snapshot.sh
