@@ -124,7 +124,7 @@ read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
 
 cat > /tmp/trinity-networking << EOF
 network  --bootproto=static --device=$ETH2 --gateway=192.168.1.254 --ip=192.168.1.254 --netmask=255.255.255.0 --ipv6=auto --nodefroute --onboot=yes
-network  --bootproto=static --device=$ETH3 --gateway=192.168.192.254 --ip=192.168.192.250 --netmask=255.255.255.0 --ipv6=auto --nodefroute --onboot=yes
+network  --bootproto=static --device=$ETH3 --ip=192.168.192.254 --netmask=255.255.255.0 --ipv6=auto --nodefroute --onboot=yes
 network  --bootproto=dhcp --device=$ETH1 --ipv6=auto --onboot=yes
 network  --hostname=mastermaster.cluster
 EOF
