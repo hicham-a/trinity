@@ -7,6 +7,8 @@ import requests
 from collections import defaultdict
 import re
 import subprocess
+import base64
+import time
 #from config import *
 
 conf_file='/etc/trinity/trinity_api.conf'
@@ -93,6 +95,7 @@ class TrinityAPI(object):
                 }
   
     r = requests.post(self.keystone_host+'/tokens', data=json.dumps(payload), headers=self.headers)
+    self.tenant_id=r.json()["access"]["token"]["tenant"]["id"]
     self.has_access = (r.status_code  == requests.codes.ok )
     self.is_admin=False
     if self.has_access: 
@@ -358,13 +361,6 @@ class TrinityAPI(object):
     ret['subsList']=subs_list
     ret['addsList']=adds_list 
     return ret
-
-#  def create_login_node(self):
-  # First add admin as a user to the project
-
-
-      
-
 
  
    
@@ -768,6 +764,201 @@ def modify_cluster(cluster,version=1):
 #  req.xcat(verb=verb,path=path,payload=payload)
 #  req.create_login_node()
   state_has_changed=True
+
+#----------------------------------------------------------------------
+# Now create the login node
+#----------------------------------------------------------------------
+  login_ip="172."+second_octet+".255.254"
+  returncode=subprocess.call("ping -c 1 "+login_ip, shell=True)
+  if returncode != 0:
+    login_pool=login_cluster
+    path=req.nova_host+'/'+req.tenant_id+'/os-floating-ips-bulk'
+    headers={"X-Auth-Project-Id":"admin", "X-Auth-Token":req.token}
+    headers.update(req.headers)
+    payload={
+      "floating_ips_bulk_create":{
+        "ip_range":"172."+second_octet+".255.254",
+        "pool": login_pool
+      }
+    }   
+    r=requests.post(path,headers=headers,data=json.dumps(payload))
+ 
+    path=req.keystone_admin+'/OS-KSADM/roles'
+    headers={"X-Auth-Token":req.token}
+    headers.update(req.headers)
+    r=requests.get(path,headers=headers)
+    for role in r.json()["roles"]:
+      if role["name"] == "_member_":
+        role_id=role["id"]
+        break
+
+    path=req.keystone_admin+'/users'
+    headers={"X-Auth-Token":req.token}
+    headers.update(req.headers)
+    payload={
+      "user": {
+        "name": "trinity_dummy_user",
+        "email": "",
+        "enabled": True,
+        "OS-KSADM:password": "system"
+      }
+    }
+    r=requests.post(path,headers=headers,data=json.dumps(payload))
+
+  
+    path=req.keystone_admin+'/users'
+    headers={"X-Auth-Token":req.token}
+    headers.update(req.headers)
+    r=requests.get(path,headers=headers)
+    for user in r.json()["users"]:
+#      if user["username"] == "admin":
+      if user["username"] == "trinity_dummy_user":
+        user_id=user["id"]
+        break
+
+  
+    path=req.keystone_admin+'/tenants'
+    headers={"X-Auth-Token":req.token}
+    headers.update(req.headers)
+    r=requests.get(path,headers=headers)
+    for tenant in r.json()["tenants"]:
+      if tenant["name"] == cluster:
+        tenant_id=tenant["id"]
+        break
+
+    path=req.keystone_admin+'/tenants/'+tenant_id+'/users/'+user_id+'/roles/OS-KSADM/'+role_id
+    headers={"X-Auth-Token":req.token}
+    headers.update(req.headers)
+    r=requests.put(path,headers=headers)
+
+    path=req.keystone_host+'/tokens'
+    headers=req.headers
+    payload = { 
+               "auth": {
+                 "tenantName": cluster,
+                 "passwordCredentials": {
+                   "username": "trinity_dummy_user",
+                   "password": "system"
+                 }
+               }
+             }
+    r = requests.post(path, data=json.dumps(payload), headers=headers)
+    tenant_token = r.json()["access"]["token"]["id"]
+
+    path=req.nova_host+'/'+tenant_id+'/os-floating-ips'  
+    headers={"X-Auth-Project-Id":cluster, "X-Auth-Token":tenant_token}
+    headers.update(req.headers)
+    payload={
+      "pool":login_pool
+    } 
+    r = requests.post(path, data=json.dumps(payload), headers=headers)
+ 
+    path=req.nova_host+'/'+tenant_id+'/os-security-groups'  
+    headers={"X-Auth-Project-Id":cluster, "X-Auth-Token":tenant_token}
+    headers.update(req.headers)
+    r = requests.get(path, headers=headers)
+    for security_group in r.json()["security_groups"]:
+      if security_group["name"] == "default": 
+        default_id=security_group["id"]
+        break
+
+    path=req.nova_host+'/'+tenant_id+'/os-security-group-rules'  
+    headers={"X-Auth-Project-Id":cluster, "X-Auth-Token":tenant_token}
+    headers.update(req.headers)
+    payload={
+      "security_group_rule": {
+        "ip_protocol": "tcp", 
+        "parent_group_id": default_id, 
+        "from_port": 1, 
+        "to_port": 65535, 
+        "cidr": "0.0.0.0/0", 
+        "group_id": None
+      }
+    }
+    r = requests.post(path, data=json.dumps(payload), headers=headers)
+
+    payload={
+      "security_group_rule": {
+        "ip_protocol": "icmp", 
+        "parent_group_id": default_id, 
+        "from_port": -1, 
+        "to_port": -1, 
+        "cidr": "0.0.0.0/0", 
+        "group_id": None
+      }
+    }
+
+    r = requests.post(path, data=json.dumps(payload), headers=headers)
+
+    path=req.nova_host+'/'+tenant_id+'/images'
+    headers={"X-Auth-Project-Id":cluster, "X-Auth-Token":tenant_token}
+    headers.update(req.headers)
+    r = requests.get(path, headers=headers)
+    for image in r.json()["images"]:
+      if image["name"] == "login":
+        image_id=image["id"]
+
+    # For now assume that we are using flavor = 2 (small)
+    fop=open(req.login_conf)
+    login_data=fop.read()
+    fop.close()
+    replacements={
+      "controller=10.141.255.254":"controller=controller",
+      "FLOATING_IP=127.0.0.1": "FLOATING_IP="+"172."+second_octet+".255.254",
+      "vc-a":vc_cluster
+    }
+    for i,j in replacements.iteritems():
+      login_data = login_data.replace(i,j)
+    login_data_encoded=base64.b64encode(login_data)
+    path=req.nova_host+'/'+tenant_id+'/servers'
+    headers={"X-Auth-Project-Id":cluster, "X-Auth-Token":tenant_token}
+    headers.update(req.headers)
+    payload={
+      "server":{
+        "name":login_cluster,
+        "imageRef":image_id,
+        "flavorRef": "2",
+        "user_data": login_data_encoded,
+        "security_groups": [{"name":"default"}],
+        "max_count": 1,
+        "min_count": 1
+      }
+    }
+    r = requests.post(path, data=json.dumps(payload), headers=headers)
+    instance_id=r.json()["server"]["id"]
+#    print instance_id
+
+    # This is added to add a small delay between creating the instance 
+    # and associating a floating ip, otherwise we get the following message
+    # "No nw_info cache associated with instance"
+    time.sleep(5)
+#    path=req.nova_host+'/'+tenant_id+'/servers/'+instance_id
+#    headers={"X-Auth-Project-Id":cluster, "X-Auth-Token":tenant_token}
+#    headers.update(req.headers)
+#    r = requests.get(path, headers=headers)
+
+
+    path=req.nova_host+'/'+tenant_id+'/servers/'+instance_id+'/action'
+    headers={"X-Auth-Project-Id":cluster, "X-Auth-Token":tenant_token}
+    headers.update(req.headers)
+    payload={
+      "addFloatingIp": {
+        "address": "172."+second_octet+".255.254"
+      }
+    } 
+    r = requests.post(path, data=json.dumps(payload), headers=headers)
+#    print path
+#    print r.json()
+  
+    path=req.keystone_admin+'/tenants/'+tenant_id+'/users/'+user_id+'/roles/OS-KSADM/'+role_id
+    headers={"X-Auth-Token":req.token}
+    headers.update(req.headers)
+    r=requests.delete(path,headers=headers)
+ 
+    path=req.keystone_admin+'/users/'+user_id
+    headers={"X-Auth-Token":req.token}
+    headers.update(req.headers)
+    r=requests.delete(path,headers=headers)
   return ret
 
 
