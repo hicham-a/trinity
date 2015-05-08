@@ -28,8 +28,8 @@ login_help(){
 }
 
 login_init(){
-  wget ${CLOUD_IMAGE_URL}
-  glance image-create \
+  [ -e ${CLOUD_IMAGE} ] ||  wget ${CLOUD_IMAGE_URL}
+  glance image-list | grep -q ${LOGIN_IMAGE} || glance image-create \
          --name "${LOGIN_IMAGE}" \
          --disk-format "${CLOUD_IMAGE_FORMAT}" \
          --container-format "${CLOUD_CONTAINER_FORMAT}" \
