@@ -5,9 +5,9 @@
 ##email          : abhishek.mukherjee@clustervision.com
 
 # The xCAT web service requires the following
-yum install mod_ssl
+yum -y install mod_ssl
 service httpd restart
-yum install perl-JSON
+yum -y install perl-JSON
 
 # Set up the xCAT web service
 useradd trinity
