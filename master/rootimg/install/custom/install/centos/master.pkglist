@@ -18,4 +18,7 @@ sssd
 
 # X fwding
 xorg-x11-xauth
+yum-utils
 
+# #230
+firefox
