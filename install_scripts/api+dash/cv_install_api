@@ -23,6 +23,7 @@ mountpoint -q ${file_root} && echo "${file_root} is already mounted" || mount ${
 # Trinity API setup
 cd ${file_root}/api+dash/trinity_api
 python setup.py install
+cd /
 sed "s/127.0.0.1/$(hostname -I| awk '{print $1}')/g" /etc/trinity/trinity_api.conf > /tmp/trinity_api.conf
 mv /tmp/trinity_api.conf /etc/trinity/trinity_api.conf
 mkdir -p /var/log/trinity

@@ -64,7 +64,7 @@ def user_add(username, cn, sn, givenName, password, shell, groups):
                        LogLevel QUIET
                     """)
         os.chown('/home/%s/.ssh/config' % username, int(uidNumber), int(uidNumber))
-        os.chmod('/home/%s/.ssh/config' % username, 600)
+        os.chmod('/home/%s/.ssh/config' % username, 0600)
 
 
 def user_delete(username):

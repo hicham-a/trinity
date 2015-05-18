@@ -15,5 +15,6 @@ cd ${file_root}/trinity_login/
 cp etc/trinity/login.conf /etc/trinity/login.conf
 cp usr/bin/tlntool /usr/bin/tlntool
 chmod uga+x /usr/bin/tlntool
+cd /
 umount ${file_root}
 

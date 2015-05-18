@@ -15,4 +15,22 @@ omd create monitoring
 omd config monitoring set DEFAULT_GUI check_mk
 omd config monitoring set APACHE_TCP_PORT 5003
 omd config monitoring set APACHE_TCP_ADDR $(hostname -I | awk '{print $1}')
+su - monitoring -c "htpasswd -b ~/etc/htpasswd admin system"
+su - monitoring -c "htpasswd -D ~/etc/htpasswd omdadmin"
+site="monitoring"
+sites="/omd/sites"
+check_mk="${sites}/${site}/etc/check_mk"
+mul_wato="${check_mk}/multisite.d/wato"
+users="${mul_wato}/users.mk"
+cat >> ${users} << EOF
+
+# Create the admin user
+multisite_users.update(
+{'admin': {'alias': u'admin',
+              'locked': False,
+              'roles': ['admin']}}
+)
+
+EOF
+chown monitoring:monitoring ${users}
 omd start monitoring

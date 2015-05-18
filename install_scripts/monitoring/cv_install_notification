@@ -26,6 +26,7 @@ if type(define_contactgroups) != dict:
 define_contactgroups.update({'admin': u'Admin'})
 
 EOF
+chown monitoring:monitoring ${groups}
 
 
 # Add all hosts to the admin contact group
@@ -37,6 +38,8 @@ host_contactgroups = [
 ] + host_contactgroups
 
 EOF
+chown monitoring:monitoring ${rules}
+
 
 # Create the clustervision user and add it to the admin contact group
 cat >> ${users} << EOF
@@ -51,6 +54,8 @@ multisite_users.update(
 )
 
 EOF
+chown monitoring:monitoring ${users}
+
 cat >> ${contacts} << EOF 
 
 # Create the clustervision contact and enable notifications for it 
@@ -67,4 +72,4 @@ contacts.update(
 )
 
 EOF
-
+chown monitoring:monitoring ${contacts}

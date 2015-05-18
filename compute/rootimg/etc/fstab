@@ -1,8 +1,0 @@
-proc            /proc    proc   rw 0 0
-sysfs           /sys     sysfs  rw 0 0
-devpts          /dev/pts devpts rw,gid=5,mode=620 0 0
-controller:/home           /home    nfs    rw  0 0
-controller:/home/cm/shared  /cm/shared  nfs  rw 0 0
-/dev/sda1 /var/lib/docker ext4 rw 0 0
-controller:/cluster        /cluster    nfs    rw  0 0
-

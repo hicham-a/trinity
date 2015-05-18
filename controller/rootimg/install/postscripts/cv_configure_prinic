@@ -3,6 +3,7 @@ cat > /etc/sysconfig/network-scripts/ifcfg-$ETH1 << EOF
 ONBOOT=no
 BOOTPROTO=dhcp
 DEVICE=$ETH1
+MTU=9000
 EOF
 
 ifup $ETH1
