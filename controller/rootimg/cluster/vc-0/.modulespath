@@ -1,0 +1,6 @@
+/usr/share/Modules/modulefiles  # Module pkg modulefiles (if no versioning)
+/etc/modulefiles                                # General module files
+#/usr/share/Modules/your_contribs                       # Edit for your requirements
+/trinity/clustervision/modulefiles
+/cluster/modulefiles
+
