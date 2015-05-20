@@ -49,6 +49,7 @@ def user_add(username, cn, sn, givenName, password, shell, groups):
     if os.path.isdir("/home/%s/.ssh" % username):
         print '/home/%s/.ssh already exists, we will not create new keys' % username
     else:
+        os.system('su - %s -c "cp -r /etc/skel -T /home/%s/"' % (username, username))
         os.makedirs('/home/%s/.ssh' % username)
         os.chown('/home/%s' % username, int(uidNumber), int(uidNumber))
         os.chown('/home/%s/.ssh' % username, int(uidNumber), int(uidNumber))

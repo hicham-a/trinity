@@ -13,3 +13,10 @@ net-tools
 xorg-x11-xauth
 yum-utils
 bind-utils
+iptables-services
+
+# See #230
+firefox
+
+# See #204
+perl-Digest-SHA1
