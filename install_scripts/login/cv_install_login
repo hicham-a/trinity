@@ -5,11 +5,11 @@
 ##email          : abhishek.mukherjee@clustervision.com
 
 remote_host="controller"
-remote_file_root="trinity"
+remote_file_root="/trinity"
 remote_nfs="${remote_host}:$remote_file_root"
-file_root="/tmp/${remote_file_root}"
+file_root="/tmp${remote_file_root}"
 mkdir -p ${file_root}
-mount ${remote_nfs} ${file_root} 
+mountpoint -q ${file_root} && echo "${file_root} is already mounted" || mount ${remote_nfs} ${file_root} 
 # Trinity login setup
 cd ${file_root}/trinity_login/
 cp etc/trinity/login.conf /etc/trinity/login.conf
