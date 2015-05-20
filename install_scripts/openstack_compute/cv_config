@@ -1,0 +1,21 @@
+#! /usr/bin/bash
+##title          : cv_config
+##description    : Stores configuration information for install scripts
+##author         : Abhishek Mukherjee
+##email          : abhishek.mukherjee@clustervision.com
+
+# [logging]
+LOGFILE=/var/log/postinstall.log
+
+# [openstack controller]
+OPENSTACK_CONTROLLER=10.141.255.254
+
+# [rabbitmq]
+RPC_PASS=system
+
+# [nova]
+NOVA_PASS=system
+
+# [cinder]
+CINDER_PASS=system
+CINDER_DBPASS=system
