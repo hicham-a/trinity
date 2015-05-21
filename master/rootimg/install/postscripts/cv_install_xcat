@@ -13,7 +13,6 @@ sleep 10
 ls /etc/yum.repos.d 
 yum repolist
 
-echo "exclude=net-snmp-perl" >> /etc/yum.repos.d/xCAT-dep.repo
 yum -y install xCAT 
 
 mkdir /tmp/trinity
