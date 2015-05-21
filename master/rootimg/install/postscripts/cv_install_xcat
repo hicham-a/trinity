@@ -144,7 +144,7 @@ exportfs -a
 echo "Creating installation tree"
 # updates and extras are required to install docker
 reposync -n -r updates -r extras -p /install/post/otherpkgs/centos7.0/x86_64/
-copycds -o /tmp/trinity/iso/*.iso
+copycds -o -n centos7.0 /tmp/trinity/iso/$(ls -cr /tmp/trinity/iso/*.iso | head -1)
 # copy openvswitch
 mkdir -p /install/post/otherpkgs/centos7.0/x86_64/openstack
 yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-icehouse/rdo-release-icehouse-4.noarch.rpm
