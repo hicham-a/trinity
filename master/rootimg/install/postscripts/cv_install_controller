@@ -10,6 +10,14 @@
 # HTH: added to make sure the network is up
 sleep 10
 
+<<<<<<< HEAD:master/rootimg/install/postscripts/cv_install_controller
+=======
+ls /etc/yum.repos.d 
+yum repolist
+
+yum -y install xCAT 
+
+>>>>>>> r3:master/rootimg/install/postscripts/cv_install_xcat
 mkdir /tmp/trinity
 mount master:/trinity /tmp/trinity       
 mkdir /trinity
@@ -127,8 +135,13 @@ exportfs -a
 #--------------------------------------------------------------------------------------
 echo "Creating installation tree"
 # updates and extras are required to install docker
+<<<<<<< HEAD:master/rootimg/install/postscripts/cv_install_controller
 # reposync -n -r updates -r extras -p /install/post/otherpkgs/centos7.0/x86_64/
 copycds -o /tmp/trinity/iso/*.iso
+=======
+reposync -n -r updates -r extras -p /install/post/otherpkgs/centos7.0/x86_64/
+copycds -o -n centos7.0 /tmp/trinity/iso/$(ls -cr /tmp/trinity/iso/*.iso | head -1)
+>>>>>>> r3:master/rootimg/install/postscripts/cv_install_xcat
 # copy openvswitch
 # yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-icehouse/rdo-release-icehouse-4.noarch.rpm
 # yum -y install --downloadonly --downloaddir=/install/post/otherpkgs/centos7.0/x86_64/openstack openvswitch
@@ -155,7 +168,7 @@ chown 1002:1002 /cluster/vc-a/etc/munge/munge.key
 #--------------------------------------------------------------------------------------
 yum -y install docker docker-registry
 sed -i 's/REGISTRY_PORT=.*/REGISTRY_PORT=5050/' /etc/sysconfig/docker-registry
-sed -i 's/OPTIONS=\(.*\)/OPTIONS=--insecure-registry controller:5050 \1/' /etc/sysconfig/docker
+sed -i 's/OPTIONS=\(.*\)/OPTIONS=--insecure-registry controller:5050 --bip=10.146.255.254/16 --fixed-cidr=10.146.255.255/16 \1/' /etc/sysconfig/docker
 echo "10.141.255.254 controller" >>  /etc/hosts
 systemctl enable docker docker-registry
 systemctl start docker docker-registry

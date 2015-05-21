@@ -49,6 +49,7 @@ def user_add(username, cn, sn, givenName, password, shell, groups):
     if os.path.isdir("/home/%s/.ssh" % username):
         print '/home/%s/.ssh already exists, we will not create new keys' % username
     else:
+        os.system('su - %s -c "cp -r /etc/skel -T /home/%s/"' % (username, username))
         os.makedirs('/home/%s/.ssh' % username)
         os.chown('/home/%s' % username, int(uidNumber), int(uidNumber))
         os.chown('/home/%s/.ssh' % username, int(uidNumber), int(uidNumber))
@@ -75,6 +76,21 @@ def user_delete(username):
         conn.delete_s(dn)
     except Exception, error:
         print error
+
+    base_dn = 'ou=Group,dc=cluster'
+    filter = '(memberuid=%s)' % username
+    attrs = ['']
+    groups = conn.search_s(base_dn, ldap.SCOPE_SUBTREE, filter, attrs)
+    dns = [dn for dn, attrs in groups]
+
+    try:
+        for dn in dns:
+             mod_attrs = [(ldap.MOD_DELETE, 'memberuid', username)]
+             #print dn, mod_attrs
+             conn.modify_s(dn, mod_attrs)
+    except Exception, e:
+        print e
+
     # Next delete the group
     try:
         dn = 'cn=%s,ou=Group,dc=cluster' % username
@@ -168,9 +184,7 @@ def group_delusers(groupname, username):
     dn = 'cn=%s,ou=Group,dc=cluster' % groupname
     mod_attrs = []
     for name in username:
-        uidNumber = user_uidNumber(name)
-        print name, uidNumber
-        mod_attrs.append((ldap.MOD_DELETE, 'memberuid', uidNumber))
+        mod_attrs.append((ldap.MOD_DELETE, 'memberuid', name))
     conn.modify_s(dn, mod_attrs)
 
 
