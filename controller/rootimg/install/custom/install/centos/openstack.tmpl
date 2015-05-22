@@ -10,15 +10,7 @@ lang en_US
 #
 #nfs --server #XCATVAR:INSTALL_NFS# --dir #XCATVAR:INSTALL_SRC_DIR#
 
-repo --name=base --baseurl=http://mirror.cogentco.com/pub/linux/centos/7/os/x86_64/
-url --url="http://mirror.cogentco.com/pub/linux/centos/7/os/x86_64/"
-
-# HTH: our own repos do not work. Apparently just doing copycds does not create a proper repository.
-# %include /tmp/repos
-# HTH: this also does not work. If we want to support both image based and kickstart based installs
-#      we need to setup separate repositories.
-# repo --name=base --baseurl=http://controller/install/centos7.0/x86_64/
-# url --url="http://controller/install/centos7.0/x86_64/"
+%include /tmp/repos
 
 #device ethernet e100
 keyboard "us"
