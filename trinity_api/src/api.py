@@ -559,7 +559,7 @@ def modify_cluster(cluster,version=1):
     if ret['statusOK']:
       # Create the cluster home directories    
       vc_cluster=req.vc + cluster
-      cluster_home=os.path.join(req.vhome,vc_cluster) 
+      cluster_home=os.path.join(req.cluster_path,vc_cluster) 
       if not os.path.isdir(cluster_home):
         os.makedirs(cluster_home) 
 #      src_root=req.cluster_path
@@ -577,22 +577,33 @@ def modify_cluster(cluster,version=1):
       # create munge user on the physical node it does not exist
       # then create a munge key
       subprocess.call('! id munge && useradd -u 1002 -U munge',shell=True)
-      munge_key_path=os.path.join(req.cluster_path,vc_cluster,req.munge_key_file)
+      munge_dir_path=os.path.join(req.cluster_path,vc_cluster,req.munge_key_dir)
+#      munge_key_path=os.path.join(req.cluster_path,vc_cluster,req.munge_key_file)
+      munge_key_path=os.path.join(munge_dir_path,req.munge_key_file)
       if os.path.isfile(munge_key_path):
         os.remove(munge_key_path)
+      if not os.path.isdir(munge_dir_path):
+        os.makedirs(munge_dir_path)
       subprocess.call('dd if=/dev/urandom bs=1 count=1024 > '+munge_key_path,shell=True)       
-      subprocess.call('chmod uga-rwx '+munge_key_path,shell=True)
-      subprocess.call('chmod u+r '+munge_key_path,shell=True)
       subprocess.call('chown munge:munge '+munge_key_path,shell=True)
+      subprocess.call('chmod u=r,go= '+munge_key_path,shell=True)
+      subprocess.call('chown munge:munge '+munge_dir_path,shell=True)
+      subprocess.call('chmod u=rwx,go= '+munge_dir_path,shell=True)
+      subprocess.call('chmod u=rwx,go=rx '+req.cluster_path+'/'+vc_cluster+'/etc/slurm',shell=True) 
+      subprocess.call('chmod u=rw,go=rx '+req.cluster_path+'/'+vc_cluster+'/etc/slurm.conf',shell=True) 
+      subprocess.call('chmod u=rw,go=r '+req.cluster_path+'/'+vc_cluster+'/etc/slurm-nodes.conf',shell=True) 
+      subprocess.call('chmod ug=rw,o=r '+req.cluster_path+'/'+vc_cluster+'/etc/slurm-user.conf',shell=True) 
+#      subprocess.call('chmod u+rw '+munge_key_path,shell=True)
+#      subprocess.call('chmod uga-rwx '+munge_key_path,shell=True)
       slurm_needs_update=True 
  
 #     Create the cluster modules and apps directories
       apps=os.path.join(req.cluster_path,vc_cluster,'apps')
-      modules=os.path.join(req.cluster_path,vc_cluster,'modules')
+      modulefiles=os.path.join(req.cluster_path,vc_cluster,'modulefiles')
       if not os.path.isdir(apps):
         os.makedirs(apps)
-      if not os.path.isdir(modules):
-        os.makedirs(modules)
+      if not os.path.isdir(modulefiles):
+        os.makedirs(modulefiles)
 
   
 ##  cont_list=[]

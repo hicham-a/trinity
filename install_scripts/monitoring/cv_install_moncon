@@ -27,6 +27,7 @@ class MonCon(object):
 
   def get_hosts_from_xcat(self):
     node_list=requests.get("https://"+self.xcat_host+"/xcatws"+"/nodes", verify=False, params=self.xcat_query).json()
+    #TODO This should be done in bunches for a very large cluster, otherwise might hit the max char limit for URLs
     node_string=",".join(node_list)
     node_info=requests.get("https://"+self.xcat_host+"/xcatws"+"/nodes/"+node_string, verify=False, params=self.xcat_query).json()
     hosts_dict={}
@@ -81,16 +82,22 @@ class MonCon(object):
 
 ################################################################################################
 
-  def add_host(self,host_name,host_ip):
+# AM : Apr 29, 2015
+# Removing IP addresses and host_attributes from hosts.
+# Hosts will be accesed by their hostnames
+# Adding IP addresses breaks for containers,
+# because their IP addresses change with the repartitioning
+  def add_host(self,host_name,host_ip=None):
     host='all_hosts += [ \"'+host_name+'|cmk-agent|prod|lan|tcp|wato|/\" + FOLDER_PATH + \"/\", ]'
-    ip='ipaddresses.update({\''+host_name+'\': u\''+ host_ip+'\'})'
-    attribute='host_attributes.update({\''+host_name+'\':{\'ipaddress\': u\''+host_ip+'\'}})'
+#    ip='ipaddresses.update({\''+host_name+'\': u\''+ host_ip+'\'})'
+#    attribute='host_attributes.update({\''+host_name+'\':{\'ipaddress\': u\''+host_ip+'\'}})'
     fop=open(self.hosts_file,'a')
     fop.write('\n'+host+'\n')
-    fop.write(ip+'\n')
-    fop.write(attribute+'\n')
+#    fop.write(ip+'\n')
+#    fop.write(attribute+'\n')
     fop.close()
-    print "ALL HOSTS: Added host "+host_name+" ("+host_ip+")"
+#    print "ALL HOSTS: Added host "+host_name+" ("+host_ip+")"
+    print "ALL HOSTS: Added host "+host_name
 
   def add_aggr(self,aggr_name,aggr_members,check='ping'):
     for host_name in aggr_members:
