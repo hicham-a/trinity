@@ -12,6 +12,10 @@ yum -y install perl-JSON
 # Set up the xCAT web service
 useradd trinity
 echo "trinity" | passwd trinity --stdin
+source /etc/profile.d/xcat.sh
 tabch key=xcat,username=trinity passwd.password=trinity
 mkdef -t policy 6 name=trinity rule=allow
 
+# Fix permissions in the httpd.conf file
+sed  -e "/<Directory \/>/,/<\/Directory>/ s/Require/#Require/" -i httpd.conf
+service httpd restart
