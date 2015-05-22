@@ -10,14 +10,6 @@
 # HTH: added to make sure the network is up
 sleep 10
 
-<<<<<<< HEAD:controller/rootimg/install/postscripts/cv_install_controller
-=======
-ls /etc/yum.repos.d 
-yum repolist
-
-yum -y install xCAT 
-
->>>>>>> r3:master/rootimg/install/postscripts/cv_install_xcat
 mkdir /tmp/trinity
 mount master:/trinity /tmp/trinity       
 mkdir /trinity
