@@ -1,33 +1,60 @@
 #!/bin/bash
 
-# see http://stackoverflow.com/questions/3173131/redirect-copy-of-stdout-to-log-file-from-within-bash-script-itself
-#exec > >(tee /var/log/postinstall.log)
-#exec 2>&1
-
 #--------------------------------------------------------------------------------------
 # install xcat
 #--------------------------------------------------------------------------------------
-# HTH: added to make sure the network is up
-sleep 10
+# determine if a master is used to install this node:
+if ping -c 4 -w 10 testme; then
+    echo master is present
+    mkdir /tmp/trinity
+    mount master:/trinity /tmp/trinity       
+    echo "Creating installation tree"
+    copycds -o -n centos7.0 /tmp/trinity/iso/$(ls -cr /tmp/trinity/iso/*.iso | head -1)
 
-mkdir /tmp/trinity
-mount master:/trinity /tmp/trinity       
+    mkdir -p /install/post/otherpkgs/centos7.0/x86_64
+    reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7.0/x86_64/
+    createrepo /install/post/otherpkgs/centos7.0/x86_64/
+else
+    echo No master found, checking for a git repository.
+    SCRIPT=$(readlink -f $0)
+    SCRIPTDIR=$(dirname $SCRIPT)
+    REPODIR=$(readlink -f $SCRIPTDIR/../../../../)
+    echo Found repository in $REPODIR
+    # Do some sanity checks
+    if git --work-tree=$REPODIR branch | grep r3; then
+        cp -Lrv --preserve $REPODIR /tmp
+        mkdir -p /tmp/trinity/iso
+        echo Downloading cd, this may take a while
+        wget http://ftp.nluug.nl/ftp/pub/os/Linux/distr/CentOS/7/isos/x86_64/CentOS-7-x86_64-DVD-1503-01.iso \
+             -O /tmp/trinity/iso/CentOS-7-x86_64-DVD-1503-01.iso
+
+	echo "Creating installation tree"
+	copycds -o -n centos7.0 /tmp/trinity/iso/$(ls -cr /tmp/trinity/iso/*.iso | head -1)
+
+        # setup repositories
+        yum -y install epel-release
+        yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno-1.noarch.rpm
+        wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/2.8/xcat-core/xCAT-core.repo -O /etc/yum.repos.d/xCAT-core.repo
+        wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo -O /etc/yum.repos.d/xCAT-dep.repo
+
+        # now create a local repository
+	mkdir -p /install/post/otherpkgs/centos7.0/x86_64
+        reposync -n -r epel -r extras -r updates -r xcat-2-core -r xcat-dep -r openstack-juno -p /install/post/otherpkgs/centos7.0/x86_64/
+	createrepo /install/post/otherpkgs/centos7.0/x86_64/
+    else
+        echo $REPODIR does not seem to be a valid repository. Bailing.
+        exit 1
+    fi
+fi
+
+#exit 0   # HTH remove this line after testing
+
 mkdir /trinity
 
 # copy all required module files etc to the right locations
 # note to self: only /trinity/env needs be mounted inside the container
 # FIXME: this takes an awful amount of time
 cp -r /tmp/trinity/clustervision /trinity &
-
-#--------------------------------------------------------------------------------------
-# HTH: disable this
-# enable all repositories inside the controller
-# but disable the local repo from master
-#--------------------------------------------------------------------------------------
-#cd /etc/yum.repos.d
-#for file in * ; do sed -i 's/enabled=0/enabled=1/g' $file; done
-#sed -i 's/enabled=1/enabled=0/g' local-repository.repo
-#cd -
 
 #--------------------------------------------------------------------------------------
 # copy required files from the master node to the controller node
@@ -43,7 +70,6 @@ for file in $(ls /install/runimages); do
         tar czf /install/runimages/${file}.tgz -C /install/runimages/${file}/ .
     fi
 done
-
 
 #--------------------------------------------------------------------------------------
 # copy default database configuration
@@ -61,7 +87,10 @@ restorexCATdb -p /tmp/xcattables
 
 # Fix for #149
 ip addr a 10.141.255.254/16 dev $ETH2
+
+# Now apply patches
 cd /opt/xcat/share/xcat/netboot/centos
+
 ln -s ../rh/dracut_033 .
 ln -s ../rh/dracut .
 
@@ -126,17 +155,15 @@ exportfs -a
 # Create installation tree
 #--------------------------------------------------------------------------------------
 echo "Creating installation tree"
-# updates and extras are required to install docker
-# reposync -n -r updates -r extras -p /install/post/otherpkgs/centos7.0/x86_64/
 copycds -o -n centos7.0 /tmp/trinity/iso/$(ls -cr /tmp/trinity/iso/*.iso | head -1)
-# copy openvswitch
-# yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-icehouse/rdo-release-icehouse-4.noarch.rpm
-# yum -y install --downloadonly --downloaddir=/install/post/otherpkgs/centos7.0/x86_64/openstack openvswitch
-# now bundle into a repository
-# reposync -n -r updates -r extras -p /install/post/otherpkgs/centos7.0/x86_64/
 mkdir -p /install/post/otherpkgs/centos7.0/x86_64
+
+# I am not entirely sure about this
+# 1. It will not work without master
+# 2. It creates a different repo layout than is present on master
 reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7.0/x86_64/
 createrepo /install/post/otherpkgs/centos7.0/x86_64/
+
 # generate the image
 genimage centos7.0-x86_64-netboot-trinity
 packimage centos7.0-x86_64-netboot-trinity
@@ -162,7 +189,7 @@ systemctl start docker docker-registry
 docker build -t controller:5050/trinity /trinity/compute
 docker push controller:5050/trinity
 
-echo "xcat installed" >> /var/log/postinstall.log
+echo $0 "finished" >> /var/log/postinstall.log
 #--------------------------------------------------------------------------------------
 # cleanup
 #--------------------------------------------------------------------------------------
