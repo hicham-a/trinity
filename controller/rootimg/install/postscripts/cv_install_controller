@@ -150,20 +150,6 @@ END
 
 exportfs -a
 
-#--------------------------------------------------------------------------------------
-# Selective updates
-# Create installation tree
-#--------------------------------------------------------------------------------------
-echo "Creating installation tree"
-copycds -o -n centos7.0 /tmp/trinity/iso/$(ls -cr /tmp/trinity/iso/*.iso | head -1)
-mkdir -p /install/post/otherpkgs/centos7.0/x86_64
-
-# I am not entirely sure about this
-# 1. It will not work without master
-# 2. It creates a different repo layout than is present on master
-reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7.0/x86_64/
-createrepo /install/post/otherpkgs/centos7.0/x86_64/
-
 # generate the image
 genimage centos7.0-x86_64-netboot-trinity
 packimage centos7.0-x86_64-netboot-trinity
