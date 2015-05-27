@@ -156,7 +156,6 @@ systemctl start docker docker-registry
 docker build -t controller:5050/trinity /trinity/compute
 docker push controller:5050/trinity
 
-echo "xcat installed" >> /var/log/postinstall.log
 #--------------------------------------------------------------------------------------
 # cleanup
 #--------------------------------------------------------------------------------------
@@ -164,5 +163,6 @@ echo "xcat installed" >> /var/log/postinstall.log
 #umount /tmp/trinity
 #rmdir /tmp/trinity
 
+echo "$0 finished" >> /var/log/postinstall.log
 exit 0
 

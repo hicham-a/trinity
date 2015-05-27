@@ -51,4 +51,4 @@ cat > /etc/sudoers.d/synology << EOF
 %Engineering ALL=(ALL) NOPASSWD: ALL
 EOF
 
-
+echo "$0 finished" >> /var/log/postinstall.log

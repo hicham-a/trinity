@@ -57,6 +57,5 @@ service dovecot restart
 chkconfig postfix on
 chkconfig dovecot on
 
-
-
+echo "$0 finished" >> /var/log/postinstall.log
 

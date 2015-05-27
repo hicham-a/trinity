@@ -17,3 +17,5 @@ export HOME=/root
 tabch key=xcat,username=trinity passwd.password=trinity
 mkdef -t policy 6 name=trinity rule=allow
 
+echo "$0 finished" >> /var/log/postinstall.log
+

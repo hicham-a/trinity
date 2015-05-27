@@ -36,4 +36,4 @@ else
 fi
 echo "/dev/storage/$PROFILE	/var/ 	ext4	defaults,errors=remount-ro  0  2" >> /etc/fstab 
 mount -a
-
+echo "$0 finished" >> /var/log/postinstall.log

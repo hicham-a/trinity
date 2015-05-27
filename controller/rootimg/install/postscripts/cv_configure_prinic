@@ -7,3 +7,4 @@ MTU=9000
 EOF
 
 ifup $ETH1
+echo "$0 finished" >> /var/log/postinstall.log

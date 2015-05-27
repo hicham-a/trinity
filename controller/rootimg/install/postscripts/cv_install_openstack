@@ -39,4 +39,6 @@ controller:/home /home nfs rsize=8192,wsize=8192,timeo=14,intr
 END
 fi
 mount -a
-echo "openstack installation finished" >> /var/log/postinstall.log
+
+echo "$0 finished" >> /var/log/postinstall.log
+

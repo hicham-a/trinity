@@ -108,5 +108,6 @@ copycds -o /trinity/iso/*.iso
 
 /root/trinity/master/create_repo_snapshot.sh
 
+echo "$0 finished" >> /var/log/postinstall.log
 exit 0
 
