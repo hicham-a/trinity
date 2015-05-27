@@ -133,17 +133,15 @@ exportfs -a
 #--------------------------------------------------------------------------------------
 # Create installation tree
 #--------------------------------------------------------------------------------------
-echo "Creating installation tree"
-# updates and extras are required to install docker
+iso=$(ls -cr /tmp/trinity/iso/*.iso | head -1)
+echo "Creating installation tree in $iso"
 reposync -n -r updates -r extras -p /install/post/otherpkgs/centos7.0/x86_64/
-copycds -o -n centos7.0 $(ls -cr /tmp/trinity/iso/*.iso | head -1)
-# copy openvswitch
+copycds -o -n centos7.0 $iso
 mkdir -p /install/post/otherpkgs/centos7.0/x86_64/openstack
 yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-icehouse/rdo-release-icehouse-4.noarch.rpm
 yum -y install --downloadonly --downloaddir=/install/post/otherpkgs/centos7.0/x86_64/openstack openvswitch
-# now bundle into a repository
 createrepo /install/post/otherpkgs/centos7.0/x86_64/
-# generate the image
+
 genimage centos7.0-x86_64-netboot-trinity
 packimage centos7.0-x86_64-netboot-trinity
 
