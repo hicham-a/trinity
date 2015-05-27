@@ -18,18 +18,16 @@ main(){
   lvm2
   )
   install_packages package_list
-  set -x
   systemctl enable lvm2-lvmetad.service
   systemctl start lvm2-lvmetad.service
-  set +x
   
   # TODO: The name of the phys. vols. should be determined automagically
   # TODO: Do we also need to modify lvm.conf?
-  # Create the LVM physical volume /dev/sdb1:
-  pvcreate /dev/sdb1
+  # Create the LVM physical volume /dev/sda:
+  pvcreate /dev/sda
   
   #Create the LVM volume group cinder-volumes:
-  vgcreate cinder-volumes /dev/sdb1
+  vgcreate cinder-volumes /dev/sda
   
   echo "--- Configuring OpenStack Cinder ---- "
   package_list=(
@@ -40,25 +38,24 @@ main(){
   openstack-utils
   openstack-cinder
   )
-  install_packages package_list
+  # install_packages ${package_list}
   
   echo "--- Editing /etc/cinder/cinder.conf"
-  set -x
   # Set up access to the backend database
   openstack-config --set /etc/cinder/cinder.conf database connection mysql://cinder:${CINDER_DBPASS}@${OPENSTACK_CONTROLLER}/cinder
   
   # Set up the message broker (rabbit_mq)
   # -- NOTE: The rpc_password needs to be identical to that in the openstack controller
   openstack-config --set /etc/cinder/cinder.conf DEFAULT rpc_backend rabbit
-  openstack-config --set /etc/cinder/cinder.conf DEFAULT rabbit_host  openstack
-  openstack-config --set /etc/cinder/cinder.conf DEFAULT rpc_password ${RPC_PASS}
+  openstack-config --set /etc/cinder/cinder.conf DEFAULT rabbit_host  ${OPENSTACK_CONTROLLER}
+  openstack-config --set /etc/cinder/cinder.conf DEFAULT rabbit_password ${RPC_PASS}
   
   # set up the authentication service
   # -- NOTE: The admin_password needs to be identical to that in the openstack controller
   openstack-config --set /etc/cinder/cinder.conf DEFAULT auth_strategy keystone
   openstack-config --set /etc/cinder/cinder.conf keystone_authtoken auth_uri http://${OPENSTACK_CONTROLLER}:5000/v2.0
   openstack-config --set /etc/cinder/cinder.conf keystone_authtoken identity_uri http://${OPENSTACK_CONTROLLER}:35357
-  openstack-config --set /etc/cinder/cinder.conf keystone_authtoken admin_tenant_name service
+  openstack-config --set /etc/cinder/cinder.conf keystone_authtoken admin_tenant_name services
   openstack-config --set /etc/cinder/cinder.conf keystone_authtoken admin_user cinder
   openstack-config --set /etc/cinder/cinder.conf keystone_authtoken admin_password ${CINDER_PASS}
   openstack-config --del /etc/cinder/cinder.conf keystone_authtoken auth_host
@@ -76,13 +73,10 @@ main(){
   
   # enable verbose logging
   openstack-config --set /etc/cinder/cinder.conf DEFAULT verbose True
-  set +x
   echo "-----------------------------------"  
   
-  set -x
   systemctl enable openstack-cinder-volume.service target.service
   systemctl start openstack-cinder-volume.service target.service
-  set +x
 }
 
 # Main script
