@@ -7,7 +7,7 @@ yum -y install device-mapper
 yum -y update device-mapper
 yum -y install docker docker-registry
 sed -i 's/REGISTRY_PORT=.*/REGISTRY_PORT=5050/' /etc/sysconfig/docker-registry
-sed -i 's/OPTIONS=\(.*\)/OPTIONS=--insecure-registry controller:5050 --bip=10.146.255.254/16 --fixed-cidr=10.146.255.255/16 \1/' /etc/sysconfig/docker
+sed -i 's/OPTIONS=\(.*\)/OPTIONS=--insecure-registry controller:5050 --bip=10.146.255.254\/16 --fixed-cidr=10.146.255.255\/16 \1/' /etc/sysconfig/docker
 echo "10.141.255.254 controller" >>  /etc/hosts
 systemctl enable docker docker-registry
 systemctl start docker docker-registry
