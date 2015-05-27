@@ -125,15 +125,9 @@ exportfs -a
 # Selective updates
 # Create installation tree
 #--------------------------------------------------------------------------------------
-echo "Creating installation tree"
-# updates and extras are required to install docker
-# reposync -n -r updates -r extras -p /install/post/otherpkgs/centos7.0/x86_64/
-copycds -o -n centos7.0 /tmp/trinity/iso/$(ls -cr /tmp/trinity/iso/*.iso | head -1)
-# copy openvswitch
-# yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-icehouse/rdo-release-icehouse-4.noarch.rpm
-# yum -y install --downloadonly --downloaddir=/install/post/otherpkgs/centos7.0/x86_64/openstack openvswitch
-# now bundle into a repository
-# reposync -n -r updates -r extras -p /install/post/otherpkgs/centos7.0/x86_64/
+iso=$(ls -c /tmp/trinity/iso/*.iso | head -1)
+echo "Creating installation tree from $iso"
+copycds -o -n centos7.0 /tmp/trinity/iso/$iso
 mkdir -p /install/post/otherpkgs/centos7.0/x86_64
 reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7.0/x86_64/
 createrepo /install/post/otherpkgs/centos7.0/x86_64/
@@ -155,7 +149,7 @@ chown 1002:1002 /cluster/vc-a/etc/munge/munge.key
 #--------------------------------------------------------------------------------------
 yum -y install docker docker-registry
 sed -i 's/REGISTRY_PORT=.*/REGISTRY_PORT=5050/' /etc/sysconfig/docker-registry
-sed -i 's/OPTIONS=\(.*\)/OPTIONS=--insecure-registry controller:5050 --bip=10.146.255.254/16 --fixed-cidr=10.146.255.255/16 \1/' /etc/sysconfig/docker
+sed -i 's/OPTIONS=\(.*\)/OPTIONS=--insecure-registry controller:5050 --bip=10.146.255.254\/16 --fixed-cidr=10.146.255.255\/16 \1/' /etc/sysconfig/docker
 echo "10.141.255.254 controller" >>  /etc/hosts
 systemctl enable docker docker-registry
 systemctl start docker docker-registry

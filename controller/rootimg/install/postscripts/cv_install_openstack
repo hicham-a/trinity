@@ -1,19 +1,9 @@
 #!/bin/bash
 
-cd /etc/yum.repos.d
-for file in * ; do sed -i 's/enabled=0/enabled=1/g' $file; done
-sed -i 's/enabled=1/enabled=0/g' local-repository.repo
-cd -
-
 systemctl stop NetworkManager
 systemctl disable NetworkManager
 
-yum -y install epel-release
-yum -y install https://rdo.fedorapeople.org/rdo-release.rpm
 yum -y install openstack-packstack
-
-# Now, find a way to get the packstack answers file from the controller
-# to here.
 
 sed "s/=127.0.0.1/=$(hostname -I)/g" //xcatpost/packstack-answers.txt > /tmp/packstack-answers.txt
 read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
@@ -40,6 +30,7 @@ mkdir -p /home
 mkdir -p /cluster
 mkdir -p /trinity
 
+# FIXME: use a rootimg mechanism for this.
 if ! grep controller:/cluster /etc/fstab > /dev/null; then
 cat << END >> /etc/fstab
 controller:/cluster /cluster nfs rsize=8192,wsize=8192,timeo=14,intr
