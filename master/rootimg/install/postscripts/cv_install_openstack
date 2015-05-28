@@ -16,11 +16,10 @@ yum -y install epel-release
 yum -y install https://rdo.fedorapeople.org/rdo-release.rpm
 yum -y install openstack-packstack
 
-# Now, find a way to get the packstack answers file from the controller
-# to here.
-
-sed "s/=127.0.0.1/=$(hostname -i)/g" //xcatpost/packstack-answers.txt > /tmp/packstack-answers.txt
+# Parameterize openstack to the local system.
 read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
+IP=$(ip addr show dev $ETH1 | grep "inet " | awk '{print $2}' | awk -F/ '{print $1}')
+sed "s/=127.0.0.1/=${IP}/g" //xcatpost/packstack-answers.txt > /tmp/packstack-answers.txt
 sed -e "s/\<eno1\>/$ETH1/g" -e "s/\<eno2\>/$ETH2/g"  -e "s/\<eno3\>/$ETH3/g" -i /tmp/packstack-answers.txt
 
 export HOME=/root
