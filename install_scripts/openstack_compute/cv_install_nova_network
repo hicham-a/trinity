@@ -42,7 +42,7 @@ main(){
 
 
 # Main script
-start_logging ${LOGFILE}
+# start_logging ${LOGFILE}
 print_header "$(basename $0)"
 main "$@"
 print_tail "$(basename $0)"

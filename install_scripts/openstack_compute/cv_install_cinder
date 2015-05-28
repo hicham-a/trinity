@@ -21,13 +21,27 @@ main(){
   systemctl enable lvm2-lvmetad.service
   systemctl start lvm2-lvmetad.service
   
-  # TODO: The name of the phys. vols. should be determined automagically
   # TODO: Do we also need to modify lvm.conf?
-  # Create the LVM physical volume /dev/sda:
-  pvcreate /dev/sda
-  
-  #Create the LVM volume group cinder-volumes:
-  vgcreate cinder-volumes /dev/sda
+  # TOTO: Add a partition table if necessary
+  if vgdisplay | grep cinder-volumes ; then
+    echo "Cinder-volumes exist!"
+  else
+    # Remove existing volume groups
+    umount -a -t ext4
+    for VG in $(vgs --noheadings | grep -v "No Volumes" | awk -F' ' '{print $1}'); do 
+      vgchange -a n ${VG}
+      vgremove -f ${VG}
+    done
+
+    DISK=$(lsblk --noheadings --list --output KNAME,TYPE | awk '{if ($2 == "disk") print $1}' | sort | head -1)
+    dd if=/dev/zero of=/dev/${DISK} bs=512 count=1
+    blockdev --rereadpt /dev/${DISK}   
+    # Create the LVM physical volume:
+    pvcreate /dev/${DISK}
+    # Create the LVM volume group cinder-volumes:
+    vgcreate cinder-volumes /dev/${DISK}
+  fi
+
   
   echo "--- Configuring OpenStack Cinder ---- "
   package_list=(
@@ -80,7 +94,7 @@ main(){
 }
 
 # Main script
-start_logging ${LOGFILE}
+# start_logging ${LOGFILE}
 print_header "$(basename $0)"
 main "$@"
 print_tail "$(basename $0)"

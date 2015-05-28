@@ -27,7 +27,12 @@ main(){
   )
   # install_packages ${package_list}
   setenforce 0
- 
+  
+  systemctl stop NetworkManager
+  systemctl disable NetworkManager
+  killall dhclient
+  systemctl start network
+
   echo "----Editing /etc/nova/nova.conf----"  
   # Set up the message broker (rabbit_mq)
   # -- NOTE: The rpc_password needs to be identical to that in the openstack controller
@@ -70,7 +75,7 @@ main(){
 
 
 # Main script
-start_logging ${LOGFILE}
+# start_logging ${LOGFILE}
 print_header "$(basename $0)"
 main "$@"
 print_tail "$(basename $0)"
