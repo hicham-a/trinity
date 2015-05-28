@@ -68,21 +68,3 @@ cat << EOF > $installroot/usr/share/Modules/init/.modulespath
 /trinity/clustervision/modulefiles
 EOF
 
-# NOTE: we do not use docker0 for networking the containers
-#-- disable the docker bridge
-ip link set docker0 down || true
-brctl delbr docker0 || true
-#-- flush iptable rules created by Docker 
-iptables -F
-iptables -X
-iptables -t nat -F
-iptables -t nat -X
-iptables -t mangle -F
-iptables -t mangle -X
-iptables -t raw -F
-iptables -t raw -X
-iptables -t security -F
-iptables -t security -X
-iptables -P INPUT ACCEPT
-iptables -P FORWARD ACCEPT
-iptables -P OUTPUT ACCEPT
