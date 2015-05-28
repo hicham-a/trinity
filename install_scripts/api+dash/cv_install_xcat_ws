@@ -17,5 +17,5 @@ tabch key=xcat,username=trinity passwd.password=trinity
 mkdef -t policy 6 name=trinity rule=allow
 
 # Fix permissions in the httpd.conf file
-sed  -e "/<Directory \/>/,/<\/Directory>/ s/Require/#Require/" -i httpd.conf
+sed  -e "/<Directory \/>/,/<\/Directory>/ s/Require/#Require/" -i /etc/httpd/conf/httpd.conf
 service httpd restart
