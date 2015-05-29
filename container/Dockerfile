@@ -9,12 +9,12 @@ RUN useradd munge -u 1002 -U && useradd slurm -u 1001 -U && \
     chown munge:munge /var/run/munge
 
 RUN yum -y install openssh-server openssh-clients python-pip vim-minimal \
-           infiniband-diags munge rsyslog bind-utils perl perl-DBI perl-Switch \
-           openldap-clients nss-pam-ldapd authconfig environment-modules \
-           infinipath-psm \
-           xauth \
-           vim-enhanced \
-           hostname  && yum clean all
+    infiniband-diags munge rsyslog bind-utils perl perl-DBI perl-Switch \
+    openldap-clients nss-pam-ldapd authconfig environment-modules \
+    infinipath-psm \
+    xauth \
+    vim-enhanced \
+    hostname  && yum clean all
 
 RUN mkdir -p /var/run/sshd && \
     chmod -rx /var/run/sshd && \
@@ -23,17 +23,9 @@ RUN mkdir -p /var/run/sshd && \
     sed -ri 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/g' /etc/ssh/sshd_config
 
 RUN pip install supervisor
-ADD supervisord.conf /usr/etc/supervisord.conf
-
-#RUN sed -ri 's/^#PermitRootLogin yes/PermitRootLogin yes/g' /etc/ssh/sshd_config 
-#RUN sed -ri 's/UsePAM yes/#UsePAM yes/g' /etc/ssh/sshd_config
-#RUN sed -ri 's/#UsePAM no/UsePAM no/g' /etc/ssh/sshd_config
-
-ADD nsswitch.conf /etc/nsswitch.conf
-ADD pam_ldap.conf /etc/pam_ldap.conf
-ADD nslcd.conf /etc/nslcd.conf
-ADD pam.d/ /etc/pam.d
+COPY rootimg /
 
 ADD rpms /rpms
 RUN yum install -y /rpms/*.rpm
-CMD ["/usr/bin/supervisord", "-c", "/usr/etc/supervisord.conf"]
+
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
