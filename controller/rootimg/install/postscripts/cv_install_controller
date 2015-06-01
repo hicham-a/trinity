@@ -68,6 +68,8 @@ ln -s ../rh/dracut .
 cd /
 cat /tmp/trinity/controller/xcat/patches/*.patch | patch -p0
 systemctl restart xcatd
+systemctl enable ntpd
+systemctl start ntpd
 makedhcp -n
 makehosts -n
 makedns -n
@@ -131,7 +133,7 @@ copycds -o -n centos7.0 /tmp/trinity/iso/$iso
 mkdir -p /install/post/otherpkgs/centos7.0/x86_64
 reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7.0/x86_64/
 createrepo /install/post/otherpkgs/centos7.0/x86_64/
-# generate the image
+
 genimage centos7.0-x86_64-netboot-trinity
 packimage centos7.0-x86_64-netboot-trinity
 
