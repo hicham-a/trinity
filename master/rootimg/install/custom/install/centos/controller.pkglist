@@ -13,3 +13,6 @@ net-tools
 xorg-x11-xauth
 yum-utils
 bind-utils
+
+# See #204
+perl-Digest-SHA1
