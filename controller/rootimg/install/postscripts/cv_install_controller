@@ -129,7 +129,7 @@ exportfs -a
 #--------------------------------------------------------------------------------------
 iso=$(ls -c /tmp/trinity/iso/*.iso | head -1)
 echo "Creating installation tree from $iso"
-copycds -o -n centos7.0 /tmp/trinity/iso/$iso
+copycds -o -n centos7.0 $iso
 mkdir -p /install/post/otherpkgs/centos7.0/x86_64
 reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7.0/x86_64/
 createrepo /install/post/otherpkgs/centos7.0/x86_64/
