@@ -77,3 +77,4 @@ bridge-utils
 tar
 # Fix for #242
 pciutils
+dmidecode
