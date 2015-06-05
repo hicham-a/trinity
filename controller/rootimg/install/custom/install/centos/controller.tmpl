@@ -158,11 +158,21 @@ reboot
 #INCLUDE:#ENV:XCATROOT#/share/xcat/install/scripts/pre.rh.rhel7#
 
 read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
+n=$(echo $HOSTNAME | sed -r  's/^[^0-9]*([0-9]+).*/\1/')       # extract node number
+
+if [[ -z $n ]]; then                                           # we assume it is a single controller
+    my_ip=10.141.255.254                                       # give it the floating ip address
+    my_hostname=controller.cluster
+else
+    n=$((($n+1)%2+1))                                          # normalize to 1 or 2
+    my_ip=10.141.255.$((254-$n))                               # use a different fixed ip address
+    my_hostname=controller-$n.cluster
+fi
 
 cat > /tmp/trinity-networking << EOF
-network  --bootproto=static --device=$ETH2 --gateway=10.141.255.254 --ip=10.141.255.254 --netmask=255.255.0.0 --ipv6=auto --nodefroute --onboot=yes
+network  --bootproto=static --device=$ETH2 --gateway=10.141.255.254 --ip=$my_ip --netmask=255.255.0.0 --ipv6=auto --nodefroute --onboot=yes
 network  --bootproto=dhcp --device=$ETH1 --ipv6=auto --onboot=yes
-network  --hostname=controller.cluster
+network  --hostname=$my_hostname
 EOF
 
 %end
