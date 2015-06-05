@@ -1,0 +1,74 @@
+yum -y install perl-DBD-MySQL mysql-server mysql mysql-devel mysql-bench mysql-connector-odbc unixODBC
+
+ip route add default via 10.141.255.254 
+#-----------------------------------------------------------------------------------------------
+# first we setup pacemaker
+#-----------------------------------------------------------------------------------------------
+
+yum -y install epel-release
+yum -y install drbdlinks
+yum -y install pacemaker
+yum -y install pcs fence-agents-all
+systemctl start pcsd
+systemctl start pacemaker 
+
+echo system | passwd hacluster --stdin
+
+yum -y install http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
+yum -y install drbd84-utils kmod-drbd84
+
+
+#-------------------------------------------------------------
+# configure drbd
+#------------------------------------------------------------
+
+systemctl disable drbd 
+systemctl disable dhcpd
+systemctl disable xcatd
+systemctl disable httpd
+systemctl disable mysqld
+
+systemctl stop drbd 
+systemctl stop dhcpd
+systemctl stop xcatd
+systemctl stop httpd
+systemctl stop mysqld
+
+sed -i -e "/vg_root-lv_drbd/d" /etc/fstab
+umount /drbd
+
+# Just to make sure, we clear the disk
+# dd if=/dev/zero of=/dev/mapper/vg_root-lv_drbd
+
+cat <<EOF >/etc/drbd.d/ha_disk.res
+resource ha_disk {
+       net {
+         after-sb-0pri discard-least-changes;
+         after-sb-1pri consensus;
+         after-sb-2pri call-pri-lost-after-sb;
+       }
+       on node001.cluster {
+         device    /dev/drbd1;
+         disk      /dev/mapper/vg_root-lv_drbd;
+         address   10.141.0.1:7789;
+         meta-disk internal;
+       }
+       on node002.cluster {
+         device    /dev/drbd1;
+         disk      /dev/mapper/vg_root-lv_drbd;
+         address   10.141.0.2:7789;
+         meta-disk internal;
+       }
+     }
+EOF
+
+drbdadm create-md ha_disk
+modprobe drbd
+drbdadm up ha_disk
+
+
+pcs cluster auth node001.cluster node002.cluster -u hacluster -p system
+pcs cluster setup --name xCAT node001.cluster node002.cluster
+pcs cluster start
+
+echo "$0 finished" >> /var/log.postinstall.log

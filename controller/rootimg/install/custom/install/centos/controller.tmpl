@@ -32,11 +32,18 @@ clearpart --all --initlabel
 
 #XCAT_PARTITION_START#
 #No RAID
-#/boot really significant for this sort of setup nowadays?
-#part /boot --size 50 --fstype ext3
-%include /tmp/partitioning
-#part swap --size 1024 
-#part / --size 1 --grow --fstype ext4
+# %include /tmp/partitioning
+
+part /boot --fstype ext3 --size=700
+part swap --size=2048
+part pv.01 --size=1 --grow
+volgroup vg_root pv.01
+logvol  /  --vgname=vg_root  --size=8192  --name=lv_root
+logvol  /tmp  --vgname=vg_root  --size=2048  --name=lv_tmp
+logvol  /var  --vgname=vg_root  --size=8192  --name=lv_var
+logvol  /drbd  --vgname=vg_root  --size=8192  --name=lv_drbd
+logvol  /spare  --vgname=vg_root  --size=1 --grow  --name=lv_spare
+
 #XCAT_PARTITION_END#
 
 #RAID 0 /scr for performance
