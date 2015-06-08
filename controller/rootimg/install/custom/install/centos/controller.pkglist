@@ -18,3 +18,6 @@ net-snmp-utils
 
 #
 iptables-services
+
+# Fix for #242
+pciutils
