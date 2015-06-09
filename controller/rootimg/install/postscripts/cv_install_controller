@@ -1,4 +1,11 @@
-#!/bin/bash
+#! /usr/bin/bash
+##title          : cv_install_openstack
+##description    : Installs an xCAT controller node. Additionally it also configures
+##                 the xCAT web service 
+##author         : Hans Then & Abhishek Mukherjee
+##email          : hans.then@clustervision
+##                 abhishek.mukherjee@clustervision.com
+
 
 # see http://stackoverflow.com/questions/3173131/redirect-copy-of-stdout-to-log-file-from-within-bash-script-itself
 #exec > >(tee /var/log/postinstall.log)
@@ -14,10 +21,17 @@ mkdir /tmp/trinity
 mount master:/trinity /tmp/trinity       
 mkdir /trinity
 
+#--------------------------------------------------------------------------------------
+# copy required files from the master node to the controller node
+#--------------------------------------------------------------------------------------
+cp --dereference --recursive --verbose --preserve /tmp/trinity/controller/rootimg/* /
+cp /tmp/trinity/version /trinity/version
+
+
 # copy all required module files etc to the right locations
 # note to self: only /trinity/env needs be mounted inside the container
 # FIXME: this takes an awful amount of time
-cp -r /tmp/trinity/clustervision /trinity &
+cp --dereference --recursive --verbose --preserve /tmp/trinity/clustervision /trinity &
 
 #--------------------------------------------------------------------------------------
 # HTH: disable this
@@ -29,11 +43,6 @@ cp -r /tmp/trinity/clustervision /trinity &
 #sed -i 's/enabled=1/enabled=0/g' local-repository.repo
 #cd -
 
-#--------------------------------------------------------------------------------------
-# copy required files from the master node to the controller node
-#--------------------------------------------------------------------------------------
-cp -r /tmp/trinity/controller/rootimg/* / 
-cp /tmp/trinity/version /trinity/version
 
 #--------------------------------------------------------------------------------------
 # create runimages
@@ -92,10 +101,21 @@ service iptables save
 # setup routing for the virtual clusters
 #--------------------------------------------------------------------------------------
 ip route add 172.16.0.0/12 dev $ETH2
-cat << END > /etc/sysconfig/network-scripts/route-$ETH2 
-ADDRESS0=172.16.0.0
-NETMASK0=255.240.0.0
-END
+mv /etc/sysconfig/network-scripts/route-eno2-trinity /etc/sysconfig/network-scripts/route-${ETH2}-trinity
+sort -u /etc/sysconfig/network-scripts/route-${ETH2}* | \
+  awk ' \
+    BEGIN {print "# Created by trinity";}; \
+    {if ($0!~/^\#/ && $0 !~/^$/) {route=route RS $0}}; \
+    END {print route}
+  ' > /tmp/route-${ETH2}
+rm /etc/sysconfig/network-scripts/route-${ETH2}*
+mv /tmp/route-${ETH2} /etc/sysconfig/network-scripts/route-${ETH2}
+
+##cp-rootimg
+##cat << END > /etc/sysconfig/network-scripts/route-$ETH2 
+##ADDRESS0=172.16.0.0
+##NETMASK0=255.240.0.0
+##END
 
 #--------------------------------------------------------------------------------------
 # Start opensm on the controller
@@ -113,13 +133,22 @@ systemctl start opensm
 systemctl enable nfs-server
 systemctl start nfs-server
 
-cat << END > /etc/exports 
-/tftpboot *(rw,no_root_squash,sync,no_subtree_check)
-/install *(rw,no_root_squash,sync,no_subtree_check)
-/trinity *(rw,sync,no_root_squash,no_all_squash)
-/cluster *(rw,sync,no_root_squash,no_all_squash)
-/home *(rw,sync,no_root_squash,no_all_squash)
-END
+sort -u /etc/exports* | \
+  awk ' \
+    BEGIN {print "# Created by trinity";}; \
+    {if ($0!~/^\#/ && $0 !~/^$/) {exports=exports RS $0}}}; \
+    END {print exports}
+  ' > /tmp/exports
+rm /etc/exports*
+mv /tmp/exports /etc/exports
+##cp-rootimg
+##cat << END > /etc/exports 
+##/tftpboot *(rw,no_root_squash,sync,no_subtree_check)
+##/install *(rw,no_root_squash,sync,no_subtree_check)
+##/trinity *(rw,sync,no_root_squash,no_all_squash)
+##/cluster *(rw,sync,no_root_squash,no_all_squash)
+##/home *(rw,sync,no_root_squash,no_all_squash)
+##END
 
 exportfs -a
 
@@ -155,7 +184,7 @@ sed -i 's/OPTIONS=\(.*\)/OPTIONS=--insecure-registry controller:5050 --bip=10.14
 echo "10.141.255.254 controller" >>  /etc/hosts
 systemctl enable docker docker-registry
 systemctl start docker docker-registry
-docker build -t controller:5050/trinity /trinity/compute
+docker build -t controller:5050/trinity /trinity/container
 docker push controller:5050/trinity
 
 #--------------------------------------------------------------------------------------
@@ -165,6 +194,23 @@ docker push controller:5050/trinity
 #umount /tmp/trinity
 #rmdir /tmp/trinity
 
-echo "$0 finished" >> /var/log/postinstall.log
+#--------------------------------------------
+# Install the xCAT web service
+#--------------------------------------------
+# The xCAT web service requires the following
+yum -y install mod_ssl
+service httpd restart
+yum -y install perl-JSON
+
+# Set up the xCAT web service
+useradd trinity
+echo "trinity" | passwd trinity --stdin
+source /etc/profile.d/xcat.sh
+export HOME=/root
+tabch key=xcat,username=trinity passwd.password=trinity
+mkdef -t policy 6 name=trinity rule=allow
+sed  -e "/<Directory \/>/,/<\/Directory>/ s/Require/#Require/" -i /etc/httpd/conf/httpd.conf
+service httpd restart
+
 exit 0
 
