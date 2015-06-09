@@ -13,7 +13,7 @@ systemctl stop NetworkManager
 systemctl disable NetworkManager
 
 yum -y install epel-release
-yum -y install https://rdo.fedorapeople.org/rdo-release.rpm
+yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno-1.noarch.rpm
 yum -y install openstack-packstack
 
 # Parameterize openstack to the local system.
