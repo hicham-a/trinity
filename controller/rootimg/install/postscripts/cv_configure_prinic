@@ -1,6 +1,6 @@
 read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
 cat > /etc/sysconfig/network-scripts/ifcfg-$ETH1 << EOF
-ONBOOT=no
+ONBOOT=yes
 BOOTPROTO=dhcp
 DEVICE=$ETH1
 MTU=9000
