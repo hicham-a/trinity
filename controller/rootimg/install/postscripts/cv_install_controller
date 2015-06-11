@@ -1,5 +1,5 @@
 #! /usr/bin/bash
-##title          : cv_install_openstack
+##title          : cv_install_controller
 ##description    : Installs an xCAT controller node. Additionally it also configures
 ##                 the xCAT web service 
 ##author         : Hans Then & Abhishek Mukherjee
@@ -101,15 +101,15 @@ service iptables save
 # setup routing for the virtual clusters
 #--------------------------------------------------------------------------------------
 ip route add 172.16.0.0/12 dev $ETH2
-mv /etc/sysconfig/network-scripts/route-eno2-trinity /etc/sysconfig/network-scripts/route-${ETH2}-trinity
+mv -f /etc/sysconfig/network-scripts/route-eno2-trinity /etc/sysconfig/network-scripts/route-${ETH2}-trinity
 sort -u /etc/sysconfig/network-scripts/route-${ETH2}* | \
   awk ' \
     BEGIN {print "# Created by trinity";}; \
     {if ($0!~/^\#/ && $0 !~/^$/) {route=route RS $0}}; \
     END {print route}
   ' > /tmp/route-${ETH2}
-rm /etc/sysconfig/network-scripts/route-${ETH2}*
-mv /tmp/route-${ETH2} /etc/sysconfig/network-scripts/route-${ETH2}
+rm -f /etc/sysconfig/network-scripts/route-${ETH2}*
+mv -f /tmp/route-${ETH2} /etc/sysconfig/network-scripts/route-${ETH2}
 
 ##cp-rootimg
 ##cat << END > /etc/sysconfig/network-scripts/route-$ETH2 
@@ -128,19 +128,19 @@ systemctl enable opensm
 systemctl start opensm
 
 #--------------------------------------------------------------------------------------
-# now setup NFS
+# now setup NFS exports
 #--------------------------------------------------------------------------------------
 systemctl enable nfs-server
 systemctl start nfs-server
 
-sort -u /etc/exports* | \
-  awk ' \
-    BEGIN {print "# Created by trinity";}; \
-    {if ($0!~/^\#/ && $0 !~/^$/) {exports=exports RS $0}}}; \
-    END {print exports}
-  ' > /tmp/exports
-rm /etc/exports*
-mv /tmp/exports /etc/exports
+#sort -u /etc/exports* | \
+#  awk ' \
+#    BEGIN {print "# Created by trinity";}; \
+#    {if ($0!~/^\#/ && $0 !~/^$/) {exports=exports RS $0}}}; \
+#    END {print exports}
+#  ' > /tmp/exports
+#rm /etc/exports*
+#mv /tmp/exports /etc/exports
 ##cp-rootimg
 ##cat << END > /etc/exports 
 ##/tftpboot *(rw,no_root_squash,sync,no_subtree_check)

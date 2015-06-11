@@ -51,8 +51,8 @@ sort -u /etc/fstab* | \
     {if ($0!~/^\#/ && $0 !~/^$/) {if ($0~/nfs/) {nfs=nfs RS $0} else {local=local RS $0}}}; \
     END {print "# local filesystems" local RS "# remote filesystems" nfs}
   ' > /tmp/fstab
-rm /etc/fstab*
-mv /tmp/fstab /etc/fstab
+rm -f /etc/fstab*
+mv -f /tmp/fstab /etc/fstab
 ##cp-rootimg
 # FIXME: use a rootimg mechanism for this.
 ##if ! grep controller:/cluster /etc/fstab > /dev/null; then
@@ -83,7 +83,7 @@ cd /opt/trinity/trinity_api
 python setup.py install
 cd -
 sed "s/127.0.0.1/$(hostname -I| awk '{print $1}')/g" /etc/trinity/trinity_api.conf > /tmp/trinity_api.conf
-mv /tmp/trinity_api.conf /etc/trinity/trinity_api.conf
+mv -f /tmp/trinity_api.conf /etc/trinity/trinity_api.conf
 mkdir -p /var/log/trinity
 mkdir -p /var/run/trinity
 
@@ -98,7 +98,7 @@ cd /opt/trinity/trinity_client
 python setup.py install
 cd -
 sed "s/127.0.0.1/$(hostname -I| awk '{print $1}')/g" /etc/trinity/trinity_client.conf > /tmp/trinity_client.conf
-mv /tmp/trinity_client.conf /etc/trinity/trinity_client.conf
+mv -f /tmp/trinity_client.conf /etc/trinity/trinity_client.conf
 
 #--------------------------------------------------
 # Install the dashboard additions
