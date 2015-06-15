@@ -34,3 +34,5 @@ multisite_users.update(
 EOF
 chown monitoring:monitoring ${users}
 omd start monitoring
+echo "$0 finished" >> /var/log/postinstall.log
+

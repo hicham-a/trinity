@@ -44,4 +44,5 @@ mountpoint -q ${virtual_home} && echo "${virtual_home} is already mounted" || mo
 service trinity_api start
 chkconfig trinity_api on
 
+echo "$0 finished" >> /var/log/postinstall.log
 

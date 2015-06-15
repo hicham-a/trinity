@@ -1,3 +1,4 @@
 #netname,net,mask,mgtifname,gateway,dhcpserver,tftpserver,nameservers,ntpservers,logservers,dynamicrange,staticrange,staticrangeincrement,nodehostname,ddnsdomain,vlanid,domain,comments,disable
-"controllers_net","192.168.1.0","255.255.255.0","eno2","192.168.1.254","192.168.1.254","192.168.1.254","192.168.1.254",,,"192.168.1.230-192.168.1.240",,,,,,,,
+"internal_net","192.168.1.0","255.255.255.0","eno2","192.168.1.254","192.168.1.254","192.168.1.254","192.168.1.254",,,"192.168.1.230-192.168.1.240",,,,,,,,
 "bmc_net","192.168.8.0","255.255.255.0","eno2",,,,,,,,,,,,,,,
+"switch_net","192.168.192.0","255.255.255.0","eno3",,,,,,,,,,,,,,,

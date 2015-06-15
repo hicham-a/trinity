@@ -13,3 +13,4 @@ yum install -y check_mk-agent*.rpm
 chkconfig xinetd on
 service xinetd restart
 iptables -F
+echo "$0 finished" >> /var/log/postinstall.log

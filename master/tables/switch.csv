@@ -1,2 +1,2 @@
 #node,switch,port,vlan,interface,comments,disable
-"controllers","switch-controllers","|\D+(\d+)|GigabitEthernet1/0/($1+0)|",,,,
+"compute","switch","|\D+(\d+)|GigabitEthernet1/0/($1+0)|",,,,

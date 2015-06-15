@@ -1,7 +1,0 @@
-#!/bin/sh
-
-modprobe -r mlx4_core
-modprobe mlx4_core
-
-exit 0
-

@@ -1,0 +1,80 @@
+bash
+yum
+dracut
+dracut-kernel
+dracut-network
+nfs-utils
+openssl
+dhclient
+kernel
+openssh-server
+openssh-clients
+iputils
+bc
+irqbalance
+procps-ng
+wget
+vim-minimal
+ntp
+rpm
+rsync
+rsyslog
+e2fsprogs
+parted
+
+# a few extra diagnostic tools
+net-tools
+traceroute
+
+# required for other stuff
+#readline-devel
+#openssl-devel
+#perl-ExtUtils-MakeMaker
+#perl-Switch
+#pam-devel
+
+# environment modules
+environment-modules
+
+# infiniband diagnostic tools
+infiniband-diags
+
+# Packes required for inifiniband support
+dapl
+ibacm
+ibsim
+ibutils
+libcxgb3
+libibcm
+libibmad
+libibumad
+libibverbs
+libibverbs-utils
+libipathverbs
+libmlx4
+libmthca
+libnes
+librdmacm
+librdmacm-utils
+rdma
+rds-tools
+gd
+graphviz
+graphviz-tcl
+ibutils-libs
+libXaw
+libXmu
+libXpm
+opensm-libs
+swig
+tcl
+tk
+urw-fonts
+
+# LDAP authentication
+openldap-clients
+nss-pam-ldapd
+authconfig
+
+# Required for NFS and LVM
+lvm2

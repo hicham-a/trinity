@@ -31,3 +31,4 @@ echo 'Include "/etc/httpd/conf.modules.d/*.conf"' >> /etc/httpd/conf/httpd.conf
 umount ${file_root}
 
 service httpd restart
+echo "$0 finished" >> /var/log/postinstall.log

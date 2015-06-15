@@ -1,4 +1,0 @@
-if ! ping -c 1 -W 10 $SITEMASTER > /dev/null; then
-   echo Unable to ping $SITEMASTER, network on fire?
-   exit 1
-fi

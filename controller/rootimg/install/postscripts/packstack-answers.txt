@@ -1,1 +1,0 @@
-../../../../master/rootimg/install/postscripts/packstack-answers.txt

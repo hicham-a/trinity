@@ -1,2 +1,2 @@
 #node,currstate,currchain,chain,ondiscover,comments,disable
-"controllers",,,"runcmd=bmcsetup,standby",,,
+"compute",,,"runcmd=bmcsetup,standby",,,
