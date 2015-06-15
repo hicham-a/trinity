@@ -67,3 +67,4 @@ cat << EOF > $installroot/usr/share/Modules/init/.modulespath
 /etc/modulefiles                                # General module files
 /trinity/clustervision/modulefiles
 EOF
+

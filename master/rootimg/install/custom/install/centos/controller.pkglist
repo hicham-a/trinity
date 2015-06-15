@@ -20,3 +20,6 @@ firefox
 
 # See #204
 perl-Digest-SHA1
+
+# see #242
+pciutils

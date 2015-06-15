@@ -40,7 +40,7 @@ class ConfigTable(tables.DataTable):
   class Meta:
     name = "hpc_config"
     verbose_name = _("Current HPC configuration")
-    table_actions=(EditAction,)
+#    table_actions=(EditAction,)
     multi_select = False
 
 
