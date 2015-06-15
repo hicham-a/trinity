@@ -1,0 +1,7 @@
+#!/bin/sh
+
+modprobe -r mlx4_core
+modprobe mlx4_core
+echo "$0 finished" >> /var/log/postinstall.log
+exit 0
+

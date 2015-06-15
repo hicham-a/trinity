@@ -1,0 +1,113 @@
+#!/bin/bash
+
+#--------------------------------------------------------------------------------------
+# correct any network settings
+#--------------------------------------------------------------------------------------
+systemctl stop NetworkManager
+systemctl disable NetworkManager
+killall dhclient
+systemctl start network
+
+# setup NAT, so nodes can access the internet (see manual step 1.f)
+read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
+systemctl start iptables
+systemctl enable iptables
+modprobe iptable_nat
+iptables -A FORWARD -i $ETH2 -j ACCEPT
+iptables -t nat -A POSTROUTING -o $ETH1 -j MASQUERADE
+iptables -D FORWARD -j REJECT --reject-with icmp-host-prohibited
+iptables -D INPUT -j REJECT --reject-with icmp-host-prohibited
+service iptables save
+
+cat > /etc/resolv.conf << EOF
+search clustervision.com
+nameserver 192.168.66.1
+EOF
+
+#---------------------------------------------------------------------------------------
+# Get the Trinity git repository
+#---------------------------------------------------------------------------------------
+cd /root
+git clone https://github.com/clustervision/trinity.git
+cd trinity
+git checkout master_installer
+
+#---------------------------------------------------------------------------------------
+# Setup the ip address towards the switch
+#---------------------------------------------------------------------------------------
+read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
+mac=$(ip link show dev $ETH3 | tail -1 | awk '{print $2}')
+decimal=$(python -c "print '.'.join([str(int(c,16)) for c in '$mac'.split(':')])")
+port=$(snmpwalk -v2c -c public switch .1.3.6.1.2.1.17.7.1.2.2.1.2 | grep $decimal | awk '{print $4}')
+sed -i /etc/sysconfig/network-scripts/ifcfg-$ETH3 -e "s/IPADDR0=192.168.192.250/IPADDR0=192.168.192.${port}/g"
+ifdown $ETH3
+ifup $ETH3
+
+#---------------------------------------------------------------------------------------
+# Copy files
+#---------------------------------------------------------------------------------------
+cp -rL /root/trinity/master/rootimg/* /
+
+# FIXME: this mount should be an rsync with the clustervision master environment modules
+# cp -r /tmp/trinity/clustervision /trinity
+
+
+#--------------------------------------------------------------------------------------
+# copy default database configuration
+# and patch the installation
+# FIXME: needs a different location
+#--------------------------------------------------------------------------------------
+source /etc/profile.d/xcat.sh
+mkdir -p /tmp/xcattables
+read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
+for table in $(ls /root/trinity/master/tables); do
+    sed -e "s/\<eno1\>/$ETH1/g" -e "s/\<eno2\>/$ETH2/g"  -e "s/\<eno3\>/$ETH3/g" /root/trinity/master/tables/$table > /tmp/xcattables/$table;
+done
+
+restorexCATdb -p /tmp/xcattables  
+
+
+cd /opt/xcat/share/xcat/netboot/centos
+ln -s ../rh/dracut_033 .
+ln -s ../rh/dracut .
+
+cd /
+cat /root/trinity/controller/xcat/patches/*.patch | patch -p0
+systemctl restart xcatd
+makedhcp -n
+makehosts -n
+makedns -n
+
+#--------------------------------------------------------------------------------------
+# now setup NFS
+#--------------------------------------------------------------------------------------
+systemctl enable nfs-server
+systemctl start nfs-server
+
+cat << END > /etc/exports 
+/tftpboot *(rw,no_root_squash,sync,no_subtree_check)
+/install *(rw,no_root_squash,sync,no_subtree_check)
+/trinity *(rw,sync,no_root_squash,no_all_squash)
+END
+
+mkdir /cluster
+exportfs -a
+
+#--------------------------------------------------------------------------------------
+# Create installation tree
+#--------------------------------------------------------------------------------------
+echo "Creating installation tree"
+# updates and extras are required to install docker
+yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-icehouse/rdo-release-icehouse-4.noarch.rpm
+yum -y install --enablerepo=extras epel-release
+wget http://sourceforge.net/projects/xcat/files/yum/2.8/xcat-core/xCAT-core.repo -O /etc/yum.repos.d/xCAT-core.repo
+wget http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo -O /etc/yum.repos.d/xCAT-dep.repo
+mkdir /trinity/iso
+wget http://linux.cs.uu.nl/centos/7/isos/x86_64/CentOS-7-x86_64-Everything-1503-01.iso -q -O /trinity/iso/CentOS-7-x86_64-Everything-1503-01.iso
+copycds -o /trinity/iso/*.iso
+
+/root/trinity/master/create_repo_snapshot.sh
+
+echo "$0 finished" >> /var/log/postinstall.log
+exit 0
+
