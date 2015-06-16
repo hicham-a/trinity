@@ -1,15 +1,21 @@
-# Add the extra configuration that needs to run only on the master nodes
+# Add the extra configuration that needs to run only on the active nodes
 
-# assign the floating IP address the master
-# FIXME: find a better IP address
-ip addr add 10.141.255.250/16 dev eth0
+# I am the active node, so make my ip address floating and assign myself a new ip address
+filename=$(grep -l "IPADDR=10.141.255.254" /etc/sysconfig/network-scripts/ifcfg-*)
+device=$(echo $filename | awk -F- '{print $3}')
+
+sed -e "s/IPADDR=10.141.255.254/IPADDR=10.141.255.253/g" -e "s/IPADDR1=10.148.255.254/IPADDR1=10.148.255.253/g" -i $filename
+hostname controller-1.cluster
+echo controller-1.cluster > /etc/hostname
+
+# assign the floating IP address to the active node
+ip addr add 10.141.255.254/16 dev $device
 
 drbdadm primary --force ha_disk
 
 mkfs -t ext4 /dev/drbd1
 mkdir /drbd
 mount /dev/drbd1 /drbd
-
 
 # actually, this can be moved to a resource specific script
 export XCATMYSQLADMIN_PW=system
@@ -80,13 +86,6 @@ EOF
 drbdlinks -c /drbd/xcat.conf initialize_shared_storage
 drbdlinks -c /drbd/xcat.conf start
 
-#-------------------------------------------------------
-# Basic cluster setup
-#------------------------------------------------------- 
-pcs cluster auth node001.cluster node002.cluster -u hacluster -p system 
-pcs cluster setup --name xCAT node001.cluster node002.cluster
-pcs cluster start --all
-
 pcs property set no-quorum-policy=ignore
 pcs resource op defaults timeout="120s"
 pcs resource defaults resource-stickyness=100
@@ -95,7 +94,7 @@ pcs property set stonith-enabled=false
 #-------------------------------------------------------
 # Create resources
 #-------------------------------------------------------
-pcs resource create ip_xCAT ocf:heartbeat:IPaddr2 ip="10.141.255.250" iflabel="xCAT" cidr_netmask="16" nic="eth0" op monitor interval="37s" 
+pcs resource create ip_xCAT ocf:heartbeat:IPaddr2 ip="10.141.255.254" iflabel="xCAT" cidr_netmask="16" nic="eth0" op monitor interval="37s" 
 
 pcs resource create drbd ocf:linbit:drbd drbd_resource=ha_disk
 pcs resource master ms_drbd drbd master-max="1" master-node-max="1" clone-max="2" clone-node-max="1" notify="true"

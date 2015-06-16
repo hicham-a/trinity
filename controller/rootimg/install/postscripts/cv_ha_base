@@ -1,4 +1,21 @@
 #-----------------------------------------------------------------------------------------------
+# Setup ip addressing and hostname
+#-----------------------------------------------------------------------------------------------
+
+filename=$(grep -l "IPADDR=10.141.255.254" /etc/sysconfig/network-scripts/ifcfg-*)
+if [ -z $filename ]; then
+    hostname controller-2.cluster
+    echo controller-2.cluster > /etc/hostname
+else
+    # I am the active node, so make my ip address floating and assign myself a new ip address
+    device=$(echo $filename | awk -F- '{print $3}')
+
+    sed -e "s/IPADDR=10.141.255.254/IPADDR=10.141.255.253/g" -e "s/IPADDR1=10.148.255.254/IPADDR1=10.148.255.253/g" -i $filename
+    hostname controller-1.cluster
+    echo controller-1.cluster > /etc/hostname
+fi
+
+#-----------------------------------------------------------------------------------------------
 # first we setup pacemaker
 #-----------------------------------------------------------------------------------------------
 
@@ -18,25 +35,12 @@ yum -y install drbd84-utils kmod-drbd84
 # configure drbd
 #------------------------------------------------------------
 
-# FIXME: this should be done in the service specific file
-systemctl disable drbd 
-systemctl disable dhcpd
-systemctl disable xcatd
-systemctl disable httpd
-systemctl disable mysqld
-
-systemctl stop drbd 
-systemctl stop dhcpd
-systemctl stop xcatd
-systemctl stop httpd
-systemctl stop mysqld
-
 # remove the drbd volume from mounting
 sed -i -e "/vg_root-lv_drbd/d" /etc/fstab
 umount /drbd
 
 # Just to make sure, we clear the disk
-# dd if=/dev/zero of=/dev/mapper/vg_root-lv_drbd
+dd if=/dev/zero of=/dev/mapper/vg_root-lv_drbd
 
 ip1=10.141.255.253
 ip2=10.141.255.252
