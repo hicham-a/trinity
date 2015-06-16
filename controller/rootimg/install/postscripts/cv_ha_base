@@ -1,4 +1,3 @@
-ip route add default via 10.141.255.254 
 #-----------------------------------------------------------------------------------------------
 # first we setup pacemaker
 #-----------------------------------------------------------------------------------------------
@@ -39,8 +38,8 @@ umount /drbd
 # Just to make sure, we clear the disk
 # dd if=/dev/zero of=/dev/mapper/vg_root-lv_drbd
 
-ip1=$(host controller-1 | awk '{print $4}')
-ip2=$(host controller-1 | awk '{print $4}')
+ip1=10.141.255.253
+ip2=10.141.255.252
 
 cat <<EOF >/etc/drbd.d/ha_disk.res
 resource ha_disk {

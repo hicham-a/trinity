@@ -4,12 +4,6 @@
 lang en_US
 #KICKSTARTNET#
 
-#
-# Where's the source?
-# nfs --server hostname.of.server or IP --dir /path/to/RH/CD/image
-#
-#nfs --server #XCATVAR:INSTALL_NFS# --dir #XCATVAR:INSTALL_SRC_DIR#
-
 %include /tmp/repos
 
 keyboard "us"
@@ -23,8 +17,6 @@ zerombr
 # Wipe out the disk
 #
 clearpart --all --initlabel
-#clearpart --linux
-#key --skip
 
 #
 # Customize to fit your needs
@@ -46,42 +38,6 @@ logvol  /spare  --vgname=vg_root  --size=1 --grow  --name=lv_spare
 
 #XCAT_PARTITION_END#
 
-#RAID 0 /scr for performance
-#part / --size 1024 --ondisk sda
-#part swap --size 512 --ondisk sda
-#part /var --size 1024 --ondisk sdb
-#part swap --size 512 --ondisk sdb
-#part raid.01 --size 1 --grow --ondisk sda
-#part raid.02 --size 1 --grow --ondisk sdb
-#raid /scr --level 0 --device md0 raid.01 raid.02
-
-#Full RAID 1 Sample
-#part raid.01 --size 50 --ondisk sda
-#part raid.02 --size 50 --ondisk sdb
-#raid /boot --level 1 --device md0 raid.01 raid.02
-#
-#part raid.11 --size 1024 --ondisk sda
-#part raid.12 --size 1024 --ondisk sdb
-#raid / --level 1 --device md1 raid.11 raid.12
-#
-#part raid.21 --size 1024 --ondisk sda
-#part raid.22 --size 1024 --ondisk sdb
-#raid /var --level 1 --device md2 raid.21 raid.22
-#
-#part raid.31 --size 1024 --ondisk sda
-#part raid.32 --size 1024 --ondisk sdb
-#raid swap --level 1 --device md3 raid.31 raid.32
-#
-#part raid.41 --size 1 --grow --ondisk sda
-#part raid.42 --size 1 --grow --ondisk sdb
-#raid /scr --level 1 --device md4 raid.41 raid.42
-
-#
-# bootloader config
-# --append <args>
-# --useLilo
-# --md5pass <crypted MD5 password for GRUB>
-#
 bootloader
 
 #
@@ -104,11 +60,6 @@ firewall --disabled
 # Select a zone
 # Add the --utc switch if your hardware clock is set to GMT
 #
-#timezone US/Hawaii
-#timezone US/Pacific
-#timezone US/Mountain
-#timezone US/Central
-#timezone US/Eastern
 timezone --utc "#TABLE:site:key=timezone:value#"
 
 #
@@ -125,8 +76,6 @@ skipx
 # 
 # where "blah" is your root password.
 #
-#rootpw --iscrypted XaLGAVe1C41x2
-#rootpw XaLGAVe1C41x2 --iscrypted
 rootpw --iscrypted #CRYPT:passwd:key=system,username=root:password#
 
 #
@@ -158,15 +107,20 @@ reboot
 #INCLUDE:#ENV:XCATROOT#/share/xcat/install/scripts/pre.rh.rhel7#
 
 read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
-n=$(echo $HOSTNAME | sed -r  's/^[^0-9]*([0-9]+).*/\1/')       # extract node number
-
-if [[ -z $n ]]; then                                           # we assume it is a single controller
-    my_ip=10.141.255.254                                       # give it the floating ip address
-    my_hostname=controller.cluster
+if ping -c 1 -w 5 10.141.255.254; then
+    # I must be the passive controller
+    my_ip=10.141.255.252                                       
+    my_hostname=controller-2.cluster
+elif ping -c 1 -w 5 10.141.255.253; then
+    # I must be the passive controller
+    my_ip=10.141.255.252                                       
+    my_hostname=controller-2.cluster
 else
-    n=$((($n+1)%2+1))                                          # normalize to 1 or 2
-    my_ip=10.141.255.$((254-$n))                               # use a different fixed ip address
-    my_hostname=controller-$n.cluster
+    # I can be either the only controller or I can be the active controller
+    # I will assume for now that I am the only controller,
+    # the cv_ha_master_xcat script will change hostnames and setup the floating ip address
+    my_ip=10.141.255.254                                       # use a different fixed ip address
+    my_hostname=controller.cluster
 fi
 
 cat > /tmp/trinity-networking << EOF
