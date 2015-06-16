@@ -26,11 +26,11 @@ clearpart --all --initlabel
 #No RAID
 # %include /tmp/partitioning
 
-part /boot --fstype ext3 --size=700
+part /boot --fstype ext3 --size=1024
 part swap --size=2048
 part pv.01 --size=1 --grow
 volgroup vg_root pv.01
-logvol  /  --vgname=vg_root  --size=8192  --name=lv_root
+logvol  /  --vgname=vg_root  --size=65536  --name=lv_root
 logvol  /tmp  --vgname=vg_root  --size=2048  --name=lv_tmp
 logvol  /var  --vgname=vg_root  --size=8192  --name=lv_var
 logvol  /drbd  --vgname=vg_root  --size=8192  --name=lv_drbd
@@ -124,7 +124,7 @@ else
 fi
 
 cat > /tmp/trinity-networking << EOF
-network  --bootproto=static --device=$ETH2 --gateway=10.141.255.254 --ip=$my_ip --netmask=255.255.0.0 --ipv6=auto --nodefroute --onboot=yes
+network  --bootproto=static --device=$ETH2 --gateway=10.141.255.254 --ip=$my_ip --netmask=255.255.0.0 --ipv6=auto --nodefroute --onboot=yes --nameserver=8.8.8.8
 network  --bootproto=dhcp --device=$ETH1 --ipv6=auto --onboot=yes
 network  --hostname=$my_hostname
 EOF
