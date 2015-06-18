@@ -30,10 +30,12 @@ EOF
 cd /root
 git clone https://github.com/clustervision/trinity.git
 cd trinity
-git checkout master_installer
+branch=$(cat /xcatpost/cv_trinity_version | head -1 | cut -b3-)
+git checkout $branch
 
 #---------------------------------------------------------------------------------------
 # Setup the ip address towards the switch
+# Not so sure about this. It seems a bit hackish. Maybe better remove it.
 #---------------------------------------------------------------------------------------
 read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
 mac=$(ip link show dev $ETH3 | tail -1 | awk '{print $2}')
@@ -49,8 +51,8 @@ ifup $ETH3
 cp -rL /root/trinity/master/rootimg/* /
 
 # FIXME: this mount should be an rsync with the clustervision master environment modules
-# cp -r /tmp/trinity/clustervision /trinity
-
+# cp -r /tmp/trinity/clustervision /trinity &
+mkdir /trinity/clustervision
 
 #--------------------------------------------------------------------------------------
 # copy default database configuration
@@ -65,7 +67,6 @@ for table in $(ls /root/trinity/master/tables); do
 done
 
 restorexCATdb -p /tmp/xcattables  
-
 
 cd /opt/xcat/share/xcat/netboot/centos
 ln -s ../rh/dracut_033 .
