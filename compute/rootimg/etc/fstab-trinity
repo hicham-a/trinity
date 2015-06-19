@@ -1,0 +1,4 @@
+/dev/sda1       /var/lib/docker         ext4    defaults,errors=remount-ro  0  2
+controller:/cluster /cluster nfs rsize=8192,wsize=8192,timeo=14,intr
+controller:/trinity /trinity nfs rsize=8192,wsize=8192,timeo=14,intr
+controller:/home /home nfs rsize=8192,wsize=8192,timeo=14,intr

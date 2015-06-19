@@ -1,0 +1,3 @@
+controller:/cluster /cluster nfs rsize=8192,wsize=8192,timeo=14,intr
+controller:/trinity /trinity nfs rsize=8192,wsize=8192,timeo=14,intr
+controller:/home /home nfs rsize=8192,wsize=8192,timeo=14,intr
