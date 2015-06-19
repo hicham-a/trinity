@@ -30,7 +30,7 @@ part /boot --fstype ext3 --size=700
 part swap --size=2048
 part pv.01 --size=1 --grow
 volgroup vg_root pv.01
-logvol  /  --vgname=vg_root  --size=8192  --name=lv_root
+logvol  /  --vgname=vg_root  --size=65536  --name=lv_root
 logvol  /tmp  --vgname=vg_root  --size=2048  --name=lv_tmp
 logvol  /var  --vgname=vg_root  --size=8192  --name=lv_var
 logvol  /drbd  --vgname=vg_root  --size=8192  --name=lv_drbd
@@ -107,21 +107,10 @@ reboot
 #INCLUDE:#ENV:XCATROOT#/share/xcat/install/scripts/pre.rh.rhel7#
 
 read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
-if ping -c 1 -w 5 10.141.255.254; then
-    # I must be the passive controller
-    my_ip=10.141.255.252                                       
-    my_hostname=controller-2.cluster
-elif ping -c 1 -w 5 10.141.255.253; then
-    # I must be the passive controller
-    my_ip=10.141.255.252                                       
-    my_hostname=controller-2.cluster
-else
-    # I can be either the only controller or I can be the active controller
-    # I will assume for now that I am the only controller,
-    # the cv_ha_master_xcat script will change hostnames and setup the floating ip address
-    my_ip=10.141.255.254                                       # use a different fixed ip address
-    my_hostname=controller.cluster
-fi
+last_octet=$(hostname -I | awk -F. '{print $4}' | awk -F' ' '{print $1}')
+n=$((($last_octet+1) % 2 + 1))
+my_ip=10.141.255.$((254-n))                                      
+my_hostname=controller-$n.cluster
 
 cat > /tmp/trinity-networking << EOF
 network  --bootproto=static --device=$ETH2 --gateway=10.141.255.254 --ip=$my_ip --netmask=255.255.0.0 --ipv6=auto --nodefroute --onboot=yes
