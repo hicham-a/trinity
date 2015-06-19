@@ -19,11 +19,3 @@ net-snmp-utils
 #
 iptables-services
 pciutils
-
-# required for mysql setup
-perl-DBD-MySQL
-mysql-server
-mysql
-mysql-devel
-mysql-connector-odbc
-unixODBC
