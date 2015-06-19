@@ -6,7 +6,7 @@
 
 
 
-LOGIN_CONF="/etc/trinity/login.conf"
+LOGIN_CONF="/trinity/login/login.conf"
 CLOUD_IMAGE="CentOS-7-x86_64-GenericCloud.qcow2"
 CLOUD_IMAGE_URL="http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2"
 CLOUD_IMAGE_FORMAT="qcow2"

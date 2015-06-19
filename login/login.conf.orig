@@ -28,11 +28,19 @@ hostname login.vc-a
 #domainname vc-a
 
 #--------------------------------------------------------------------------
+<<<<<<< HEAD
 # Copy the required files from controller to the login node  
 #--------------------------------------------------------------------------
 mkdir -p /trinity
 mount ${controller}:/trinity /trinity
 cp --dereference --recursive --verbose --preserve /trinity/login/rootimg/* /
+=======
+# Copy the required files from the controller
+#--------------------------------------------------------------------------
+mkdir -p /trinity
+mount ${controller}:/trinity /trinity
+cp --dereference --recursive --verbose --preserve /trinity/openstack/rootimg/* /
+>>>>>>> 9a1c59228f805df0eda883848d064e09fa024f32
 
 #---------------------------------------------------------------------------
 # Hostname resolution
@@ -45,12 +53,18 @@ EOF
 read ETH1 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -1)
 sed -e 's/^PEERDNS="yes"/PEERDNS="no"/g' \
     -i /etc/sysconfig/network-scripts/ifcfg-${ETH1}
+<<<<<<< HEAD
 
 
+#--------------------------------------------------------------------------
+# Setup NFS mounts 
+#--------------------------------------------------------------------------
+=======
     
 #---------------------------------------------------------------------------
 # Setup NFS mounts
 #---------------------------------------------------------------------------
+>>>>>>> 9a1c59228f805df0eda883848d064e09fa024f32
 mkdir -p /cluster
 mkdir -p /home
 ##sort -u /etc/fstab* | \
@@ -273,6 +287,10 @@ service sshd restart
 #---------------------------------------------------------------------------
 yum -y install xorg-x11-xauth
 
+<<<<<<< HEAD
+
+=======
+>>>>>>> 9a1c59228f805df0eda883848d064e09fa024f32
 #---------------------------------------------------------------------------
 # Other packages
 #---------------------------------------------------------------------------

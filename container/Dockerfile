@@ -23,7 +23,7 @@ RUN mkdir -p /var/run/sshd && \
     sed -ri 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/g' /etc/ssh/sshd_config
 
 RUN pip install supervisor
-ADD usr/etc/supervisord.conf /usr/etc/supervisord.conf
+
 
 #RUN sed -ri 's/^#PermitRootLogin yes/PermitRootLogin yes/g' /etc/ssh/sshd_config 
 #RUN sed -ri 's/UsePAM yes/#UsePAM yes/g' /etc/ssh/sshd_config
@@ -32,4 +32,4 @@ ADD usr/etc/supervisord.conf /usr/etc/supervisord.conf
 COPY rootimg/* /
 ADD rpms /rpms
 RUN yum install -y /rpms/*.rpm
-CMD ["/usr/bin/supervisord", "-c", "/usr/etc/supervisord.conf"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
