@@ -33,7 +33,7 @@ volgroup vg_root pv.01
 logvol  /  --vgname=vg_root  --size=65536  --name=lv_root
 logvol  /tmp  --vgname=vg_root  --size=2048  --name=lv_tmp
 logvol  /var  --vgname=vg_root  --size=8192  --name=lv_var
-logvol  /drbd  --vgname=vg_root  --size=8192  --name=lv_drbd
+logvol  /drbd  --vgname=vg_root  --size=32768  --name=lv_drbd
 logvol  /spare  --vgname=vg_root  --size=1 --grow  --name=lv_spare
 
 #XCAT_PARTITION_END#
