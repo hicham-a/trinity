@@ -21,7 +21,7 @@ profile=$4
 workdir=$5
 
 #-- Copy supporting files
-cp --dereference --recursive --verbose --preserve /trinity/nova/rootimg/* $installroot
+cp --dereference --recursive --verbose --preserve /trinity/cinder/rootimg/* $installroot
 
 #-- Example how /etc/fstab can be automatically generated during image generation:
 ##cat <<END >$installroot/etc/fstab

@@ -23,14 +23,15 @@ workdir=$5
 #-- Copy supporting files
 cp --dereference --recursive --verbose --preserve /trinity/compute/rootimg/* $installroot
 
-sort -u ${installroot}/etc/fstab* | \
-  awk '
-    BEGIN {print "# Created by trinity";}; \
-    {if ($0!~/^\#/ && $0 !~/^$/) {if ($0~/nfs/) {nfs=nfs RS $0} else {local=local RS $0}}}; \
-    END {print "# local filesystems" local RS "# remote filesystems" nfs}
-  ' > ${installroot}/tmp/fstab
-rm ${installroot}/etc/fstab*
-mv ${installroot}/tmp/fstab ${installroot}/etc/fstab
+##AM: Using a single fstab
+##sort -u ${installroot}/etc/fstab* | \
+##  awk '
+##    BEGIN {print "# Created by trinity";}; \
+##    {if ($0!~/^\#/ && $0 !~/^$/) {if ($0~/nfs/) {nfs=nfs RS $0} else {local=local RS $0}}}; \
+##    END {print "# local filesystems" local RS "# remote filesystems" nfs}
+##  ' > ${installroot}/tmp/fstab
+##rm ${installroot}/etc/fstab*
+##mv ${installroot}/tmp/fstab ${installroot}/etc/fstab
 
 ##cp-rootimg
 #-- Example how /etc/fstab can be automatically generated during image generation:
