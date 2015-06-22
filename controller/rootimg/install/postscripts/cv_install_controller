@@ -101,21 +101,26 @@ service iptables save
 # setup routing for the virtual clusters
 #--------------------------------------------------------------------------------------
 ip route add 172.16.0.0/12 dev $ETH2
-mv -f /etc/sysconfig/network-scripts/route-eno2-trinity /etc/sysconfig/network-scripts/route-${ETH2}-trinity
-sort -u /etc/sysconfig/network-scripts/route-${ETH2}* | \
-  awk ' \
-    BEGIN {print "# Created by trinity";}; \
-    {if ($0!~/^\#/ && $0 !~/^$/) {route=route RS $0}}; \
-    END {print route}
-  ' > /tmp/route-${ETH2}
-rm -f /etc/sysconfig/network-scripts/route-${ETH2}*
-mv -f /tmp/route-${ETH2} /etc/sysconfig/network-scripts/route-${ETH2}
+mv /etc/sysconfig/network-scripts/route-eno2 /etc/sysconfig/network-scripts/route-${ETH2}
+
+##AM: This is not required, assuming that everything is already written into route-eno2
+#mv -f /etc/sysconfig/network-scripts/route-eno2-trinity /etc/sysconfig/network-scripts/route-${ETH2}-trinity
+#sort -u /etc/sysconfig/network-scripts/route-${ETH2}* | \
+#  awk ' \
+#    BEGIN {print "# Created by trinity";}; \
+#    {if ($0!~/^\#/ && $0 !~/^$/) {route=route RS $0}}; \
+#    END {print route}
+#  ' > /tmp/route-${ETH2}
+#rm -f /etc/sysconfig/network-scripts/route-${ETH2}*
+#mv -f /tmp/route-${ETH2} /etc/sysconfig/network-scripts/route-${ETH2}
 
 ##cp-rootimg
 ##cat << END > /etc/sysconfig/network-scripts/route-$ETH2 
 ##ADDRESS0=172.16.0.0
 ##NETMASK0=255.240.0.0
 ##END
+
+
 
 #--------------------------------------------------------------------------------------
 # Start opensm on the controller
@@ -133,6 +138,7 @@ systemctl start opensm
 systemctl enable nfs-server
 systemctl start nfs-server
 
+##AM: Using the exports.d mechanism 
 #sort -u /etc/exports* | \
 #  awk ' \
 #    BEGIN {print "# Created by trinity";}; \

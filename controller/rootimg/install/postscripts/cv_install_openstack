@@ -45,23 +45,26 @@ mkdir -p /home
 mkdir -p /cluster
 mkdir -p /trinity
 
-sort -u /etc/fstab* | \
-  awk '
-    BEGIN {print "# Created by trinity";}; \
-    {if ($0!~/^\#/ && $0 !~/^$/) {if ($0~/nfs/) {nfs=nfs RS $0} else {local=local RS $0}}}; \
-    END {print "# local filesystems" local RS "# remote filesystems" nfs}
-  ' > /tmp/fstab
-rm -f /etc/fstab*
-mv -f /tmp/fstab /etc/fstab
-##cp-rootimg
+##AM: Will use the HERE doc for now
+##    we do not want file merge logic in the postbootscript
+##sort -u /etc/fstab* | \
+##  awk '
+##    BEGIN {print "# Created by trinity";}; \
+##    {if ($0!~/^\#/ && $0 !~/^$/) {if ($0~/nfs/) {nfs=nfs RS $0} else {local=local RS $0}}}; \
+##    END {print "# local filesystems" local RS "# remote filesystems" nfs}
+##  ' > /tmp/fstab
+##rm -f /etc/fstab*
+##mv -f /tmp/fstab /etc/fstab
+
 # FIXME: use a rootimg mechanism for this.
-##if ! grep controller:/cluster /etc/fstab > /dev/null; then
-##cat << END >> /etc/fstab
-##controller:/cluster /cluster nfs rsize=8192,wsize=8192,timeo=14,intr
-##controller:/trinity /trinity nfs rsize=8192,wsize=8192,timeo=14,intr
-##controller:/home /home nfs rsize=8192,wsize=8192,timeo=14,intr
-##END
-##fi
+##AM: This is an append, cannot use rootimg mechanism for now
+if ! grep controller:/cluster /etc/fstab > /dev/null; then
+cat << END >> /etc/fstab
+controller:/cluster /cluster nfs rsize=8192,wsize=8192,timeo=14,intr
+controller:/trinity /trinity nfs rsize=8192,wsize=8192,timeo=14,intr
+controller:/home /home nfs rsize=8192,wsize=8192,timeo=14,intr
+END
+fi
 mount -a
 
 #--------------------------------------------------
@@ -111,6 +114,23 @@ cd -
 echo 'Include "/etc/httpd/conf.modules.d/*.conf"' >> /etc/httpd/conf/httpd.conf
 
 service httpd restart
+
+
+#-----------------------------------------------------------------------------------
+# Download the base login node image (CentOS cloud image) and upload it to glance
+#-----------------------------------------------------------------------------------
+CLOUD_IMAGE_URL="http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2"
+CLOUD_IMAGE="CentOS-7-x86_64-GenericCloud.qcow2"
+CLOUD_IMAGE_FORMAT="qcow2"
+CLOUD_CONTAINER_FORMAT="bare"
+LOGIN_IMAGE="login"
+wget ${CLOUD_IMAGE_URL}
+glance image-create \
+         --name "${LOGIN_IMAGE}" \
+         --disk-format "${CLOUD_IMAGE_FORMAT}" \
+         --container-format "${CLOUD_CONTAINER_FORMAT}" \
+         --is-public True \
+         --file "${CLOUD_IMAGE}"
 
 
 

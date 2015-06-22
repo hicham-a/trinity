@@ -37,17 +37,16 @@ cp --dereference --recursive --verbose --preserve /trinity/login/rootimg/* /
 #---------------------------------------------------------------------------
 # Hostname resolution
 #---------------------------------------------------------------------------
-cat << EOF > /etc/resolv.conf
-search cluster. vc-a. cluster
-nameserver 10.141.255.254
-EOF
+##cp-rootimg
+##cat << EOF > /etc/resolv.conf
+##search cluster. vc-a. cluster
+##nameserver 10.141.255.254
+##EOF
 
 read ETH1 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -1)
 sed -e 's/^PEERDNS="yes"/PEERDNS="no"/g' \
     -i /etc/sysconfig/network-scripts/ifcfg-${ETH1}
 
-
-    
 #---------------------------------------------------------------------------
 # Setup NFS mounts
 #---------------------------------------------------------------------------
@@ -62,7 +61,7 @@ mkdir -p /home
 ##rm /etc/fstab*
 ##mv /tmp/fstab /etc/fstab
 ##mount -a
-# For now we will use the HERE document
+#AM: For now we will use the HERE document
 cat <<EOF >> /etc/fstab
 controller:/cluster/vc-a /cluster nfs rsize=8192,wsize=8192,timeo=14,intr
 controller:/trinity /trinity nfs rsize=8192,wsize=8192,timeo=14,intr
@@ -98,7 +97,7 @@ fi
 mkdir -p /var/log/slurm
 chown -R slurm:slurm /var/log/slurm
 
-# Moved to the end
+#AM: Moved to the end
 # service munge start
 # service slurm start
 # chkconfig munge on
@@ -133,15 +132,16 @@ slapadd -n 0  -l /etc/openldap/schema/cosine.ldif
 slapadd -n 0  -l /etc/openldap/schema/nis.ldif
 slapadd -n 0  -l /etc/openldap/schema/inetorgperson.ldif
 
-cat > /tmp/trinity.ldif << EOF
-dn: cn=trinity,cn=schema,cn=config
-objectClass: olcSchemaConfig
-cn: trinity
-olcObjectClasses: {0}( 1.3.6.1.4.1.19173.2.2.2.8
- NAME 'uidNext'
- DESC 'Where we get the next uidNumber from'
- MUST ( cn $ uidNumber ) )
-EOF
+##cp-rootimg
+##cat > /tmp/trinity.ldif << EOF
+##dn: cn=trinity,cn=schema,cn=config
+##objectClass: olcSchemaConfig
+##cn: trinity
+##olcObjectClasses: {0}( 1.3.6.1.4.1.19173.2.2.2.8
+## NAME 'uidNext'
+## DESC 'Where we get the next uidNumber from'
+## MUST ( cn $ uidNumber ) )
+##EOF
 
 slapadd -n 0  -l /tmp/trinity.ldif
 
@@ -252,9 +252,9 @@ chmod ga-wx /root/.ssh/authorized_keys
 # User Manager
 #---------------------------------------------------------------------------
 yum -y install python-ldap python-retrying
-cp /trinity/login/obol/obol /usr/sbin/
-chmod uga-rwx /usr/sbin/obol
-chmod u+x /usr/sbin/obol
+##cp-rootimg
+##cp /trinity/login/obol/obol /usr/sbin/
+chmod u=x,go= /usr/sbin/obol
 
 #---------------------------------------------------------------------------
 # No strict host checking for the virtual cluster
@@ -299,12 +299,13 @@ chmod ug=rwx,o=rx /cluster/modulefiles
 #---------------------------------------------------------------------------
 # Start munge and slurm
 #---------------------------------------------------------------------------
-mkdir -p /etc/systemd/system/munge.service.d
-cat << EOF > /etc/systemd/system/munge.service.d/customexec.conf
-[Service]
-ExecStart=
-ExecStart=/usr/sbin/munged  --key-file /cluster/etc/munge/munge.key
-EOF
+##cp-rootimg
+##mkdir -p /etc/systemd/system/munge.service.d
+##cat << EOF > /etc/systemd/system/munge.service.d/customexec.conf
+##[Service]
+##ExecStart=
+##ExecStart=/usr/sbin/munged  --key-file /cluster/etc/munge/munge.key
+##EOF
 
 service munge start
 service slurm start
@@ -315,12 +316,13 @@ chkconfig slurm on
 # Setup security limits
 # Fix for #174
 #---------------------------------------------------------------------------
-cat << EOF > /etc/security/limits.d/trinity.conf
-*               -       stack           unlimited
-*               -       memlock         unlimited
-EOF 
-
-cat << EOF > /etc/sysconfig/slurm
-ulimit -l unlimited
-ulimit -s unlimited
-EOF
+##cp-rootimg
+##cat << EOF > /etc/security/limits.d/trinity.conf
+##*               -       stack           unlimited
+##*               -       memlock         unlimited
+##EOF 
+##
+##cat << EOF > /etc/sysconfig/slurm
+##ulimit -l unlimited
+##ulimit -s unlimited
+##EOF
