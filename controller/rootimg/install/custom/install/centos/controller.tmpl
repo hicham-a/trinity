@@ -107,15 +107,11 @@ reboot
 #INCLUDE:#ENV:XCATROOT#/share/xcat/install/scripts/pre.rh.rhel7#
 
 read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
-last_octet=$(hostname -I | awk -F. '{print $4}' | awk -F' ' '{print $1}')
-n=$((($last_octet+1) % 2 + 1))
-my_ip=10.141.255.$((254-n))                                      
-my_hostname=controller-$n.cluster
 
 cat > /tmp/trinity-networking << EOF
-network  --bootproto=static --device=$ETH2 --gateway=10.141.255.254 --ip=$my_ip --netmask=255.255.0.0 --ipv6=auto --nodefroute --onboot=yes
 network  --bootproto=dhcp --device=$ETH1 --ipv6=auto --onboot=yes
-network  --hostname=$my_hostname
+network  --bootproto=static --device=$ETH2 --gateway=10.141.255.254 --ip=10.141.255.254 --netmask=255.255.0.0 --ipv6=auto --nodefroute --onboot=yes
+network  --hostname=controller.cluster
 EOF
 
 %end
@@ -135,10 +131,8 @@ done
 sed -i /etc/sysconfig/network-scripts/ifcfg-$ETH1 -e "s/DEFROUTE=\(.*\)/DEFROUTE=yes/" -e "s/PEERDNS=\(.*\)/PEERDNS=no/"
 
 # Fix for #85
-last_octet=$(igrep IPADDR= /etc/sysconfig/network-scripts/ifcfg-$ETH2 | awk -F. '{print $4}')
-
 cat >> /etc/sysconfig/network-scripts/ifcfg-$ETH2 << EOF
-IPADDR1=10.148.255.${last_octet}
+IPADDR1=10.148.255.254
 PREFIX1=16
 GATEWAY1=10.148.255.254
 EOF

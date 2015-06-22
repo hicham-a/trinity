@@ -71,6 +71,26 @@ makehosts -n
 makedns -n
 
 #--------------------------------------------------------------------------------------
+# make xCAT use a mysqldatabase
+#--------------------------------------------------------------------------------------
+ip addr a 10.141.255.254/16 dev $ETH2
+export XCATMYSQLADMIN_PW=system
+export XCATMYSQLROOT_PW=system
+# Hack the mysqlsetup script to show debugging errors
+sed -i -e 's/$mysql->log_stdout($debug)/$mysql->log_stdout(1)/' /opt/xcat/bin/mysqlsetup
+export TERM=dumb
+mysqlsetup -i -V
+#sleep 1
+#echo "GRANT ALL on xcatdb.* TO xcatadmin@'localhost' IDENTIFIED BY 'system';" | mysql -u root -psystem
+#echo "GRANT ALL on xcatdb.* TO xcatadmin@'%' IDENTIFIED BY 'system';" | mysql -u root -psystem
+#sleep 1
+#rm /etc/xcat/cfgloc
+#sleep 1
+#systemctl start xcatd
+#sleep 1
+#mysqlsetup -i -V
+
+#--------------------------------------------------------------------------------------
 # correct any network settings
 #--------------------------------------------------------------------------------------
 
@@ -147,7 +167,7 @@ chown 1002:1002 /cluster/vc-a/etc/munge/munge.key
 #--------------------------------------------------------------------------------------
 yum -y install docker docker-registry
 sed -i 's/REGISTRY_PORT=.*/REGISTRY_PORT=5050/' /etc/sysconfig/docker-registry
-sed -i 's/OPTIONS=\(.*\)/OPTIONS=--insecure-registry controller:5050 --bip=10.146.255.254\/16 --fixed-cidr=10.146.255.255\/16 \1/' /etc/sysconfig/docker
+sed -i 's/OPTIONS=\(.*\)/OPTIONS=--insecure-registry controller:5050 --bip=10.141.255.254\/16 --fixed-cidr=10.141.255.255\/16 \1/' /etc/sysconfig/docker
 echo "10.141.255.254 controller" >>  /etc/hosts
 systemctl enable docker docker-registry
 systemctl start docker docker-registry

@@ -1,5 +1,7 @@
 #-----------------------------------------------------------------------------------------------
 # first we setup pacemaker
+# FIXME: this should be part of the package lists. Also we need to add the elrepo repo to the 
+#        master repositories.
 #-----------------------------------------------------------------------------------------------
 
 yum -y install epel-release
@@ -14,10 +16,33 @@ echo system | passwd hacluster --stdin
 yum -y install http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
 yum -y install drbd84-utils kmod-drbd84
 
+#-----------------------------------------------------------------------------------------------
+# Determine if this will be the active or passive node. An odd node will become 
+# the active node. Any even node will become the passive node. 
+#
+# Adapt the network configuration accordingly.
+#-----------------------------------------------------------------------------------------------
+n=$(echo $NODE | egrep -o '[[:digit:]]*' | head -n1)
+# normalize to 1 or 2
+N=$((((n-1)%2)+1))
+
+# set the new ip addresses
+octet=$((254-$N))
+
+# update network scripts
+filename=$(grep -l IPADDR=10.141.255.254 /etc/sysconfig/network-scripts/ifcfg-*)
+if=$(echo $filename | awk -F- '{print $3}')
+sed -e "s/\(IPADDR.\?\)=\(10\.14[18]\.255\)\.254/\1=\2.$octet/" $filename
+systemctl restart network
+
+if [ $N = 1 ]; then
+   # I am the active node, so will take the floating IP addr here
+   ip addr add 10.141.255.254/16 dev $if
+fi 
+
 #-------------------------------------------------------------
 # configure drbd
 #------------------------------------------------------------
-
 # remove the drbd volume from mounting
 sed -i -e "/vg_root-lv_drbd/d" /etc/fstab
 umount /drbd
@@ -26,9 +51,6 @@ umount /drbd
 echo Clearing drbd logical volume, this may take some time.
 dd if=/dev/zero of=/dev/mapper/vg_root-lv_drbd bs=1M count=1024
 echo Clearing drbd logical volume, done.
-
-ip1=10.141.255.253
-ip2=10.141.255.252
 
 cat <<EOF >/etc/drbd.d/ha_disk.res
 resource ha_disk {
@@ -40,13 +62,13 @@ resource ha_disk {
        on controller-1.cluster {
          device    /dev/drbd1;
          disk      /dev/mapper/vg_root-lv_drbd;
-         address   ${ip1}:7789;
+         address   10.141.255.253:7789;
          meta-disk internal;
        }
        on controller-2.cluster {
          device    /dev/drbd1;
          disk      /dev/mapper/vg_root-lv_drbd;
-         address   ${ip2}:7789;
+         address   10.141.255.252:7789;
          meta-disk internal;
        }
      }
@@ -56,8 +78,8 @@ drbdadm create-md ha_disk
 modprobe drbd
 drbdadm up ha_disk
 
-if [ $NODE = 'controller-1' ]; then 
-   # Here we should setup some type of waiting mechanism until controller-2 is ready to be configured.
+if [ $N = 1 ]; then 
+   # Wait until the passive controller is ready to continue
    for i in {1..100}; do
        if ssh controller-2 cat /tmp/cv_ha_ready; then break; fi
        sleep 5
@@ -66,8 +88,14 @@ if [ $NODE = 'controller-1' ]; then
    pcs cluster auth controller-1.cluster controller-2.cluster -u hacluster -p system
    pcs cluster setup --name trinity controller-1.cluster controller-2.cluster --force
    pcs cluster start --all
+
+   drbdadm primary --force ha_disk
+
+   mkfs -t ext4 /dev/drbd1
+   mount /dev/drbd1 /drbd
 else
    touch /tmp/cv_ha_ready
+   drbdadm invalidate ha_xcat
 fi
 
 echo "$0 finished"
