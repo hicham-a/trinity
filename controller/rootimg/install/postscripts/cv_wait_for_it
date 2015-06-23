@@ -4,6 +4,7 @@ for i in {1..30}; do
       sleep 5
    else
       echo Network connection established
+      exit 0
    fi
 done
 echo Error: Unable to establish network connection.
