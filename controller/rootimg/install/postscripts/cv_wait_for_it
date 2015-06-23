@@ -1,4 +1,9 @@
-if ! ping -c 1 -W 10 $SITEMASTER > /dev/null; then
-   echo Unable to ping $SITEMASTER, network on fire?
-   exit 1
-fi
+for i in {1..30}; do
+   if ! ping -c 1 -W 10 $SITEMASTER > /dev/null; then
+      echo No network connection $i
+      sleep 5
+   else
+      echo Network connection established
+   fi
+done
+echo Error: Unable to establish network connection.
