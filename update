@@ -13,6 +13,13 @@
 bold=$(tput bold)
 normal=$(tput sgr0)
 main(){
+  PROFILES=(
+    master
+    controller
+    login
+    compute
+    container  
+  )
   if [[ -z $1  ||  "$1" == "--help" || "$1" == "-h" ]]; then
     help="
 Usage:
@@ -32,7 +39,7 @@ Usage:
       --tables : restore xCAT tables from repo
 
     login 
-      --name <login_IP> : (mandatory) update the particular login node,
+      --name <login_IP> : (mandatory option) update the particular login node,
                           you may need to enter the root password for 
                           the login node
 
@@ -44,7 +51,7 @@ Usage:
   fi  
   profile=$1
   if [ -d "${profile}/rootimg" ] ; then
-    echo ${proceed}
+  # TODO: should also check if profile is in PROFILES
     echo "This will update the current node using the from source code repository"
     echo "using the profile: ${bold}$1${normal}"
     read -e -p "Do you want to continue? (y/n) [n]: " proceed
