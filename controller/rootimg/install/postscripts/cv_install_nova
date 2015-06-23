@@ -21,6 +21,8 @@ main(){
   killall dhclient
   systemctl start network
 
+  systemctl stop openstack-nova-compute.service openstack-nova-network.service openstack-nova-metadata-api.service
+
   if vgdisplay | grep nova-volumes ; then
     echo "Nova-volumes exist!"
   else
@@ -56,6 +58,7 @@ main(){
   fi
   echo "/dev/nova-volumes/nova-volume	/var/lib/nova 	ext4	defaults,errors=remount-ro  0  2" >> /etc/fstab 
   mount -a
+  chown -R nova:nova /var/lib/nova
 
 #-------------------------------------------------
 # Configure the openstack-nova-compute component
