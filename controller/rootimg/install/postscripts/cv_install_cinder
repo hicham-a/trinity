@@ -5,7 +5,7 @@
 ##email          : abhishek.mukherjee@clustervision.com
 
 # Get config info and helper functions
-source /trinity/cinder/config
+source /trinity/cinder/config.sh
 
 # Main function
 main(){
