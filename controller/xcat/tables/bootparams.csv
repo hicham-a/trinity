@@ -1,0 +1,2 @@
+#node,kernel,initrd,kcmdline,addkcmdline,dhcpstatements,adddhcpstatements,comments,disable
+"compute",,,,selinux=0

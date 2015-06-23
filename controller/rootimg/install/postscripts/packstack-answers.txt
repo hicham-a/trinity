@@ -124,7 +124,7 @@ CONFIG_STORAGE_HOST=127.0.0.1
 CONFIG_SAHARA_HOST=127.0.0.1
 
 # To subscribe each server to EPEL enter "y"
-CONFIG_USE_EPEL=n
+CONFIG_USE_EPEL=y
 
 # A comma separated list of URLs to any additional yum repositories
 # to install

@@ -5,9 +5,18 @@ openstack-utils
 
 # required for nova compute
 openstack-nova-compute
+openstack-nova-network
+openstack-nova-api
 sysfsutils
 
 # required for cinder
 openstack-cinder
 lvm2
-targetcli python-oslo-db MySQL-python
+targetcli 
+python-oslo-db 
+MySQL-python
+
+# Needed for nova-compute
+libvirt-daemon-config-nwfilter
+libvirt-daemon-driver-nwfilter
+

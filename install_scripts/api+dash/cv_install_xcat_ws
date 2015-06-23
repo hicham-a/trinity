@@ -16,6 +16,8 @@ source /etc/profile.d/xcat.sh
 export HOME=/root
 tabch key=xcat,username=trinity passwd.password=trinity
 mkdef -t policy 6 name=trinity rule=allow
+sed  -e "/<Directory \/>/,/<\/Directory>/ s/Require/#Require/" -i /etc/httpd/conf/httpd.conf
+service httpd restart
 
 echo "$0 finished" >> /var/log/postinstall.log
 
