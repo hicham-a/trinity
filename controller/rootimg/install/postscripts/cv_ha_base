@@ -106,9 +106,6 @@ resource ha_disk {
      }
 EOF
 
-drbdadm create-md ha_disk
-modprobe drbd
-drbdadm up ha_disk
 
 if [ $N = 1 ]; then 
    # I am the passive node
@@ -134,7 +131,15 @@ if [ $N = 1 ]; then
    #-------------------------------------------------------------------
    # Setup drbd and disks
    #-------------------------------------------------------------------
+   drbdadm create-md ha_disk
+   modprobe drbd
+   drbdadm up ha_disk
    drbdadm primary --force ha_disk
+
+   ssh controller-2.cluster drbdadm create-md ha_disk
+   ssh controller-2.cluster modprobe drbd
+   ssh controller-2.cluster drbdadm up ha_disk
+   ssh controller-2.cluster drbdadm invalidate ha_disk
 
    mkfs -t ext4 /dev/drbd1
    mount /dev/drbd1 /drbd
@@ -241,7 +246,6 @@ EOF
    pcs constraint order start grp_xCAT then start xCAT
 else
    touch /tmp/cv_ha_ready
-   drbdadm invalidate ha_disk
 
    systemctl stop dhcpd
    systemctl stop mysqld
