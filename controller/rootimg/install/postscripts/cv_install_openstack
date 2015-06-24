@@ -177,7 +177,7 @@ sed -e "s/<TENANT>/${FIRST_TENANT}/g" \
     -e "s/<USER>/${FIRST_USER}/g" \
     -e "s/<PASSWORD>/${FIRST_PASS}/g" \
     -e "s/<OPENSTACK>/$(hostname -i)/g" \
-    -i /root/keystonerc_a
+    /trinity/openstack/keystonerc > /root/keystonerc_${FIRST_TENANT}
 
 source /root/keystonerc_a
 nova secgroup-add-rule default tcp 1 65535 0.0.0.0/0
