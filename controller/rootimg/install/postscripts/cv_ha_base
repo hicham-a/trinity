@@ -9,11 +9,21 @@ yum -y install pacemaker
 yum -y install pcs fence-agents-all
 systemctl start pcsd
 systemctl start pacemaker 
+systemctl enable pcsd
+systemctl enable pacemaker
 
 echo system | passwd hacluster --stdin
 
 yum -y install http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
 yum -y install drbd84-utils kmod-drbd84
+echo drbd > /etc/modules.load.d/drbd.conf
+
+# Disable automatic starting of the services, this should be handled by pacemaker from now
+systemctl disable dhcpd
+systemctl disable mysqld
+systemctl disable httpd
+systemctl disable named
+systemctl disable xcatd
 
 #-----------------------------------------------------------------------------------------------
 # Determine if this will be the active or passive node. An odd node will become 
@@ -164,7 +174,7 @@ link('/etc/xcat')
 link('/opt/xcat')
 link('/root/.xcat')
 # Hosts is a bit odd - may just want to rsync out...
-link('/etc/hosts')
+#link('/etc/hosts')
 # ==== Conserver ====
 link('/etc/conserver.cf')
 # ==== DNS ====
@@ -255,11 +265,6 @@ else
    systemctl stop named
    systemctl stop xcatd
 
-   systemctl disable dhcpd
-   systemctl disable mysqld
-   systemctl disable httpd
-   systemctl disable named
-   systemctl disable xcatd
 
 fi
 
