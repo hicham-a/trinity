@@ -121,12 +121,13 @@ if [ $N = 1 ]; then
    #-------------------------------------------------------------------
    pcs cluster auth controller-1.cluster controller-2.cluster -u hacluster -p system
    pcs cluster setup --name ha_cluster controller-1.cluster controller-2.cluster --force
-   pcs cluster start --all
 
    pcs property set no-quorum-policy=ignore
    pcs resource op defaults timeout="120s"
    pcs resource defaults resource-stickyness=100
    pcs property set stonith-enabled=false
+
+   pcs cluster start --all
 
    #-------------------------------------------------------------------
    # Setup drbd and disks
@@ -136,13 +137,14 @@ if [ $N = 1 ]; then
    drbdadm up ha_disk
    drbdadm primary --force ha_disk
 
+   mkfs -t ext4 /dev/drbd1
+   mount /dev/drbd1 /drbd
+
    ssh controller-2.cluster drbdadm create-md ha_disk
    ssh controller-2.cluster modprobe drbd
    ssh controller-2.cluster drbdadm up ha_disk
+   sleep 1
    ssh controller-2.cluster drbdadm invalidate ha_disk
-
-   mkfs -t ext4 /dev/drbd1
-   mount /dev/drbd1 /drbd
 
    rm /etc/httpd/logs ; ln -s /var/log/httpd /etc/httpd/logs
    rm /etc/httpd/modules ; ln -s /usr/lib64/httpd/modules /etc/httpd/modules
