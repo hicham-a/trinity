@@ -180,8 +180,9 @@ sed -e "s/<TENANT>/${FIRST_TENANT}/g" \
     /trinity/openstack/keystonerc > /root/keystonerc_${FIRST_TENANT}
 
 source /root/keystonerc_a
+nova floating-ip-create ${FIRST_POOL}
 nova secgroup-add-rule default tcp 1 65535 0.0.0.0/0
 nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0 
-nova boot --flavor 1 --image ${LOGIN_IMAGE} --security-groups default --user-data ${LOGIN_DATA} ${LOGIN_NODE}
+nova boot --flavor 2 --image ${LOGIN_IMAGE} --security-groups default --user-data ${LOGIN_DATA} ${LOGIN_NODE}
 sleep 5
 nova floating-ip-associate ${LOGIN_NODE} ${FIRST_FLOATING}
