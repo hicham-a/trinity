@@ -68,7 +68,7 @@ controller:/trinity /trinity nfs rsize=8192,wsize=8192,timeo=14,intr
 controller:/home/vc-a /home nfs rsize=8192,wsize=8192,timeo=14,intr
 EOF
 
-mount-a
+mount -a
 
 #--------------------------------------------------------------------------
 # Setup munge and SLURM 

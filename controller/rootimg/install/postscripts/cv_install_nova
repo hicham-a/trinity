@@ -122,8 +122,8 @@ main(){
   openstack-config --set /etc/nova/nova.conf DEFAULT share_dhcp_address  True
   openstack-config --set /etc/nova/nova.conf DEFAULT force_dhcp_release  True
   openstack-config --set /etc/nova/nova.conf DEFAULT flat_network_bridge  br100
-  openstack-config --set /etc/nova/nova.conf DEFAULT flat_interface  ${ETH1}
-  openstack-config --set /etc/nova/nova.conf DEFAULT public_interface  ${ETH2}
+  openstack-config --set /etc/nova/nova.conf DEFAULT flat_interface  ${ETH2}
+  openstack-config --set /etc/nova/nova.conf DEFAULT public_interface  ${ETH1}
   echo "-----------------------------------"  
 
   systemctl enable openstack-nova-network.service 
