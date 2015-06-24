@@ -23,7 +23,7 @@
 NAME="trinity_api"
 DAEMON="/usr/bin/wrapper_$NAME"
 CONFIG="/etc/trinity/$NAME.conf"
-PIDFILE="/var/run/trinity/$NAME.pid"
+PIDFILE="/var/run/$NAME.pid"
 LOGFILE="/var/log/trinity/$NAME.log"
 TIMEOUT=60
 LOCKFILE="/var/lock/subsys/$NAME"
