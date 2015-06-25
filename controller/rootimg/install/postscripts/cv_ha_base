@@ -16,7 +16,7 @@ echo system | passwd hacluster --stdin
 
 yum -y install http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
 yum -y install drbd84-utils kmod-drbd84
-echo drbd > /etc/modules.load.d/drbd.conf
+echo drbd > /etc/modules-load.d/drbd.conf
 
 # Disable automatic starting of the services, this should be handled by pacemaker from now
 systemctl disable dhcpd
@@ -135,11 +135,6 @@ if [ $N = 1 ]; then
    pcs cluster auth controller-1.cluster controller-2.cluster -u hacluster -p system
    pcs cluster setup --name ha_cluster controller-1.cluster controller-2.cluster --force
 
-   pcs property set no-quorum-policy=ignore
-   pcs resource op defaults timeout="120s"
-   pcs resource defaults resource-stickyness=100
-   pcs property set stonith-enabled=false
-
    pcs cluster start --all
 
    #-------------------------------------------------------------------
@@ -178,8 +173,10 @@ link('/opt/xcat')
 link('/root/.xcat')
 # Hosts is a bit odd - may just want to rsync out...
 #link('/etc/hosts')
+#
 # ==== Conserver ====
 link('/etc/conserver.cf')
+#
 # ==== DNS ====
 link('/etc/named')
 link('/etc/named.conf')
@@ -192,6 +189,7 @@ link('/etc/sysconfig/named')
 link('/var/named')
 # ==== YUM ====
 link('/etc/yum.repos.d')
+#
 # ==== DHCP ====
 link('/etc/dhcp')
 link('/var/lib/dhcpd')
@@ -209,15 +207,23 @@ link('/var/lib/mysql')
 # ==== tftp ====
 link('/tftpboot')
 #
+# ==== openldap ====
+link('/etc/openldap')
+link('/var/lib/ldap')
+#
+# ==== docker =====
+link('/var/lib/docker')
+link('/var/lib/docker-registry')
+
 # ==== NFS ====
 link('/etc/exports')
 link('/var/lib/nfs')
 link('/etc/sysconfig/nfs')
-
+#
 # === Trinity NFS shares ====
 link('/trinity/')
 link('/cluster/')
-
+link('/home')
 #
 EOF
 
@@ -258,13 +264,22 @@ EOF
    pcs constraint colocation add ip_bmc ms_drbd INFINITY with-rsc-role=Master
    pcs constraint colocation add grp_xCAT xCAT
 
-   # Finally we specify the order in which resources should be started.
+   # Specify the order in which resources should be started.
    pcs constraint order fs_drbd then start symlinks_xCAT
    pcs constraint order ip then start grp_drbd
    pcs constraint order ip then start ip_bmc
    pcs constraint order promote ms_drbd then start grp_drbd
    pcs constraint order start grp_drbd then start grp_xCAT
    pcs constraint order start grp_xCAT then start xCAT
+
+   # Finally some defaults
+   pcs property set no-quorum-policy=ignore
+   pcs resource op defaults timeout="120s"
+   pcs resource defaults resource-stickyness=100
+   pcs property set stonith-enabled=false
+
+   # Just a hack. We noticed drbd came up with not configured errors. 
+   pcs resource cleanup drbd 
 else
    touch /tmp/cv_ha_ready
 
@@ -276,7 +291,6 @@ else
    systemctl stop docker
    systemctl stop docker-registry
    systemctl stop slapd
-
 
 fi
 
