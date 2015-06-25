@@ -24,6 +24,9 @@ systemctl disable mysqld
 systemctl disable httpd
 systemctl disable named
 systemctl disable xcatd
+systemctl disable docker
+systemctl disable docker-registry
+systemctl disable slapd
 
 #-----------------------------------------------------------------------------------------------
 # Determine if this will be the active or passive node. An odd node will become 
@@ -226,7 +229,8 @@ EOF
    #-------------------------------------------------------------------
    dev=$(ip a | grep 10.148.255.253 | awk '{print $5}')
 
-   pcs resource create ip_xCAT ocf:heartbeat:IPaddr2 ip="10.141.255.254" iflabel="xCAT" cidr_netmask="16" nic="$dev" op monitor interval="37s"
+   pcs resource create ip ocf:heartbeat:IPaddr2 ip="10.141.255.254" iflabel="xCAT" cidr_netmask="16" nic="$dev" op monitor interval="37s"
+   pcs resource create ip_bmc ocf:heartbeat:IPaddr2 ip="10.148.255.254" iflabel="xCAT" cidr_netmask="16" nic="$dev" op monitor interval="37s"
    pcs resource create drbd ocf:linbit:drbd drbd_resource=ha_disk
    pcs resource master ms_drbd drbd master-max="1" master-node-max="1" clone-max="2" clone-node-max="1" notify="true"
    pcs resource create fs_drbd ocf:heartbeat:Filesystem device="/dev/drbd/by-res/ha_disk" directory="/drbd" fstype="ext4" op monitor interval="57s"
@@ -236,23 +240,28 @@ EOF
    pcs resource create mysqld systemd:mysqld op monitor interval="37s"
    pcs resource create dhcpd systemd:dhcpd op monitor interval="37s"
    pcs resource create named systemd:named op monitor interval="37s"
+   pcs resource create docker systemd:docker op monitor interval="37s"
+   pcs resource create docker-registry systemd:docker-registry op monitor interval="37s"
+   pcs resource create slapd systemd:slapd op monitor interval="37s"
    pcs resource create xCAT lsb:xcatd op monitor interval="42s"
 
    # For convenience we create to groups of resources.
    # This will help ordering according to the dependencies.
    pcs resource group add grp_drbd fs_drbd symlinks_xCAT
-   pcs resource group add grp_xCAT httpd dhcpd named mysqld xCAT
+   pcs resource group add grp_xCAT httpd dhcpd named mysqld docker docker-registry slapd xCAT
 
    # We specify that all services and groups should be on
    # the same node as where drbd keeps its master copy of the data.
    pcs constraint colocation add grp_xCAT grp_drbd
    pcs constraint colocation add grp_drbd ms_drbd INFINITY with-rsc-role=Master
-   pcs constraint colocation add ip_xCAT ms_drbd INFINITY with-rsc-role=Master
+   pcs constraint colocation add ip ms_drbd INFINITY with-rsc-role=Master
+   pcs constraint colocation add ip_bmc ms_drbd INFINITY with-rsc-role=Master
    pcs constraint colocation add grp_xCAT xCAT
 
    # Finally we specify the order in which resources should be started.
    pcs constraint order fs_drbd then start symlinks_xCAT
-   pcs constraint order ip_xCAT then start grp_drbd
+   pcs constraint order ip then start grp_drbd
+   pcs constraint order ip then start ip_bmc
    pcs constraint order promote ms_drbd then start grp_drbd
    pcs constraint order start grp_drbd then start grp_xCAT
    pcs constraint order start grp_xCAT then start xCAT
@@ -264,6 +273,9 @@ else
    systemctl stop httpd
    systemctl stop named
    systemctl stop xcatd
+   systemctl stop docker
+   systemctl stop docker-registry
+   systemctl stop slapd
 
 
 fi
