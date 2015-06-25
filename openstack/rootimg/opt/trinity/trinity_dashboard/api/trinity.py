@@ -29,20 +29,25 @@ def version(request):
   return c.version()
 
 def overview(request):
-  excluded_tenants=['services']
+  excluded_tenants=['services','admin','demo']
   c=trinityclient(request)
   hardwares_list=c.hardwares_list()
   clusters_list=c.clusters_list()
   tenants_list,more=keystone.tenant_list(request)
   clusters_detail=c.clusters_detail()
-  for tenant in tenants_list:
-    if tenant.name not in clusters_list and tenant.name not in excluded_tenants:
-      clusters_detail.append({'cluster':tenant.name})
-  data=[]
+
   tenant_name_list=[tenant.name for tenant in tenants_list]
   for i in range(len(clusters_detail)):
-    if clusters_detail[i]['cluster'] not in tenant_name_list:
-      clusters_detail[i]['cluster']='* '+clusters_detail[i]['cluster']
+    if clusters_detail[i]['cluster'] in tenant_name_list:
+      clusters_detail[i].update({'status': 'Active'})
+    else:
+      clusters_detail[i].update({'status': 'No tenant'})
+
+  for tenant in tenants_list:
+    if tenant.name not in clusters_list and tenant.name not in excluded_tenants:
+      clusters_detail.append({'cluster':tenant.name, 'status': 'No nodes'})
+
+  data=[]
   for cluster in clusters_detail:
     datum=DictToObject(hardwares_list,cluster,default_keys=['cluster'],default_value=0)
     data.append(datum)

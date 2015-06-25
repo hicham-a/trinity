@@ -53,6 +53,9 @@ class OverviewTable(tables.DataTable):
     cluster=tables.Column('cluster', verbose_name=_(' '))
     cluster.table=self
     columns_unsorted.append(('cluster',cluster))
+    status=tables.Column('status', verbose_name=_('Status'))
+    status.table=self
+    columns_unsorted.append(('status',status))
     for hardware in hardwares:
       key=hardware
       value=tables.Column(hardware, verbose_name=_(hardware), summation='sum')
@@ -66,11 +69,11 @@ class OverviewTable(tables.DataTable):
   def get_object_id(self,datum):
     return datum.cluster
 
-#  def get_row_actions(self,datum):
-#    if datum.cluster=="Free Nodes":
-#      return []
-#    else:
-#      return self._meta.row_actions
+  def get_row_actions(self,datum):
+    if datum.cluster=="No tenant":
+      return []
+    else:
+      return self._meta.row_actions
 
   class Meta:
     name = "hpc_overview"
