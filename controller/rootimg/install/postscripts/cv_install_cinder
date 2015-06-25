@@ -77,7 +77,8 @@ main(){
   
   # Set up the message broker (rabbit_mq)
  # # -- NOTE: The rpc_password needs to be identical to that in the openstack controller
-  openstack-config --set /etc/cinder/cinder.conf DEFAULT rpc_backend rabbit
+  # openstack-config --set /etc/cinder/cinder.conf DEFAULT rpc_backend rabbit
+  openstack-config --set /etc/cinder/cinder.conf DEFAULT rpc_backend cinder.openstack.common.rpc.impl_kombu
   openstack-config --set /etc/cinder/cinder.conf DEFAULT rabbit_host  ${OPENSTACK_CONTROLLER}
   openstack-config --set /etc/cinder/cinder.conf DEFAULT rabbit_password ${RPC_PASS}
   
