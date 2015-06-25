@@ -176,7 +176,7 @@ sed -e "s/FLOATING_IP=127.0.0.1/FLOATING_IP=${FIRST_FLOATING}/g" \
 sed -e "s/<TENANT>/${FIRST_TENANT}/g" \
     -e "s/<USER>/${FIRST_USER}/g" \
     -e "s/<PASSWORD>/${FIRST_PASS}/g" \
-    -e "s/<OPENSTACK>/$(hostname -i)/g" \
+    -e "s/<OPENSTACK>/$(hostname -I | awk '{print $1}')/g" \
     /trinity/openstack/keystonerc > /root/keystonerc_${FIRST_TENANT}
 
 source /root/keystonerc_a
