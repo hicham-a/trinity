@@ -4,9 +4,9 @@
 #author		: Abhishek Mukherjee
 #email		: abhishek.mukherjee@clustervision.com
 
-cv_email="rsa@clustervision.com"
-echo -n "Enter the RSA email [${cv_email}]: "
-read cv_email
+read -e -p "Enter the RSA email [${cv_email}]: " cv_email
+cv_email=${cv_email:="rsa@clustervision.com"}
+
 site="monitoring"
 sites="/omd/sites"
 check_mk="${sites}/${site}/etc/check_mk"
