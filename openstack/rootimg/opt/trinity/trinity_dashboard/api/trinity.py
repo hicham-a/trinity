@@ -107,3 +107,6 @@ def cluster_config(request):
     data.append(datum)
   return data 
 
+def monitoring_info(request):
+  c=trinityclient(request)
+  return c.monitoring_info()

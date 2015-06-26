@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load url from future %}
+
+{% block title %}{% trans "HPC Monitoring" %}{% endblock %}
+
+{% block page_header %}
+   {% include "horizon/common/_page_header.html" with title=_("HPC Monitoring") %}
+{% endblock page_header %}
+{% block main %}
+<div>
+<!--<iframe id="login_frame" name="login_frame" width="100%" height="900"></iframe> -->
+<form id="login_form" method="POST" action="http://{{ monHost }}/{{ monRoot }}/check_mk/login.py" method="POST" target="_blank">
+    <input type="hidden" name="_login" value="1"/>
+    <input type="text" class="text" name="_username" value="{{ monUser }}"/>
+    <input type="password" class="text" name="_password" value="{{ monPass }}"/>
+</form>
+<script type="text/javascript">
+  document.getElementById("login_form").submit();
+</script>
+</div>
+{% endblock %}
+
+

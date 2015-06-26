@@ -372,7 +372,18 @@ class TrinityAPI(object):
 #      return ret
 #    node_list=self.group_nodes(name=cluster, startkey=self.vc)
     
-     
+  def mon_info(self):
+    self.authenticate()
+    ret={}
+    if self.has_access and self.is_admin:
+      ret.update({'monUser':self.mon_user})      
+      ret.update({'monPass':self.mon_pass})      
+      ret.update({'monHost':self.mon_host})  
+      ret.update({'monRoot':self.mon_root})    
+    return ret
+      
+
+    
 
 ######################################################################### 
 
@@ -962,6 +973,10 @@ def modify_cluster(cluster,version=1):
   return ret
 
 
+@trinity.get('/trinity/v<version:float>/monitoring')
+def show_monitoring_info(version=1):
+  req=TrinityAPI(request)
+  return req.mon_info()
 
 # Helper functions
 

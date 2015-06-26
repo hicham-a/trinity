@@ -125,6 +125,10 @@ class Client(object):
     r = requests.put(self.trinity_prefix+'/clusters/'+cluster, data=json.dumps(self.payload), headers=self.headers)
     return r.json() 
 
+  def monitoring_info(self):
+    r =requests.get(self.trinity_prefix+'/monitoring', data=json.dumps(self.payload), headers=self.headers)
+    return r.json()
+
   def get_metrics(self):
 #  Dummy
     return
