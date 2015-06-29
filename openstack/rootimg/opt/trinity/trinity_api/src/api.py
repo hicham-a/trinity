@@ -673,14 +673,15 @@ def modify_cluster(cluster,version=1):
 
   # Get the network info
   path="/tables/networks/rows"
-  xcat_networks=requests.get(xcat_host+path,verify=False,params=query,headers=headers).json()
+  xcat_networks=requests.get(xcat_host+path,verify=False,params=req.query,headers=req.headers).json()["networks"]
   network_map={}
   for network in xcat_networks:
-    if network["domain"].startswith(req.vc):
+    if "domain" in network and network["domain"].startswith(req.vc):
       second_octet=network["net"].split(".")[1]      
-      network_map.update({second_octet,network["domain"]})
+      network_map.update({second_octet:network["domain"]})
    
-  for second_octet in range(16,32):
+  for second_octet_int in range(16,32):
+    second_octet=str(second_octet_int)
     if second_octet not in network_map.keys():
       break
 
@@ -1110,12 +1111,12 @@ def startup():
 
   # Get the network info
   path="/tables/networks/rows"
-  xcat_networks=requests.get(xcat_host+path,verify=False,params=query,headers=headers).json()
+  xcat_networks=requests.get(xcat_host+path,verify=False,params=query,headers=headers).json()["networks"]
   network_map={}
   for network in xcat_networks:
-    if network["domain"].startswith(vc):
+    if "domain" in network and network["domain"].startswith(vc):
       second_octet=network["net"].split(".")[1]      
-      network_map.update({second_octet,network["domain"]})
+      network_map.update({second_octet:network["domain"]})
 
   state_has_changed=False
 
