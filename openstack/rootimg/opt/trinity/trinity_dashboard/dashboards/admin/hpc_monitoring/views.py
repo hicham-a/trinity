@@ -10,7 +10,7 @@ from horizon.utils import memoized
 from horizon import workflows
 
 from openstack_dashboard.api import trinity
-from  . import tables as monitoring_tables
+#from  . import tables as monitoring_tables
 
 class IndexView(TemplateView):
   template_name='admin/hpc_monitoring/index.html'

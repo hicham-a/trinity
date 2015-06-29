@@ -1,3 +1,4 @@
+import copy
 from django.utils.translation import ugettext_lazy as _
 # should really use collections.OrderedDict
 from django.utils.datastructures import SortedDict
@@ -70,10 +71,27 @@ class OverviewTable(tables.DataTable):
     return datum.cluster
 
   def get_row_actions(self,datum):
-    if datum.cluster=="No tenant":
+    if datum.status=="No tenant":
       return []
     else:
-      return self._meta.row_actions
+      bound_actions = []
+      for action in self._meta.row_actions:
+          # Copy to allow modifying properties per row
+          bound_action = copy.copy(self.base_actions[action.name])
+          bound_action.attrs = copy.copy(bound_action.attrs)
+          bound_action.datum = datum
+          # Remove disallowed actions.
+          if not self._filter_action(bound_action,
+                                     self.request,
+                                     datum):
+              continue
+          # Hook for modifying actions based on data. No-op by default.
+          bound_action.update(self.request, datum)
+          # Pre-create the URL for this link with appropriate parameters
+          if issubclass(bound_action.__class__, tables.actions.LinkAction):
+              bound_action.bound_url = bound_action.get_link_url(datum)
+          bound_actions.append(bound_action)
+      return bound_actions
 
   class Meta:
     name = "hpc_overview"
