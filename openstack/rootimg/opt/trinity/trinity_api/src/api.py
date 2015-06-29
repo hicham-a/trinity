@@ -535,6 +535,8 @@ def show_hardware_details(cluster,version=1):
 def modify_cluster(cluster,version=1):
   global state_has_changed
   global all_nodes_info
+  global network_map
+
   state_has_changed=True
   req=TrinityAPI(request)
   ret={}
@@ -667,8 +669,21 @@ def modify_cluster(cluster,version=1):
   vc_net='vc_'+cluster+'_net'
   login_cluster='login-'+cluster
 # This will not work if cluster is not a single char!!!!!  
-  second_octet=str(16+ord(cluster)-ord('a'))
- 
+##  second_octet=str(16+ord(cluster)-ord('a'))
+
+  # Get the network info
+  path="/tables/networks/rows"
+  xcat_networks=requests.get(xcat_host+path,verify=False,params=query,headers=headers).json()
+  network_map={}
+  for network in xcat_networks:
+    if network["domain"].startswith(req.vc):
+      second_octet=network["net"].split(".")[1]      
+      network_map.update({second_octet,network["domain"]})
+   
+  for second_octet in range(16,32):
+    if second_octet not in network_map.keys():
+      break
+
   if not cluster_exists :
     # create vc-<cluster> entry in the hosts table
     # The verb is PUT because the nodes already exist
@@ -1051,6 +1066,7 @@ def startup():
   global state_has_changed
   global cached_detailed_overview
   global all_nodes_info
+  global network_map
   hw='hw-'
   vc='vc-'
   headers={"Content-Type":"application/json", "Accept":"application/json"} # setting this by hand for now
@@ -1091,6 +1107,16 @@ def startup():
       if members: node_list=[x.strip() for x in members.split(',')]
       hc_overview['cluster'][cluster]=node_list
   cached_detailed_overview=hc_overview
+
+  # Get the network info
+  path="/tables/networks/rows"
+  xcat_networks=requests.get(xcat_host+path,verify=False,params=query,headers=headers).json()
+  network_map={}
+  for network in xcat_networks:
+    if network["domain"].startswith(vc):
+      second_octet=network["net"].split(".")[1]      
+      network_map.update({second_octet,network["domain"]})
+
   state_has_changed=False
 
 #  print hc_overview
