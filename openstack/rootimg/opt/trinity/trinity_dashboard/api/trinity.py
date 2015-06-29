@@ -49,7 +49,7 @@ def overview(request):
 
   data=[]
   for cluster in clusters_detail:
-    datum=DictToObject(hardwares_list,cluster,default_keys=['cluster'],default_value=0)
+    datum=DictToObject(hardwares_list,cluster,default_keys=['cluster','status'],default_value=0)
     data.append(datum)
   return data  
   
