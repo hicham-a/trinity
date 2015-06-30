@@ -45,7 +45,7 @@ def overview(request):
 
   for tenant in tenants_list:
     if tenant.name not in clusters_list and tenant.name not in excluded_tenants:
-      clusters_detail.append({'cluster':tenant.name, 'status': 'No nodes'})
+      clusters_detail.append({'cluster':tenant.name, 'status': 'Active'})
 
   data=[]
   for cluster in clusters_detail:
