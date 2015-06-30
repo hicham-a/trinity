@@ -37,11 +37,11 @@ cp --dereference --recursive --verbose --preserve /trinity/login/rootimg/* /
 #---------------------------------------------------------------------------
 # Hostname resolution
 #---------------------------------------------------------------------------
-##cp-rootimg
-##cat << EOF > /etc/resolv.conf
-##search cluster. vc-a. cluster
-##nameserver 10.141.255.254
-##EOF
+##For now using a HERE document
+cat << EOF > /etc/resolv.conf
+search cluster. vc-a. cluster
+nameserver 10.141.255.254
+EOF
 
 read ETH1 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -1)
 sed -e 's/^PEERDNS="yes"/PEERDNS="no"/g' \
