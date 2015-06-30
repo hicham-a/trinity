@@ -34,6 +34,10 @@ mkdir -p /trinity
 mount ${controller}:/trinity /trinity
 cp --dereference --recursive --verbose --preserve /trinity/login/rootimg/* /
 
+# Make sure that /tmp is world writable
+chmod -R 777 /tmp
+chmod +t /tmp
+
 #---------------------------------------------------------------------------
 # Hostname resolution
 #---------------------------------------------------------------------------
