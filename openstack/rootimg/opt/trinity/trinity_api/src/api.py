@@ -931,7 +931,7 @@ def modify_cluster(cluster,version=1):
     fop.close()
     replacements={
       # "controller=10.141.255.254":"controller=controller",
-      "FLOATING_IP=127.0.0.1": "FLOATING_IP="+"172."+second_octet+".255.254",
+      # "FLOATING_IP=127.0.0.1": "FLOATING_IP="+"172."+second_octet+".255.254",
       "vc-a":vc_cluster
     }
     for i,j in replacements.iteritems():
