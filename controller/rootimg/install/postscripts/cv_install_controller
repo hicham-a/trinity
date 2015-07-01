@@ -95,6 +95,10 @@ mysqlsetup -i -V
 #--------------------------------------------------------------------------------------
 # correct any network settings
 #--------------------------------------------------------------------------------------
+systemctl stop NetworkManager
+systemctl disable NetworkManager
+killall dhclient
+systemctl start network
 
 # setup NAT, so nodes can access the internet (see manual step 1.f)
 chkconfig iptables on
