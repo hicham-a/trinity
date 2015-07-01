@@ -597,9 +597,9 @@ def modify_cluster(cluster,version=1):
       subprocess.call('chown munge:munge '+munge_dir_path,shell=True)
       subprocess.call('chmod u=rwx,go= '+munge_dir_path,shell=True)
       subprocess.call('chmod u=rwx,go=rx '+req.cluster_path+'/'+vc_cluster+'/etc/slurm',shell=True) 
-      subprocess.call('chmod u=rw,go=rx '+req.cluster_path+'/'+vc_cluster+'/etc/slurm.conf',shell=True) 
-      subprocess.call('chmod u=rw,go=r '+req.cluster_path+'/'+vc_cluster+'/etc/slurm-nodes.conf',shell=True) 
-      subprocess.call('chmod ug=rw,o=r '+req.cluster_path+'/'+vc_cluster+'/etc/slurm-user.conf',shell=True) 
+      subprocess.call('chmod u=rw,go=rx '+req.cluster_path+'/'+vc_cluster+'/etc/slurm/slurm.conf',shell=True) 
+      subprocess.call('chmod u=rw,go=r '+req.cluster_path+'/'+vc_cluster+'/etc/slurm/slurm-nodes.conf',shell=True) 
+      subprocess.call('chmod ug=rw,o=r '+req.cluster_path+'/'+vc_cluster+'/etc/slurm/slurm-user.conf',shell=True) 
 #      subprocess.call('chmod u+rw '+munge_key_path,shell=True)
 #      subprocess.call('chmod uga-rwx '+munge_key_path,shell=True)
       slurm_needs_update=True 
