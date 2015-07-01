@@ -264,8 +264,8 @@ chmod u=x,go= /usr/sbin/obol
 #---------------------------------------------------------------------------
 # No strict host checking for the virtual cluster
 #---------------------------------------------------------------------------
-FLOATING_IP=127.0.0.1
-VC_NET=$(echo ${FLOATING_IP} | awk -F. '{ print $1"."$2".*.*" }')
+# FLOATING_IP=127.0.0.1
+# VC_NET=$(echo ${FLOATING_IP} | awk -F. '{ print $1"."$2".*.*" }')
 cat << EOF >> /etc/ssh/ssh_config
 Host *
     StrictHostKeyChecking no
