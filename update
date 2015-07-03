@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+##title          : update
+##description    : This script will update a node given a profile. It will copy   
+##                 the Trinity supplied files from the repository to the root
+##                 file system of the node. Optionally, it will perform some 
+##                 additional steps for some profiles, 
+##                 e.g., update the version files, update xCAT tables etc
+##                 
+##author         : Abhishek Mukherjee & Hans Then
+##email          : abhishek.mukherjee@clustervision.com 
+##                 hans.then@clustervision.com
+
+bold=$(tput bold)
+normal=$(tput sgr0)
+main(){
+  PROFILES=(
+    master
+    controller
+    login
+    compute
+    container  
+  )
+  if [[ -z $1  ||  "$1" == "--help" || "$1" == "-h" ]]; then
+    help="
+Usage:
+  ${bold}update <profile> [<options>]${normal}
+
+  The following profiles are supported:
+    master, controller, openstack, login, compute and container
+
+  For profiles master and controller,
+  run this script locally.
+
+  For all other profiles, the script should be run from the controller
+  and after running update controller.
+
+  The following options are supported:
+    master | controller
+      --tables : restore xCAT tables from repo
+
+    login 
+      --name <login_IP> : (mandatory option) update the particular login node,
+                          you may need to enter the root password for 
+                          the login node
+
+    compute | container
+      --reboot <node_range> : reboot the nodes or containers with the new image
+    "
+    echo "${help}"
+    return 0
+  fi  
+  profile=$1
+  if [ -d "${profile}/rootimg" ] ; then
+  # TODO: should also check if profile is in PROFILES
+    echo "This will update the current node using the from source code repository"
+    echo "using the profile: ${bold}$1${normal}"
+    read -e -p "Do you want to continue? (y/n) [n]: " proceed
+    proceed=${proceed:="n"}
+    if [[ "${proceed}" == 'Y' || "${proceed}" == 'y' || "${proceed}" == 'Yes' || "${proceed}" == 'YES'|| "${proceed}" == 'yes' ]]; then
+      echo ${proceed}
+      copy $1
+      extras "$@"
+    fi
+    return $?
+  else
+    echo "No such profile: $1"
+    return 1
+  fi
+}
+
+copy(){
+  case $1 in
+    master | controller )
+      # Copy the files to the nodes root filesystem
+      REPO=$( cd "$1" && pwd )
+      cp --dereference --recursive --verbose --preserve ${REPO}/rootimg/* /
+      # TODO: There should be a list of excludes here
+      LOCAL=/trinity/site-local/$1
+      if [ -d "${LOCAL}/rootimg" ] ; then
+        cp --dereference --recursive --verbose --preserve ${LOCAL}/rootimg/* /
+      else
+        echo "No site-local rootimg found"
+      fi
+    ;;
+    openstack )
+      # Assumes that /trinity is mounted on the openstack node as /trinity    
+      # Assumes that the 'openstack' hostname is resolvable on the controller
+      xdsh openstack "cp --dereference --recursive --verbose --preserve /trinity/$1/rootimg/* /"
+    ;;  
+    compute )  
+      # Note that the compute profile actually corresponds to the trinity osimge!
+      # TODO The osver and arch should not be hardcoded
+      cp --dereference --recursive --verbose --preserve /trinity/$1/rootimg/* /install/netboot/centos7.0/x86_64/trinity/rootimg/
+      genimage centos7.0-x86_64-netboot-trinity
+      packimage centos7.0-x86_64-netboot-trinity
+    ;;
+    container )
+      docker build -t controller:5050/trinity /trinity/container
+      docker push controller:5050/trinity
+    ;;
+    login )
+      if [[ "$2" == "--name" ]] && ping -c 1 "$3" > /dev/null 2>&1 ; then
+        ssh root@"$3" "/trinity/login/rootimg/* /" 
+      else
+        echo "Enter a valid login node"
+      fi   
+  esac  
+}  
+
+extras(){
+  REPO=$( cd "$1" && pwd )
+  case $1 in
+    master | controller)
+      (git branch | grep "*"; git rev-parse --short HEAD; git status --porcelain) > /trinity/version
+#      cp /trinity/version /trinity/$1/rootimg/install/postscripts/cv_trinity_version
+      if [ -z $2 ]; then
+        return 0
+      fi
+      source /etc/profile.d/xcat.sh
+      mkdir -p /tmp/xcattables
+      read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
+      for table in $(ls ${REPO}/tables); do
+        sed -e "s/\<eno1\>/$ETH1/g" -e "s/\<eno2\>/$ETH2/g"  -e "s/\<eno3\>/$ETH3/g" ${REPO}/tables/$table > /tmp/xcattables/$table;
+      done
+      restorexCATdb -Vp /tmp/xcattables     
+      return 0
+    ;;
+    openstack)
+      service trinity_api restart
+      service httpd restart
+    ;;
+    *)
+      return 0
+    ;;
+  esac
+}
+ 
+main "$@"
+exit $?
+

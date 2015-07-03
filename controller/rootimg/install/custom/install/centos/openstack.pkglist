@@ -14,3 +14,6 @@ xorg-x11-xauth
 yum-utils
 bind-utils
 
+# #230
+firefox
+

@@ -1,0 +1,16 @@
+.
+├── compute
+├── conf.tmpl
+├── controller
+├── ha-xcat
+├── install_scripts
+├── login
+├── master
+├── openldap
+├── openstack
+├── salt
+├── slurm
+├── trinity
+└── utils
+
+13 directories

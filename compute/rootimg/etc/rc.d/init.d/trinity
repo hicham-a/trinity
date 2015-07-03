@@ -26,8 +26,8 @@ start() {
     echo "Starting Trinity"
 
     # disable the docker bridge
-    ip link set docker0 down || true
-    brctl delbr docker0 || true
+#    ip link set docker0 down || true
+#    brctl delbr docker0 || true
 
     # Determine our container name
     NAME=$(hostname -s | sed s/node/c/)

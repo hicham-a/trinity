@@ -1,19 +1,24 @@
-#!/bin/bash
+#! /usr/bin/bash
+##title          : cv_install_openstack
+##description    : Installs an openstack node. It also installs the Trinity API server, 
+##                 the client and the dashboard additions
+##                 and then start the API server # service trinity_api start
+##author         : Hans Then & Abhishek Mukherjee
+##email          : hans.then@clustervision
+##                 abhishek.mukherjee@clustervision.com
 
-cd /etc/yum.repos.d
-for file in * ; do sed -i 's/enabled=0/enabled=1/g' $file; done
-sed -i 's/enabled=1/enabled=0/g' local-repository.repo
-cd -
+
+#--------------------------------------------------------------------------------------
+# copy the required files from the controller to the root file system
+#--------------------------------------------------------------------------------------
+mkdir /trinity
+mount controller:/trinity /trinity       
+cp --dereference --recursive --verbose --preserve /trinity/openstack/rootimg/* /
 
 systemctl stop NetworkManager
 systemctl disable NetworkManager
 
-yum -y install epel-release
-yum -y install https://rdo.fedorapeople.org/rdo-release.rpm
 yum -y install openstack-packstack
-
-# Now, find a way to get the packstack answers file from the controller
-# to here.
 
 sed "s/=127.0.0.1/=$(hostname -I)/g" //xcatpost/packstack-answers.txt > /tmp/packstack-answers.txt
 read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
@@ -40,6 +45,19 @@ mkdir -p /home
 mkdir -p /cluster
 mkdir -p /trinity
 
+##AM: Will use the HERE doc for now
+##    we do not want file merge logic in the postbootscript
+##sort -u /etc/fstab* | \
+##  awk '
+##    BEGIN {print "# Created by trinity";}; \
+##    {if ($0!~/^\#/ && $0 !~/^$/) {if ($0~/nfs/) {nfs=nfs RS $0} else {local=local RS $0}}}; \
+##    END {print "# local filesystems" local RS "# remote filesystems" nfs}
+##  ' > /tmp/fstab
+##rm -f /etc/fstab*
+##mv -f /tmp/fstab /etc/fstab
+
+# FIXME: use a rootimg mechanism for this.
+##AM: This is an append, cannot use rootimg mechanism for now
 if ! grep controller:/cluster /etc/fstab > /dev/null; then
 cat << END >> /etc/fstab
 controller:/cluster /cluster nfs rsize=8192,wsize=8192,timeo=14,intr
@@ -48,4 +66,125 @@ controller:/home /home nfs rsize=8192,wsize=8192,timeo=14,intr
 END
 fi
 mount -a
-echo "openstack installation finished" >> /var/log/postinstall.log
+
+#--------------------------------------------------
+# Install the API server
+#--------------------------------------------------
+# Assumes that /cluster and  /home are already mounted
+
+# The Trinity API server init script requires the Linux Standard Base
+yum -y install redhat-lsb
+
+# The Trinity API server needs python Bottle
+yum -y install epel-release
+yum -y install python-pip
+pip install bottle
+pip install cherrypy
+
+# Trinity API setup
+cd /opt/trinity/trinity_api
+python setup.py install
+cd -
+sed "s/127.0.0.1/$(hostname -I| awk '{print $1}')/g" /etc/trinity/trinity_api.conf > /tmp/trinity_api.conf
+mv -f /tmp/trinity_api.conf /etc/trinity/trinity_api.conf
+mkdir -p /var/log/trinity
+#mkdir -p /var/run/trinity
+
+# Start the API
+service trinity_api start
+chkconfig trinity_api on
+
+#--------------------------------------------------
+# Install the python client
+#--------------------------------------------------
+cd /opt/trinity/trinity_client
+python setup.py install
+cd -
+sed "s/127.0.0.1/$(hostname -I| awk '{print $1}')/g" /etc/trinity/trinity_client.conf > /tmp/trinity_client.conf
+mv -f /tmp/trinity_client.conf /etc/trinity/trinity_client.conf
+
+#--------------------------------------------------
+# Install the dashboard additions
+#--------------------------------------------------
+cd /opt/trinity/trinity_dashboard
+sh setup.sh
+cd -
+
+# This is to fix a bug in the httpd configuration needed for Juno
+echo 'Include "/etc/httpd/conf.modules.d/*.conf"' >> /etc/httpd/conf/httpd.conf
+
+service httpd restart
+
+
+#-----------------------------------------------------------------------------------
+# Download the base login node image (CentOS cloud image) and upload it to glance
+#-----------------------------------------------------------------------------------
+CLOUD_IMAGE_URL="http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2"
+CLOUD_IMAGE="CentOS-7-x86_64-GenericCloud.qcow2"
+CLOUD_IMAGE_FORMAT="qcow2"
+CLOUD_CONTAINER_FORMAT="bare"
+LOGIN_IMAGE="login"
+wget ${CLOUD_IMAGE_URL}
+glance image-create \
+         --name "${LOGIN_IMAGE}" \
+         --disk-format "${CLOUD_IMAGE_FORMAT}" \
+         --container-format "${CLOUD_CONTAINER_FORMAT}" \
+         --is-public True \
+         --file "${CLOUD_IMAGE}"
+
+
+
+
+#-----------------------------------------------------------------------------------
+# Create the default cluster
+#-----------------------------------------------------------------------------------
+FIRST_TENANT="a"
+FIRST_USER="a"
+FIRST_PASS="system"
+FIRST_CLUSTER="vc-a"
+FIRST_POOL="login_a"
+FIRST_FLOATING="172.16.255.254"
+LOGIN_SETUP="/trinity/login/setup.sh"
+LOGIN_DATA="/root/.login_data"
+LOGIN_NODE="login-a"
+
+keystone tenant-create --name ${FIRST_TENANT}
+keystone user-create --name ${FIRST_TENANT} --tenant ${FIRST_USER} --pass ${FIRST_PASS}
+nova floating-ip-bulk-create --pool ${FIRST_POOL} ${FIRST_FLOATING}
+mkdir -p /cluster/${FIRST_CLUSTER}
+cp -r /cluster/vc-0/* /cluster/${FIRST_CLUSTER}/ 
+
+useradd -u 1002 -U munge --no-create-home
+mkdir -p /cluster/${FIRST_CLUSTER}/etc/munge
+[ -e  /cluster/${FIRST_CLUSTER}/etc/munge/munge.key ] && rm /cluster/${FIRST_CLUSTER}/etc/munge/munge.key
+dd if=/dev/urandom bs=1 count=1024 > /cluster/${FIRST_CLUSTER}/etc/munge/munge.key
+chown -R munge:munge /cluster/${FIRST_CLUSTER}/etc/munge
+chmod u=rwx,go= /cluster/${FIRST_CLUSTER}/etc/munge
+chmod u=r,go=   /cluster/${FIRST_CLUSTER}/etc/munge/munge.key
+
+nodes=$(curl -k 'https://controller/xcatws/groups/vc-a/attrs/members?userName=trinity&password=trinity&pretty=1' | awk -F: '{if (NR==3) {print $2}}' | sed 's/"//g')
+sed -e "s/<NODES>/${nodes}/g" -i /cluster/${FIRST_CLUSTER}/etc/slurm/slurm-nodes.conf
+chmod u=rwx,go=rx /cluster/${FIRST_CLUSTER}/etc/slurm
+chmod u=rw,go=rx  /cluster/${FIRST_CLUSTER}/etc/slurm/slurm.conf
+chmod u=rw,go=r   /cluster/${FIRST_CLUSTER}/etc/slurm/slurm-nodes.conf
+chmod ug=rw,o=r   /cluster/${FIRST_CLUSTER}/etc/slurm/slurm-user.conf
+
+cp ${LOGIN_SETUP} ${LOGIN_DATA}
+
+sed -e "s/FLOATING_IP=127.0.0.1/FLOATING_IP=${FIRST_FLOATING}/g" \
+    -e "s/vc-a/${FIRST_CLUSTER}/g" \
+    -i "${LOGIN_DATA}"
+
+sed -e "s/<TENANT>/${FIRST_TENANT}/g" \
+    -e "s/<USER>/${FIRST_USER}/g" \
+    -e "s/<PASSWORD>/${FIRST_PASS}/g" \
+    -e "s/<OPENSTACK>/$(hostname -I | awk '{print $1}')/g" \
+    /trinity/openstack/keystonerc > /root/keystonerc_${FIRST_TENANT}
+
+source /root/keystonerc_a
+nova floating-ip-create ${FIRST_POOL}
+nova secgroup-add-rule default tcp 1 65535 0.0.0.0/0
+nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0 
+nova boot --flavor 2 --image ${LOGIN_IMAGE} --security-groups default --user-data ${LOGIN_DATA} ${LOGIN_NODE}
+sleep 5
+nova floating-ip-associate ${LOGIN_NODE} ${FIRST_FLOATING}

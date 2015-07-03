@@ -13,4 +13,6 @@ for v in $(lvs | tail -n+2 | awk -F' ' '{print $1"-"$2}'); do
 done
 mount -a
 exportfs -a
+o "$0 finished" >> /var/log/postinstall.log
+echo "$0 finished" >> /var/log/postinstall.log
 

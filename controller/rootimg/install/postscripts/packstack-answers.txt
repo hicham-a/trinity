@@ -64,7 +64,7 @@ CONFIG_CLIENT_INSTALL=y
 
 # Comma separated list of NTP servers. Leave plain if Packstack
 # should not install ntpd on instances.
-CONFIG_NTP_SERVERS=
+CONFIG_NTP_SERVERS=pool.ntp.org
 
 # Set to 'y' if you would like Packstack to install Nagios to monitor
 # OpenStack hosts
@@ -124,7 +124,7 @@ CONFIG_STORAGE_HOST=127.0.0.1
 CONFIG_SAHARA_HOST=127.0.0.1
 
 # To subscribe each server to EPEL enter "y"
-CONFIG_USE_EPEL=n
+CONFIG_USE_EPEL=y
 
 # A comma separated list of URLs to any additional yum repositories
 # to install
@@ -669,7 +669,7 @@ CONFIG_CEILOMETER_COORDINATION_BACKEND=redis
 CONFIG_MONGODB_HOST=127.0.0.1
 
 # The IP address of the server on which to install redis
-CONFIG_REDIS_HOST=127.0.0.1
+CONFIG_REDIS_MASTER_HOST=127.0.0.1
 
 # The port on which the redis server listens
 CONFIG_REDIS_PORT=6379
