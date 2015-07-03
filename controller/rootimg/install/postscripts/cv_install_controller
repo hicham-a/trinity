@@ -74,6 +74,16 @@ makedhcp -n
 makehosts -n
 makedns -n
 
+# Fix for #314
+# We need a here document. resolv.conf cannot be put in the rootimg, because we can only change
+# resolv.conf after we have setup the local dns server.
+
+cat <<EOF > /etc/resolv.conf
+domain cluster
+search cluster
+nameserver localhost
+EOF
+
 #--------------------------------------------------------------------------------------
 # correct any network settings
 #--------------------------------------------------------------------------------------
