@@ -1,0 +1,7 @@
+# This script will install the NVIDIA GPU drivers
+# Make sure to blacklist the nouveau driver in the bootparams table
+# nouveau.blacklist=yes
+bash /cluster/NVIDIA*.run --accept-license --no-questions --silent
+
+
+

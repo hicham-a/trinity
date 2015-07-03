@@ -1,6 +1,5 @@
 ./boot*
 ./usr/share/wallpapers/RHEL6/contents/images*
-./usr/include*
 ./usr/lib/locale*
 ./usr/lib64/perl5/Encode/CN*
 ./usr/lib64/perl5/Encode/JP*
@@ -9,7 +8,6 @@
 ./lib/kbd/keymaps/i386*
 ./lib/kbd/keymaps/mac*
 ./lib/kdb/keymaps/include*
-./usr/local/include*
 ./usr/local/share/man*
 ./usr/share/man*
 ./usr/share/cracklib*
