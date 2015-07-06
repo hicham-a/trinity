@@ -11,12 +11,12 @@
 # install xcat
 #--------------------------------------------------------------------------------------
 # determine if a master is used to install this node:
-if ping -c 4 -w 10 testme; then
+if [ ! -z $SITEMASTER ]; then
     echo master is present
     mkdir /tmp/trinity
-    mount master:/trinity /tmp/trinity       
+    mount ${SITEMASTER}:/trinity /tmp/trinity       
     echo "Creating installation tree"
-    copycds -o -n centos7.0 /tmp/trinity/iso/$(ls -cr /tmp/trinity/iso/*.iso | head -1)
+    copycds -o -n centos7.0 $(ls -cr /tmp/trinity/iso/*.iso | head -1)
 
     mkdir -p /install/post/otherpkgs/centos7.0/x86_64
     reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7.0/x86_64/
@@ -27,31 +27,22 @@ else
     SCRIPTDIR=$(dirname $SCRIPT)
     REPODIR=$(readlink -f $SCRIPTDIR/../../../../)
     echo Found repository in $REPODIR
-    # Do some sanity checks
-    if git --work-tree=$REPODIR branch | grep r3; then
-        cp -Lrv --preserve $REPODIR /tmp
-        mkdir -p /tmp/trinity/iso
-        echo Downloading cd, this may take a while
-        wget http://ftp.nluug.nl/ftp/pub/os/Linux/distr/CentOS/7/isos/x86_64/CentOS-7-x86_64-DVD-1503-01.iso \
-             -O /tmp/trinity/iso/CentOS-7-x86_64-DVD-1503-01.iso
+    cp -Lrv --preserve $REPODIR /tmp
+    # setup repositories
+    yum -y install wget createrepo yum-utils ntp nfs-utils net-snmp rsync yp-tools openssh-server net-tools bind-utils net-snmp-utils pciutils iptables-services
+    yum -y install epel-release
+    yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno-1.noarch.rpm
+    wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/2.8/xcat-core/xCAT-core.repo -O /etc/yum.repos.d/xCAT-core.repo
+    wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo -O /etc/yum.repos.d/xCAT-dep.repo
+    yum -y install xCAT
+    source /etc/profile.d/xcat.sh
+    mkdir -p /tmp/trinity/iso
+    echo Downloading cd, this may take a while
+    wget http://ftp.nluug.nl/ftp/pub/os/Linux/distr/CentOS/7/isos/x86_64/CentOS-7-x86_64-DVD-1503-01.iso \
+         -O /tmp/trinity/iso/CentOS-7-x86_64-DVD-1503-01.iso
 
-	echo "Creating installation tree"
-	copycds -o -n centos7.0 /tmp/trinity/iso/$(ls -cr /tmp/trinity/iso/*.iso | head -1)
-
-        # setup repositories
-        yum -y install epel-release
-        yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno-1.noarch.rpm
-        wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/2.8/xcat-core/xCAT-core.repo -O /etc/yum.repos.d/xCAT-core.repo
-        wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo -O /etc/yum.repos.d/xCAT-dep.repo
-
-        # now create a local repository
-	mkdir -p /install/post/otherpkgs/centos7.0/x86_64
-        reposync -n -r epel -r extras -r updates -r xcat-2-core -r xcat-dep -r openstack-juno -p /install/post/otherpkgs/centos7.0/x86_64/
-	createrepo /install/post/otherpkgs/centos7.0/x86_64/
-    else
-        echo $REPODIR does not seem to be a valid repository. Bailing.
-        exit 1
-    fi
+    echo "Creating installation tree"
+    copycds -o -n centos7.0 $(ls -cr /tmp/trinity/iso/*.iso | head -1)
 fi
 
 #exit 0   # HTH remove this line after testing
@@ -171,25 +162,6 @@ systemctl start opensm
 #--------------------------------------------------------------------------------------
 systemctl enable nfs-server
 systemctl start nfs-server
-
-##AM: Using the exports.d mechanism 
-#sort -u /etc/exports* | \
-#  awk ' \
-#    BEGIN {print "# Created by trinity";}; \
-#    {if ($0!~/^\#/ && $0 !~/^$/) {exports=exports RS $0}}}; \
-#    END {print exports}
-#  ' > /tmp/exports
-#rm /etc/exports*
-#mv /tmp/exports /etc/exports
-##cp-rootimg
-##cat << END > /etc/exports 
-##/tftpboot *(rw,no_root_squash,sync,no_subtree_check)
-##/install *(rw,no_root_squash,sync,no_subtree_check)
-##/trinity *(rw,sync,no_root_squash,no_all_squash)
-##/cluster *(rw,sync,no_root_squash,no_all_squash)
-##/home *(rw,sync,no_root_squash,no_all_squash)
-##END
-
 exportfs -a
 
 #--------------------------------------------------------------------------------------
@@ -200,19 +172,17 @@ iso=$(ls -c /tmp/trinity/iso/*.iso | head -1)
 echo "Creating installation tree from $iso"
 copycds -o -n centos7.0 $iso
 mkdir -p /install/post/otherpkgs/centos7.0/x86_64
-reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7.0/x86_64/
+
+if [ -z $SITEMASTER ]; then
+    reposync -n -r epel -r extras -r updates -r xcat-2-core -r xcat-dep -r openstack-juno -p /install/post/otherpkgs/centos7.0/x86_64/
+else
+    reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7.0/x86_64/
+fi
+
 createrepo /install/post/otherpkgs/centos7.0/x86_64/
 
 genimage centos7.0-x86_64-netboot-trinity
 packimage centos7.0-x86_64-netboot-trinity
-
-#---------------------------------------------------------------------------------------
-# Workaround: create a default munge key for vc-a cluster
-#---------------------------------------------------------------------------------------
-mkdir -p /cluster/vc-a/etc/munge/
-dd if=/dev/urandom bs=1 count=1024 >/cluster/vc-a/etc/munge/munge.key
-chmod 400 /cluster/vc-a/etc/munge/munge.key
-chown 1002:1002 /cluster/vc-a/etc/munge/munge.key
 
 #--------------------------------------------------------------------------------------
 # install docker and docker-registry
@@ -230,9 +200,6 @@ docker push controller:5050/trinity
 #--------------------------------------------------------------------------------------
 # cleanup
 #--------------------------------------------------------------------------------------
-
-#umount /tmp/trinity
-#rmdir /tmp/trinity
 
 #--------------------------------------------
 # Install the xCAT web service
