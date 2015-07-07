@@ -5,8 +5,7 @@
 ##email          : abhishek.mukherjee@clustervision.com
 
 # Get config info and helper functions
-source /xcatpost/cv_config
-source /xcatpost/cv_utils
+source /trinity/cinder/config
 
 # Main function
 main(){
@@ -14,10 +13,11 @@ main(){
   NODE_IP=$(hostname -I| awk '{print $1}')
   
   echo "---- Configuring LVM ---"
-  package_list=(
-  lvm2
-  )
-  install_packages package_list
+  #AM: Packages installed by the pkglist
+  #package_list=(
+  #lvm2
+  #)
+  #install_packages package_list
   systemctl enable lvm2-lvmetad.service
   systemctl start lvm2-lvmetad.service
   
@@ -44,14 +44,15 @@ main(){
 
   
   echo "--- Configuring OpenStack Cinder ---- "
-  package_list=(
-  epel-release 
-  targetcli
-  python-oslo-db
-  MySQL-python
-  openstack-utils
-  openstack-cinder
-  )
+  #AM: Packages installed by the pkglist
+  #package_list=(
+  #epel-release 
+  #targetcli
+  #python-oslo-db
+  #MySQL-python
+  #openstack-utils
+  #openstack-cinder
+  #)
   # install_packages ${package_list}
   
   echo "--- Editing /etc/cinder/cinder.conf"
@@ -59,7 +60,7 @@ main(){
   openstack-config --set /etc/cinder/cinder.conf database connection mysql://cinder:${CINDER_DBPASS}@${OPENSTACK_CONTROLLER}/cinder
   
   # Set up the message broker (rabbit_mq)
-  # -- NOTE: The rpc_password needs to be identical to that in the openstack controller
+ # # -- NOTE: The rpc_password needs to be identical to that in the openstack controller
   openstack-config --set /etc/cinder/cinder.conf DEFAULT rpc_backend rabbit
   openstack-config --set /etc/cinder/cinder.conf DEFAULT rabbit_host  ${OPENSTACK_CONTROLLER}
   openstack-config --set /etc/cinder/cinder.conf DEFAULT rabbit_password ${RPC_PASS}
@@ -94,7 +95,8 @@ main(){
 }
 
 # Main script
+#AM: All log info fwd to /var/log/xcat/xcat.log
 # start_logging ${LOGFILE}
-print_header "$(basename $0)"
+#print_header "$(basename $0)"
 main "$@"
-print_tail "$(basename $0)"
+#print_tail "$(basename $0)"

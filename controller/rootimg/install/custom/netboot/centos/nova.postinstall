@@ -20,12 +20,20 @@ arch=$3
 profile=$4
 workdir=$5
 
-#-- Example how /etc/fstab can be automatically generated during image generation:
-cat <<END >$installroot/etc/fstab
-proc            /proc    proc   rw 0 0
-sysfs           /sys     sysfs  rw 0 0
-devpts          /dev/pts devpts rw,gid=5,mode=620 0 0
-#/dev/sda3	/var/ 	ext4	defaults,errors=remount-ro  0  2
-END
+#-- Copy supporting files
+cp --dereference --recursive --verbose --preserve /trinity/nova/rootimg/* $installroot
 
+#-- Example how /etc/fstab can be automatically generated during image generation:
+##cat <<END >$installroot/etc/fstab
+##proc            /proc    proc   rw 0 0
+##sysfs           /sys     sysfs  rw 0 0
+##devpts          /dev/pts devpts rw,gid=5,mode=620 0 0
+###/dev/sda3	/var/ 	ext4	defaults,errors=remount-ro  0  2
+##END
+
+
+# -- FIXME: HTH the location needs to point to a better location. Also the
+# addresses in the copied /etc/nova/nova.conf are hard-coded.
+# cp /root/files/etc/nova/nova.conf $installroot/etc/nova/nova.conf
+# chroot $installroot systemctl enable libvirtd.service openstack-nova-compute.service
 

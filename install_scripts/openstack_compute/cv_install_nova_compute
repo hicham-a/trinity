@@ -5,26 +5,28 @@
 ##email          : abhishek.mukherjee@clustervision.com
 
 # Get config info and helper functions
-source /xcatpost/cv_config
-source /xcatpost/cv_utils
+source /trinity/nova/config
+##AM: Not using anything from cv_utils
+#source /xcatpost/cv_utils
 
 # Main function
 main(){
   # Parameters and constants
   NODE_IP=$(hostname -I| awk '{print $1}')
 
-  package_list=(
-    epel-release 
-    sysfsutils
-    lvm2
-    targetcli
-    python-oslo-db
-    MySQL-python
-    openstack-selinux
-    openstack-utils
-    openstack-nova-compute
-    openstack-cinder
-  )
+  ##AM: The packages will be installed from the pkglist
+  #package_list=(
+  #  epel-release 
+  #  sysfsutils
+  #  lvm2
+  #  targetcli
+  #  python-oslo-db
+  #  MySQL-python
+  #  openstack-selinux
+  #  openstack-utils
+  #  openstack-nova-compute
+  #  openstack-cinder
+  #)
   # install_packages ${package_list}
   setenforce 0
   
@@ -75,9 +77,10 @@ main(){
 
 
 # Main script
+##AM: log info will be forwarded to /var/log/xcat/xcat.log
 # start_logging ${LOGFILE}
-print_header "$(basename $0)"
+# print_header "$(basename $0)"
 main "$@"
-print_tail "$(basename $0)"
+# print_tail "$(basename $0)"
 
 
