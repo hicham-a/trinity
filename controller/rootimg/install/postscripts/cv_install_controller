@@ -164,13 +164,13 @@ exportfs -a
 #--------------------------------------------------------------------------------------
 iso=$(ls -c /tmp/trinity/iso/*.iso | head -1)
 echo "Creating installation tree from $iso"
-copycds -o -n centos7.0 $iso
-mkdir -p /install/post/otherpkgs/centos7.0/x86_64
-reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7.0/x86_64/
-createrepo /install/post/otherpkgs/centos7.0/x86_64/
+copycds -o -n centos7 $iso
+mkdir -p /install/post/otherpkgs/centos7/x86_64
+reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7/x86_64/
+createrepo /install/post/otherpkgs/centos7/x86_64/
 
-genimage centos7.0-x86_64-netboot-trinity
-packimage centos7.0-x86_64-netboot-trinity
+genimage centos7-x86_64-netboot-trinity
+packimage centos7-x86_64-netboot-trinity
 
 #---------------------------------------------------------------------------------------
 # Workaround: create a default munge key for vc-a cluster
