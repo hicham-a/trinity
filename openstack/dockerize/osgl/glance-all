@@ -1,0 +1,3 @@
+#! /bin/bash
+/usr/bin/glance-api
+/usr/bin/glance-registry
