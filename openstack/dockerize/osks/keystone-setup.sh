@@ -1,5 +1,5 @@
 #! /usr/bin/env bash
-IP=$1
+IP=$(hostname -i)
 docker exec osks keystone --os-token system --os-endpoint http://${IP}:35357/v2.0 tenant-create --name admin --description "Admin Tenant"
 docker exec osks keystone --os-token system --os-endpoint http://${IP}:35357/v2.0 user-create --name admin --pass system 
 docker exec osks keystone --os-token system --os-endpoint http://${IP}:35357/v2.0 role-create --name admin
