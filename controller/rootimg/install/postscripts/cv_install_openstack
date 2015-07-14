@@ -13,7 +13,7 @@
 #--------------------------------------------------------------------------------------
 mkdir /trinity
 mount controller:/trinity /trinity       
-cp --dereference --recursive --verbose --preserve /trinity/openstack/rootimg/* /
+cp --dereference --recursive --preserve /trinity/openstack/rootimg/* /
 
 systemctl stop NetworkManager
 systemctl disable NetworkManager
