@@ -7,8 +7,10 @@
 #--------------------------------------------------------------------------------------
 # install xcat
 #--------------------------------------------------------------------------------------
-# HTH: added to make sure the network is up
-sleep 10
+systemctl stop NetworkManager
+systemctl disable NetworkManager
+killall dhclient
+systemctl start network
 
 mkdir /tmp/trinity
 mount master:/trinity /tmp/trinity       
