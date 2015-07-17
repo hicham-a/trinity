@@ -74,7 +74,7 @@ class OverviewTable(tables.DataTable):
     if datum.status=="No tenant":
       return []
     else:
-      bound_actions=[]
+      bound_actions = []
       for action in self._meta.row_actions:
           # Copy to allow modifying properties per row
           bound_action = copy.copy(self.base_actions[action.name])
