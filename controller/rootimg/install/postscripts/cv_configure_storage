@@ -36,4 +36,7 @@ else
 fi
 echo "/dev/storage/$PROFILE	/var/ 	ext4	defaults,errors=remount-ro  0  2" >> /etc/fstab 
 mount -a
+# FIXME: move this into a separate script
+systemctl start docker
+systemctl start trinity
 echo "$0 finished" >> /var/log/postinstall.log
