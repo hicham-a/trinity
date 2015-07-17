@@ -8,7 +8,7 @@
 ##email          : Hans Then <hans.then@clustervision.com>
 
 if [ $(lvs --noheadings | awk -F' ' '{print $1}') == $PROFILE ]; then
-   echo "Already initialized"
+   echo "$0 already configured" >> /var/log/postinstall.log
 else
    # remove existing volume groups
    umount -a -t ext4
