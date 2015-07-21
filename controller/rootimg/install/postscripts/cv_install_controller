@@ -17,10 +17,6 @@ if [ ! -z $SITEMASTER ]; then
     mount ${SITEMASTER}:/trinity /tmp/trinity       
     echo "Creating installation tree"
     copycds -o -n centos7.0 $(ls -cr /tmp/trinity/iso/*.iso | head -1)
-
-    mkdir -p /install/post/otherpkgs/centos7.0/x86_64
-    reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7.0/x86_64/
-    createrepo /install/post/otherpkgs/centos7.0/x86_64/
 else
     echo No master found, checking for a git repository.
     SCRIPT=$(readlink -f $0)
@@ -29,12 +25,12 @@ else
     echo Found repository in $REPODIR
     cp -Lrv --preserve $REPODIR /tmp
     # setup repositories
-    yum -y install wget createrepo yum-utils ntp nfs-utils net-snmp rsync yp-tools openssh-server net-tools bind-utils net-snmp-utils pciutils iptables-services
+    yum install $(grep -v ^# $REPODIR/controller/rootimg/install/custom/install/centos/controller.pkglist)
     yum -y install epel-release
     yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno-1.noarch.rpm
     wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/2.8/xcat-core/xCAT-core.repo -O /etc/yum.repos.d/xCAT-core.repo
     wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo -O /etc/yum.repos.d/xCAT-dep.repo
-    yum -y install xCAT
+    yum install $(grep -v ^# $REPODIR/controller/rootimg/install/custom/install/centos/controller.otherpkgs)
     source /etc/profile.d/xcat.sh
     mkdir -p /tmp/trinity/iso
     echo Downloading cd, this may take a while
@@ -166,11 +162,7 @@ exportfs -a
 
 #--------------------------------------------------------------------------------------
 # Selective updates
-# Create installation tree
 #--------------------------------------------------------------------------------------
-iso=$(ls -c /tmp/trinity/iso/*.iso | head -1)
-echo "Creating installation tree from $iso"
-copycds -o -n centos7.0 $iso
 mkdir -p /install/post/otherpkgs/centos7.0/x86_64
 
 if [ -z $SITEMASTER ]; then
