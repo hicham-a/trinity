@@ -26,14 +26,15 @@ start() {
     echo "Starting Trinity"
 
     # disable the docker bridge
-#    ip link set docker0 down || true
-#    brctl delbr docker0 || true
+    ip link set docker0 down || true
+    brctl delbr docker0 || true
 
     # Determine our container name
     NAME=$(hostname -s | sed s/node/c/)
 
     # Determine in which virtual cluster this node is active
-    for VC in vc-{a..l}; do
+    #for VC in vc-{a..l}; do
+    for VC in $(ls /cluster | grep "^vc-"); do
         if host $NAME.$VC; then found=1; break; fi
     done
 
@@ -84,8 +85,7 @@ start() {
         *)
             docker run \
                --net=none \
-               --privileged \
-               -v /dev/infiniband:/dev/infiniband \
+               --device=/dev/infiniband \
                -v /trinity/clustervision:/trinity/clustervision \
                -v /root:/root \
                -v /home/${VC}:/home \
@@ -124,7 +124,7 @@ force-reload() {
 
 rh_status() {
     state=$(docker inspect --format='{{.State.Running}}' trinity 2>/dev/null)
-    test -z $state || $state = true
+    test -n "$state" -a "$state" = true
 }
 
 rh_status_q() {

@@ -23,31 +23,8 @@ workdir=$5
 #-- Copy supporting files
 cp --dereference --recursive --verbose --preserve /trinity/compute/rootimg/* $installroot
 
-##AM: Using a single fstab
-##sort -u ${installroot}/etc/fstab* | \
-##  awk '
-##    BEGIN {print "# Created by trinity";}; \
-##    {if ($0!~/^\#/ && $0 !~/^$/) {if ($0~/nfs/) {nfs=nfs RS $0} else {local=local RS $0}}}; \
-##    END {print "# local filesystems" local RS "# remote filesystems" nfs}
-##  ' > ${installroot}/tmp/fstab
-##rm ${installroot}/etc/fstab*
-##mv ${installroot}/tmp/fstab ${installroot}/etc/fstab
-
-##cp-rootimg
-#-- Example how /etc/fstab can be automatically generated during image generation:
-##cat <<END >$installroot/etc/fstab
-##proc            /proc    proc   rw 0 0
-##sysfs           /sys     sysfs  rw 0 0
-##devpts          /dev/pts devpts rw,gid=5,mode=620 0 0
-##/dev/sda1	/var/lib/docker 	ext4	defaults,errors=remount-ro  0  2
-##controller:/cluster /cluster nfs rsize=8192,wsize=8192,timeo=14,intr
-##controller:/trinity /trinity nfs rsize=8192,wsize=8192,timeo=14,intr
-##controller:/home /home nfs rsize=8192,wsize=8192,timeo=14,intr
-##END
-
 #-- A small docker patch
 sed -i 's/OPTIONS=\(.*\)/OPTIONS=--insecure-registry controller:5050 \1/' $installroot/etc/sysconfig/docker
-
 
 #-- Enable services
 chroot $installroot chkconfig rdma on
@@ -66,18 +43,7 @@ cp -r /etc/security/limits.d/* $installroot/etc/security/limits.d
 install -d $installroot/etc/yum.repos.d
 cp -r /etc/yum.repos.d/* $installroot/etc/yum.repos.d
 
-#-- Fix for #163. #FIXME: remove once merged with master_installer.
-chroot $installroot yum -y update device-mapper
-chroot $installroot yum -y install device-mapper-event-libs
-
-
-#-- copy modules environment config file
-##cp-rootimg
-#install -D /usr/share/Modules/init/.modulespath $installroot/usr/share/Modules/init/.modulespath
-##mkdir -p $installroot/usr/share/Modules/init/
-##cat << EOF > $installroot/usr/share/Modules/init/.modulespath
-##/usr/share/Modules/modulefiles                  # Module pkg modulefiles (if no versioning)
-##/etc/modulefiles                                # General module files
-##/trinity/clustervision/modulefiles
-##EOF
-
+#-- Copy supporting files from the local environment
+if [ -d /trinity/site-local/compute/rootimg/ ]; then
+    cp --dereference --recursive --verbose --preserve /trinity/site-local/compute/rootimg/* $installroot
+fi
