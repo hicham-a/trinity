@@ -2,7 +2,11 @@
 # and sets an appropriate address on that interface.
 # Determine bmc ip addresses (FIXME: this requires to be run as a postscript now)
 
+# FIXME: needs better error handling in case we cannot find a BMC address
 my_bmc_ip=$(host $(hostname)-bmc | cut -d' ' -f4)
+
+my_bmc_ip=$(ipmitool-xcat lan print 1 | grep "IP Address              :" | awk -F: '{print $2}')
+
 my_ip_on_bmc=$(echo ${my_bmc_ip} | awk -F. '{ printf "%d.%d.%d.%d",$1,$2,$3,254-$4 }')
 other_bmc_ip=$(echo ${my_bmc_ip} | awk -F. '{ printf "%d.%d.%d.%d",$1,$2,$3,(2-($4+1)%2) }')
 
