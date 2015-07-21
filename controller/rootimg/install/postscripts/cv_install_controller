@@ -224,5 +224,4 @@ mkdef -t policy 6 name=trinity rule=allow
 sed  -e "/<Directory \/>/,/<\/Directory>/ s/Require/#Require/" -i /etc/httpd/conf/httpd.conf
 service httpd restart
 
-exit 0
-
+echo "$0 finished" >> /var/log/postinstall.log
