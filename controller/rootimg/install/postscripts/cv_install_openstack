@@ -13,7 +13,7 @@
 #--------------------------------------------------------------------------------------
 mkdir /trinity
 mount controller:/trinity /trinity       
-cp --dereference --recursive --verbose --preserve /trinity/openstack/rootimg/* /
+cp --dereference --recursive --preserve /trinity/openstack/rootimg/* /
 
 systemctl stop NetworkManager
 systemctl disable NetworkManager
@@ -147,12 +147,13 @@ FIRST_FLOATING="172.16.255.254"
 LOGIN_SETUP="/trinity/login/setup.sh"
 LOGIN_DATA="/root/.login_data"
 LOGIN_NODE="login-a"
+SKEL=".skel"
 
 keystone tenant-create --name ${FIRST_TENANT}
 keystone user-create --name ${FIRST_TENANT} --tenant ${FIRST_USER} --pass ${FIRST_PASS}
 nova floating-ip-bulk-create --pool ${FIRST_POOL} ${FIRST_FLOATING}
 mkdir -p /cluster/${FIRST_CLUSTER}
-cp -r /cluster/vc-0/* /cluster/${FIRST_CLUSTER}/ 
+cp -r /cluster/${SKEL}/* /cluster/${FIRST_CLUSTER}/ 
 
 useradd -u 1002 -U munge --no-create-home
 mkdir -p /cluster/${FIRST_CLUSTER}/etc/munge
