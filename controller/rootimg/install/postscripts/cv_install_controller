@@ -108,6 +108,9 @@ makedns -n
 # correct any network settings
 #--------------------------------------------------------------------------------------
 
+# Fix for #356
+systemctl disable firewalld
+
 # setup NAT, so nodes can access the internet (see manual step 1.f)
 chkconfig iptables on
 service iptables start
