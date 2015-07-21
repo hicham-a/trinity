@@ -33,7 +33,8 @@ start() {
     NAME=$(hostname -s | sed s/node/c/)
 
     # Determine in which virtual cluster this node is active
-    for VC in vc-{a..l}; do
+    #for VC in vc-{a..l}; do
+    for VC in $(ls /cluster | grep "^vc-"); do
         if host $NAME.$VC; then found=1; break; fi
     done
 
@@ -124,7 +125,7 @@ force-reload() {
 
 rh_status() {
     state=$(docker inspect --format='{{.State.Running}}' trinity 2>/dev/null)
-    test -z $state || $state = true
+    test -n "$state" -a "$state" = true
 }
 
 rh_status_q() {
