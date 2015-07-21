@@ -535,6 +535,8 @@ def show_hardware_details(cluster,version=1):
 def modify_cluster(cluster,version=1):
   global state_has_changed
   global all_nodes_info
+  global network_map
+
   state_has_changed=True
   req=TrinityAPI(request)
   ret={}
@@ -662,14 +664,30 @@ def modify_cluster(cluster,version=1):
 ## We assume that the cluster name is a,b,c...l
 ##---------------------------------------------------------------------
   vc_cluster=req.vc + cluster
-
-#should not hardcoded!!!
+  #should not hardcoded!!!
   vc_net='vc_'+cluster+'_net'
   login_cluster='login-'+cluster
-# This will not work if cluster is not a single char!!!!!  
-  second_octet=str(16+ord(cluster)-ord('a'))
+  # This will not work if cluster is not a single char!!!!!  
+  ##  second_octet=str(16+ord(cluster)-ord('a'))
+
+  # Get the network info
+  path="/tables/networks/rows"
+  xcat_networks=requests.get(xcat_host+path,verify=False,params=req.query,headers=req.headers).json()["networks"]
+  network_map={}
+  for network in xcat_networks:
+    if "domain" in network and network["domain"].startswith(req.vc):
+      network_map.update({network["domain"]:network["net"].split(".")[1]})
  
+  if vc_cluster in network_map.keys():
+    second_octet=network_map[vc_cluster]
+  else: 
+    for second_octet_int in range(16,32):
+      second_octet=str(second_octet_int)
+      if second_octet not in network_map.values():
+        break
+
   if not cluster_exists :
+
     # create vc-<cluster> entry in the hosts table
     # The verb is PUT because the nodes already exist
     verb='PUT' 
@@ -712,6 +730,7 @@ def modify_cluster(cluster,version=1):
     req.xcat(verb=verb,path=path,payload=payload)
     path='/nodes/'+login_cluster+'/dns' 
     req.xcat(verb=verb,path=path,payload=payload)
+
   # makehost and makedns for cluster
   cont_subs_list=[]
   node_subs_list=[]
@@ -919,6 +938,7 @@ def modify_cluster(cluster,version=1):
       "vc-a":vc_cluster
     }
     for i,j in replacements.iteritems():
+      print i,j
       login_data = login_data.replace(i,j)
     login_data_encoded=base64.b64encode(login_data)
     path=req.nova_host+'/'+tenant_id+'/servers'
@@ -1051,6 +1071,7 @@ def startup():
   global state_has_changed
   global cached_detailed_overview
   global all_nodes_info
+  global network_map
   hw='hw-'
   vc='vc-'
   headers={"Content-Type":"application/json", "Accept":"application/json"} # setting this by hand for now
@@ -1091,6 +1112,16 @@ def startup():
       if members: node_list=[x.strip() for x in members.split(',')]
       hc_overview['cluster'][cluster]=node_list
   cached_detailed_overview=hc_overview
+
+  # Get the network info
+  path="/tables/networks/rows"
+  xcat_networks=requests.get(xcat_host+path,verify=False,params=query,headers=headers).json()["networks"]
+  network_map={}
+  for network in xcat_networks:
+    if "domain" in network and network["domain"].startswith(vc):
+      second_octet=network["net"].split(".")[1]      
+      network_map.update({second_octet:network["domain"]})
+
   state_has_changed=False
 
 #  print hc_overview
