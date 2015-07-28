@@ -8,7 +8,7 @@
 ##email          : Hans Then <hans.then@clustervision.com>
 
 if [ $(lvs --noheadings | awk -F' ' '{print $1}') == $PROFILE ]; then
-   echo "Already initialized"
+   echo "$0 already configured" >> /var/log/postinstall.log
 else
    # remove existing volume groups
    umount -a -t ext4
@@ -36,4 +36,7 @@ else
 fi
 echo "/dev/storage/$PROFILE	/var/ 	ext4	defaults,errors=remount-ro  0  2" >> /etc/fstab 
 mount -a
+# FIXME: move this into a separate script
+systemctl start docker
+systemctl start trinity
 echo "$0 finished" >> /var/log/postinstall.log

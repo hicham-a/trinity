@@ -14,6 +14,11 @@
 #--------------------------------------------------------------------------------------
 # install xcat
 #--------------------------------------------------------------------------------------
+systemctl stop NetworkManager
+systemctl disable NetworkManager
+killall dhclient
+systemctl start network
+
 mkdir /tmp/trinity
 mount ${SITEMASTER}:/trinity /tmp/trinity       
 mkdir /trinity
@@ -165,8 +170,7 @@ yum -y install docker docker-registry
 sed -i 's/REGISTRY_PORT=.*/REGISTRY_PORT=5050/' /etc/sysconfig/docker-registry
 # FIXME: this is not idempotent
 sed -i 's/OPTIONS=\(.*\)/OPTIONS=--insecure-registry controller:5050 --bip=10.146.255.254\/16 --fixed-cidr=10.146.255.255\/16 \1/' /etc/sysconfig/docker
-# FIXME: check if this is necessary
-echo "10.141.255.254 controller" >>  /etc/hosts
+
 systemctl enable docker docker-registry
 systemctl start docker docker-registry
 docker build -t controller:5050/trinity /trinity/container

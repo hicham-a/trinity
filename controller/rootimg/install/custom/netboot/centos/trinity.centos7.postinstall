@@ -21,7 +21,7 @@ profile=$4
 workdir=$5
 
 #-- Copy supporting files
-cp --dereference --recursive --verbose --preserve /trinity/compute/rootimg/* $installroot
+cp --dereference --recursive --preserve /trinity/compute/rootimg/* $installroot
 
 #-- A small docker patch
 sed -i 's/OPTIONS=\(.*\)/OPTIONS=--insecure-registry controller:5050 \1/' $installroot/etc/sysconfig/docker
@@ -29,10 +29,11 @@ sed -i 's/OPTIONS=\(.*\)/OPTIONS=--insecure-registry controller:5050 \1/' $insta
 #-- Enable services
 chroot $installroot chkconfig rdma on
 chroot $installroot chkconfig ntpd on
-chroot $installroot chkconfig docker on
 chroot $installroot chkconfig openvswitch on
-chroot $installroot chkconfig trinity on
+chroot $installroot chkconfig trinity off
+chroot $installroot chkconfig docker off
 chroot $installroot chkconfig avahi-daemon off
+
 echo "mlx4_ib" > $installroot/etc/modules-load.d/mlx4_ib.conf
 
 #-- copy security limits from controller node
