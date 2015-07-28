@@ -117,6 +117,13 @@ rm /etc/dhclient.d/ntp.sh
 # disable peerdns
 sed -i /etc/sysconfig/network-scripts/ifcfg-$ETH1 -e "s/DEFROUTE=\(.*\)/DEFROUTE=yes/" -e "s/PEERDNS=\(.*\)/PEERDNS=no/"
 
+# Fix for #85
+cat >> /etc/sysconfig/network-scripts/ifcfg-$ETH2 << EOF
+IPADDR1=10.148.255.254
+PREFIX1=16
+GATEWAY1=10.148.255.254
+EOF
+ip a a 10.148.255.254/16 dev $ETH2
 
 systemctl enable ntpd
 systemctl start ntpd
