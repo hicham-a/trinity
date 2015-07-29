@@ -86,7 +86,11 @@ start() {
         *)
             docker run \
                --net=none \
-               --device=/dev/infiniband \
+               --device=/dev/infiniband/issm0 \
+               --device=/dev/infiniband/rdma_cm \
+               --device=/dev/infiniband/ucm0  \
+               --device=/dev/infiniband/umad0 \
+               --device=/dev/infiniband/uverbs0 \
                -v /trinity/clustervision:/trinity/clustervision \
                -v /root:/root \
                -v /home/${VC}:/home \
