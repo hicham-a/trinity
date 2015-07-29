@@ -1,0 +1,7 @@
+#!/bin/bash
+environment=$(cat /trinity/site | head -1)
+version=$(cat /trinity/version)
+site=$(cat /trinity/site)
+echo "**Version:**" ${version//\*/}
+echo "**Environment:**" ${environment}
+echo "**Site:**" ${site}
