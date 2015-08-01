@@ -17,7 +17,7 @@
 systemctl stop NetworkManager
 systemctl disable NetworkManager
 killall dhclient
-systemctl start network
+systemctl restart network
 
 mkdir /tmp/trinity
 mount ${SITEMASTER}:/trinity /tmp/trinity       
