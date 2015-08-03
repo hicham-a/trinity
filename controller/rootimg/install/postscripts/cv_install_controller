@@ -101,7 +101,7 @@ cp /tmp/trinity/version /trinity/version
 # setup routing for the virtual clusters
 #--------------------------------------------------------------------------------------
 ip route add 172.16.0.0/12 dev $ETH2
-mv /etc/sysconfig/network-scripts/route-eno2 /etc/sysconfig/network-scripts/route-${ETH2}
+mv /etc/sysconfig/network-scripts/route-eno2 /etc/sysconfig/network-scripts/route-${ETH2} 2> /dev/null
 
 #--------------------------------------------------------------------------------------
 # Additional network processing
@@ -125,6 +125,7 @@ GATEWAY1=10.148.255.254
 EOF
 ip a a 10.148.255.254/16 dev $ETH2
 
+systemctl restart network
 systemctl enable ntpd
 systemctl start ntpd
 
