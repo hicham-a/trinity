@@ -8,21 +8,10 @@ sleep 5
 
 yum -y install openldap openldap-clients openldap-servers
 cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
-chkconfig slapd on
-service slapd start
 
-ldapmodify -Y EXTERNAL -H ldapi:/// << EOF
-dn: olcDatabase={2}hdb,cn=config
-changetype: modify
-add: olcRootPW
-olcRootPW: system
--
-replace: olcSuffix
-olcSuffix: dc=cluster
--
-replace: olcRootDN
-olcRootDN: cn=Manager,dc=cluster
-EOF
+cp -rLp /trinity/openldap/rootimg/* /
+systemctl enable slapd 
+systemctl start slapd
 
 #----------------------------------------------------------------------------
 # Install the required schema's + custom one for the uid
