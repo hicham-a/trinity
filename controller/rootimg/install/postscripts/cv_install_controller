@@ -16,7 +16,7 @@ if [ ! -z $SITEMASTER ]; then
     mkdir /tmp/trinity
     mount ${SITEMASTER}:/trinity /tmp/trinity       
     echo "Creating installation tree"
-    copycds -o -n centos7.0 $(ls -cr /tmp/trinity/iso/*.iso | head -1)
+    copycds -o $(ls -cr /tmp/trinity/iso/*.iso | head -1)
 else
     echo No master found, checking for a git repository.
     SCRIPT=$(readlink -f $0)
@@ -28,7 +28,7 @@ else
     yum install $(grep -v ^# $REPODIR/controller/rootimg/install/custom/install/centos/controller.pkglist)
     yum -y install epel-release
     yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno-1.noarch.rpm
-    wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/2.8/xcat-core/xCAT-core.repo -O /etc/yum.repos.d/xCAT-core.repo
+    wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/2.9/xcat-core/xCAT-core.repo -O /etc/yum.repos.d/xCAT-core.repo
     wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo -O /etc/yum.repos.d/xCAT-dep.repo
     yum install $(grep -v ^# $REPODIR/controller/rootimg/install/custom/install/centos/controller.otherpkgs)
     source /etc/profile.d/xcat.sh
@@ -38,7 +38,7 @@ else
          -O /tmp/trinity/iso/CentOS-7-x86_64-DVD-1503-01.iso
 
     echo "Creating installation tree"
-    copycds -o -n centos7.0 $(ls -cr /tmp/trinity/iso/*.iso | head -1)
+    copycds -o $(ls -cr /tmp/trinity/iso/*.iso | head -1)
 fi
 
 #exit 0   # HTH remove this line after testing
@@ -48,18 +48,7 @@ systemctl disable NetworkManager
 killall dhclient
 systemctl restart network
 
-mkdir /trinity
-
-#--------------------------------------------------------------------------------------
-# copy required files from the master node to the controller node
-#--------------------------------------------------------------------------------------
-cp --dereference --recursive --preserve /tmp/trinity/controller/rootimg/* /
-cp /tmp/trinity/version /trinity/version
-
-# copy all required module files etc to the right locations
-# note to self: only /trinity/env needs be mounted inside the container
-# FIXME: this takes an awful amount of time
-cp --dereference --recursive --preserve /tmp/trinity/clustervision /trinity &
+mkdir -p /trinity
 
 # create runimages
 #--------------------------------------------------------------------------------------
@@ -94,15 +83,15 @@ ln -s ../rh/dracut .
 cd /
 cat /tmp/trinity/controller/xcat/patches/*.patch | patch -p0
 systemctl restart xcatd
+setenforce 0
+sestatus
+
+#
+hostname controller
 makedhcp -n
 makehosts -n
 makedns -n
 
-cat << EOF > /etc/resolv.conf
-domain cluster
-search cluster
-nameserver localhost
-EOF
 
 #--------------------------------------------------------------------------------------
 # correct any network settings
@@ -180,15 +169,15 @@ exportfs -a
 #--------------------------------------------------------------------------------------
 # Selective updates
 #--------------------------------------------------------------------------------------
-mkdir -p /install/post/otherpkgs/centos7.0/x86_64
+mkdir -p /install/post/otherpkgs/centos7/x86_64
 
 if [ -z $SITEMASTER ]; then
-    reposync -n -r epel -r extras -r updates -r xcat-2-core -r xcat-dep -r openstack-juno -p /install/post/otherpkgs/centos7.0/x86_64/
+    reposync -n -r epel -r extras -r updates -r xcat-2-core -r xcat-dep -r openstack-juno -p /install/post/otherpkgs/centos7/x86_64/
 else
-    reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7.0/x86_64/
+    reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7/x86_64/
 fi
 
-createrepo /install/post/otherpkgs/centos7.0/x86_64/
+createrepo /install/post/otherpkgs/centos7/x86_64/
 genimage centos7-x86_64-netboot-trinity
 packimage centos7-x86_64-netboot-trinity
 
