@@ -59,12 +59,14 @@ Usage:
   # TODO: should also check if profile is in PROFILES
     echo "This will update the current node using the from source code repository"
     echo "using the profile: ${bold}$1${normal}"
-    read -e -p "Do you want to continue? (y/n) [n]: " proceed
-    proceed=${proceed:="n"}
-    if [[ "${proceed}" == 'Y' || "${proceed}" == 'y' || "${proceed}" == 'Yes' || "${proceed}" == 'YES'|| "${proceed}" == 'yes' ]]; then
-      echo ${proceed}
+    echo "${bold}To abort, enter any character, now!${normal} "
+    read -t 5 -s proceed
+    if [ -z "${proceed}" ]; then
+      echo "Proceeding with update!"
       copy $1
       extras "$@"
+    else
+      echo "Aborting!"
     fi
     return $?
   else
