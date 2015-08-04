@@ -17,6 +17,8 @@
 systemctl stop NetworkManager
 systemctl disable NetworkManager
 killall dhclient
+# disable the dhcp based ntp
+rm /etc/dhclient.d/ntp.sh
 systemctl restart network
 
 mkdir /tmp/trinity
@@ -111,8 +113,6 @@ for file in /etc/sysconfig/network-scripts/ifcfg-{$ETH2,$ETH3}; do
     sed -i $file -e "s/DEFROUTE=\(.*\)/DEFROUTE=no/"
 done
 
-# disable the dhcp based ntp
-rm /etc/dhclient.d/ntp.sh
 
 # disable peerdns
 sed -i /etc/sysconfig/network-scripts/ifcfg-$ETH1 -e "s/DEFROUTE=\(.*\)/DEFROUTE=yes/" -e "s/PEERDNS=\(.*\)/PEERDNS=no/"
