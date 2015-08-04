@@ -113,6 +113,9 @@ cd -
 # This is to fix a bug in the httpd configuration needed for Juno
 echo 'Include "/etc/httpd/conf.modules.d/*.conf"' >> /etc/httpd/conf/httpd.conf
 
+# Ensure that the dashboard is accessible using the short hostname
+sed -e "s/ServerAlias openstack.cluster/ServerAlias openstack/g" -i /etc/httpd/conf.d/15-horizon_vhost.conf
+
 service httpd restart
 
 
