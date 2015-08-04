@@ -7,6 +7,7 @@
 sleep 5
 
 yum -y install openldap openldap-clients openldap-servers
+yum -y install python-ldap python-retrying
 cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
 
 cp -rLp /trinity/openldap/rootimg/* /
