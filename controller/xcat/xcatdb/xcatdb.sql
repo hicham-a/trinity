@@ -16,6 +16,14 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Current Database: `xcatdb`
+--
+
+CREATE DATABASE /*!32312 IF NOT EXISTS*/ `xcatdb` /*!40100 DEFAULT CHARACTER SET latin1 */;
+
+USE `xcatdb`;
+
+--
 -- Table structure for table `auditlog`
 --
 
@@ -2117,4 +2125,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2015-08-04 19:35:30
+-- Dump completed on 2015-08-06 20:01:15
