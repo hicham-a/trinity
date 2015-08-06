@@ -51,16 +51,9 @@ Usage:
   fi  
   profile=$1
   if [ -d "${profile}/rootimg" ] ; then
-  # TODO: should also check if profile is in PROFILES
-    echo "This will update the current node using the from source code repository"
-    echo "using the profile: ${bold}$1${normal}"
-    read -e -p "Do you want to continue? (y/n) [n]: " proceed
-    proceed=${proceed:="n"}
-    if [[ "${proceed}" == 'Y' || "${proceed}" == 'y' || "${proceed}" == 'Yes' || "${proceed}" == 'YES'|| "${proceed}" == 'yes' ]]; then
-      echo ${proceed}
-      copy $1
-      extras "$@"
-    fi
+    echo "update $profile"
+    copy $1
+    extras "$@"
     return $?
   else
     echo "No such profile: $1"
@@ -73,24 +66,22 @@ copy(){
     master | controller )
       # Copy the files to the nodes root filesystem
       REPO=$( cd "$1" && pwd )
-      cp --dereference --recursive --verbose --preserve ${REPO}/rootimg/* /
+      cp --dereference --recursive --preserve ${REPO}/rootimg/* /
       # TODO: There should be a list of excludes here
       LOCAL=/trinity/site-local/$1
       if [ -d "${LOCAL}/rootimg" ] ; then
-        cp --dereference --recursive --verbose --preserve ${LOCAL}/rootimg/* /
-      else
-        echo "No site-local rootimg found"
+        cp --dereference --recursive --preserve ${LOCAL}/rootimg/* /
       fi
     ;;
     openstack )
       # Assumes that /trinity is mounted on the openstack node as /trinity    
       # Assumes that the 'openstack' hostname is resolvable on the controller
-      xdsh openstack "cp --dereference --recursive --verbose --preserve /trinity/$1/rootimg/* /"
+      xdsh openstack "cp --dereference --recursive --preserve /trinity/$1/rootimg/* /"
     ;;  
     compute )  
       # Note that the compute profile actually corresponds to the trinity osimge!
       # TODO The osver and arch should not be hardcoded
-      cp --dereference --recursive --verbose --preserve /trinity/$1/rootimg/* /install/netboot/centos7/x86_64/trinity/rootimg/
+      cp --dereference --recursive --preserve /trinity/$1/rootimg/* /install/netboot/centos7/x86_64/trinity/rootimg/
       genimage centos7-x86_64-netboot-trinity
       packimage centos7-x86_64-netboot-trinity
     ;;
