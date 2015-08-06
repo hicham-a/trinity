@@ -4,30 +4,18 @@
 ##author         : Hans Then 
 ##email          : hans.then@clustervision
 
-# FIXME: we now setup mariadb first for xCAT and then remove it to the docker instance.
-# FIXME: this leaves an unused mariadb instance on the physical node. We could actually just use a 
-# FIXME: prepared xcatdb.sql and setup the /etc/xcat.cfgloc.
-
-source /etc/profile.d/xcat.sh
-yum -y install mariadb-devel mariadb-libs mariadb-server mariadb-bench mariadb perl-DBD-MySQL mysql-connector-odbc unixODBC
-export TERM=dumb
-export XCATMYSQLADMIN_PW=system
-export XCATMYSQLROOT_PW=system
-mysqlsetup -i -V
-mysqldump --databases xcatdb -psystem > /root/xcatdb.sql
-systemctl stop mariadb
-systemctl disable mariadb
-
 docker run -p 3306:3306 --name=db -it -d -e MYSQL_ROOT_PASSWORD=system mariadb
 while ! docker logs db | grep "ready for connections"; do
     sleep 1; 
     echo "waiting until db is started"; 
 done
 
+dumpxCATdb -p /tmp/xcattables
+
 docker exec db /usr/bin/mysql -psystem -e "create database xcatdb;"
 docker exec db /usr/bin/mysql -psystem -e "CREATE USER xcatadmin IDENTIFIED BY 'system';"
 docker exec db /usr/bin/mysql -psystem -e "GRANT ALL on xcatdb.* TO xcatadmin@'%' IDENTIFIED BY 'system';"
-(docker exec -i db /usr/bin/mysql -psystem xcatdb) < /root/xcatdb.sql;
+#(docker exec -i db /usr/bin/mysql -psystem xcatdb) < /root/xcatdb.sql;
 
 echo "mysql:dbname=xcatdb;host=10.141.255.254|xcatadmin|system" > /etc/xcat/cfgloc
 XCATBYPASS=y XCATCFG="/etc/xcat/cfglog"  restorexCATdb -p /tmp/xcattables
