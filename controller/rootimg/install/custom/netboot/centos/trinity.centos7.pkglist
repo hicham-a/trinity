@@ -80,7 +80,10 @@ tar
 pciutils
 dmidecode
 
-# For the nvidia GPU
+# For the Nvidia GPU
 gcc
 kernel-headers
 kernel-devel
+
+#Fix for 210
+lvm2
