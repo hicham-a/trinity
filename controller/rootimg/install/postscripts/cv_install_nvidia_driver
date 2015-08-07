@@ -1,6 +1,14 @@
 # This script will install the NVIDIA GPU drivers
 # Make sure to blacklist the nouveau driver in the bootparams table
 # nouveau.blacklist=yes
+count=$(find /cluster -maxdepth 1 -type f -name 'NVIDIA*run' | wc -l)
+if [ "$count" -eq 0 ]; then
+    echo "No Nvidia driver found. Please download the Nvidia driver to /cluster and run this script again"
+    exit 1
+elif [ "$count" -gt 1 ]; then
+    echo "Multiple Nvidia drivers found. Please make up your mind."
+    exit 1
+fi
 bash /cluster/NVIDIA*.run --accept-license --no-questions --silent
 
 
