@@ -24,6 +24,12 @@ else
     REPODIR=$(readlink -f $SCRIPTDIR/../../../../)
     echo Found repository in $REPODIR
     cp -Lrv --preserve $REPODIR /tmp
+
+    # Fix #379
+    cd $REPODIR
+    (git branch | grep "*"; git rev-parse --short HEAD; git status --porcelain) > /tmp/trinity/version
+    cd -
+
     # setup repositories
     yum -y install $(grep -v ^# $REPODIR/controller/rootimg/install/custom/install/centos/controller.pkglist)
     yum -y install epel-release
