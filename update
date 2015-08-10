@@ -78,10 +78,17 @@ Usage:
 copy(){
   case $1 in
     master | controller )
-      # Remove stale files under /trinity
-      [ -d /trinity ] && rm -rf /trinity/* 
-      # Copy the files to the nodes root filesystem
       REPO=$( cd "$1" && pwd )
+      # Remove stale files under /trinity
+      # [ -d /trinity ] && rm -rf /trinity/*
+      for profile in $( ls /trinity ); do
+        if [ "${profile}" != "clustervision" ] ; then
+           echo "Removing stale /trinity/${profile}"
+           rm -rf /trinity/${profile}/*
+           rmdir /trinity/${profile}
+        fi  
+      done 
+      # Copy the files to the nodes root filesystem
       cp --dereference --recursive --verbose --preserve ${REPO}/rootimg/* /
       # TODO: There should be a list of excludes here
       LOCAL=/trinity/site-local/$1
