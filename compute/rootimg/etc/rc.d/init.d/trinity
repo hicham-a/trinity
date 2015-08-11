@@ -55,8 +55,8 @@ start() {
             continue;
         fi
         
-        if ! ping -c 5 -W 5 $GW; then
-            echo "No cluster directory found for ${VC}."; 
+        if ! ping -c 5 -W 5 login.${VC}; then
+            echo "No login node found for ${VC}."; 
             sleep 5
             continue;
         fi
