@@ -34,11 +34,11 @@ chmod +t /tmp
 #--------------------------------------------------------------------------
 # Set hostname and domainname 
 #--------------------------------------------------------------------------
-#echo “login” >> /etc/hostname
-#hostname login.vc-a
+echo “login” > /etc/hostname
+hostname login
 #domainname vc-a
 chmod +x /usr/sbin/custom_hostname
-systemctl start set-hostname.service
+#systemctl start set-hostname.service
 systemctl enable set-hostname.service
 
 #---------------------------------------------------------------------------
