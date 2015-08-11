@@ -161,14 +161,6 @@ createrepo /install/post/otherpkgs/centos7/x86_64/
 genimage centos7-x86_64-netboot-trinity
 packimage centos7-x86_64-netboot-trinity
 
-#---------------------------------------------------------------------------------------
-# Workaround: create a default munge key for vc-a cluster
-#---------------------------------------------------------------------------------------
-mkdir -p /cluster/vc-a/etc/munge/
-dd if=/dev/urandom bs=1 count=1024 >/cluster/vc-a/etc/munge/munge.key
-chmod 400 /cluster/vc-a/etc/munge/munge.key
-chown 1002:1002 /cluster/vc-a/etc/munge/munge.key
-
 #--------------------------------------------------------------------------------------
 # install docker and docker-registry
 # and create the trinity image for the compute nodes
