@@ -26,37 +26,44 @@ start() {
     echo "Starting Trinity"
 
     # disable the docker bridge
-    ip link set docker0 down || true
-    brctl delbr docker0 || true
+    ip link set docker0 down 2>/dev/null|| true
+    brctl delbr docker0 2>/dev/null || true
 
     # Determine our container name
     NAME=$(hostname -s | sed s/node/c/)
 
-    # Determine in which virtual cluster this node is active
-    #for VC in vc-{a..l}; do
-    for VC in $(ls /cluster | grep "^vc-"); do
-        if host $NAME.$VC; then found=1; break; fi
+    while [ 1 ]; do 
+        # Determine in which virtual cluster this node is active
+        #for VC in vc-{a..l}; do
+        for VC in $(ls /cluster | grep "^vc-"); do
+            if host $NAME.$VC; then found=1; break; fi
+        done
+
+        if [ ! $found ]; then
+            echo "Could not determine cluster membership for this node. Sleeping now."
+            sleep 5
+            continue;
+        fi
+
+        IP=$(host ${NAME}.${VC} | awk -F' ' '{print $4}')
+        GW=$(echo $IP | awk -F. '{ print $1"."$2".255.254" }')
+     
+        # Check a few directories and files
+        if [ ! -d /cluster/${VC} ]; then
+            echo "No cluster directory found for ${VC}."; 
+            sleep 5
+            continue;
+        fi
+        
+        if ! ping -c 5 -W 5 $GW; then
+            echo "No cluster directory found for ${VC}."; 
+            sleep 5
+            continue;
+        fi
+        # All tests succeeded, just get on with it.
+        break;
     done
 
-    # Fix for #90
-    if [ ! $found ]; then
-        echo "Error, could not determine cluster membership for this node"
-        exit 1
-    fi
-
-    IP=$(host ${NAME}.${VC} | awk -F' ' '{print $4}')
-    GW=$(echo $IP | awk -F. '{ print $1"."$2".255.254" }')
- 
-    # Check a few directories and files
-    if [ ! -d /cluster/${VC} ]; then
-        logger -p syslog.err "No cluster directory found for ${VC}, exiting."; exit 1
-    fi
-    if [ ! -f /cluster/${VC}/etc/slurm/slurm.conf ]; then
-        logger -p syslog.err "No slurm.conf found, exiting."; exit 1
-    fi
-    if [ ! -f /cluster/${VC}/etc/munge/munge.key ]; then
-        logger -p syslog.err "No munge.key found, exiting."; exit 1
-    fi
 
     # check if there is a cluster specific image
     if wget http://controller:5050/v1/repositories/library/${VC}/tags -q -O-; then
