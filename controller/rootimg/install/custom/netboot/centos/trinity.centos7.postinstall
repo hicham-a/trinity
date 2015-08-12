@@ -32,7 +32,6 @@ chroot $installroot chkconfig ntpd on
 chroot $installroot chkconfig openvswitch on
 chroot $installroot chkconfig trinity off
 chroot $installroot chkconfig docker off
-chroot $installroot chkconfig avahi-daemon off
 
 echo "mlx4_ib" > $installroot/etc/modules-load.d/mlx4_ib.conf
 
