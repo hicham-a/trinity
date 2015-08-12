@@ -213,7 +213,10 @@ service httpd restart
 #--------------------------------------------
 # Initialize the git repository
 #--------------------------------------------
+version=$(cat /trinity/version | head -2)
 cd /
 git init 
+git add .
+git commit -m "Initial system setup based on Trinity: ${version//\*/}"
 
 echo "$0 finished" >> /var/log/postinstall.log
