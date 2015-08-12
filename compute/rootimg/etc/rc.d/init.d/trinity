@@ -26,8 +26,8 @@ start() {
     echo "Starting Trinity"
 
     # disable the docker bridge
-#    ip link set docker0 down || true
-#    brctl delbr docker0 || true
+    ip link set docker0 down || true
+    brctl delbr docker0 || true
 
     # Determine our container name
     NAME=$(hostname -s | sed s/node/c/)
@@ -72,7 +72,8 @@ start() {
     fi
 
     # determine the ethernet device name
-    read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
+    # Fix for 229
+    ETH1=$(ip route | grep default | awk '{print $5}' | head -1)
 
     state=$(docker inspect --format='{{.State.Running}}' trinity)
     case $state in
@@ -85,8 +86,11 @@ start() {
         *)
             docker run \
                --net=none \
-               --privileged \
-               -v /dev/infiniband:/dev/infiniband \
+               --device=/dev/infiniband/issm0 \
+               --device=/dev/infiniband/rdma_cm \
+               --device=/dev/infiniband/ucm0  \
+               --device=/dev/infiniband/umad0 \
+               --device=/dev/infiniband/uverbs0 \
                -v /trinity/clustervision:/trinity/clustervision \
                -v /root:/root \
                -v /home/${VC}:/home \
