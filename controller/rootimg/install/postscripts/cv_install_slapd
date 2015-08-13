@@ -82,13 +82,13 @@ ldapmodify -Y EXTERNAL -H ldapi:/// << EOF
 dn: olcDatabase={2}hdb,cn=config
 changetype: modify
 add: olcAccess
-olcAccess: to attrs=userPassword by self write 
-                                 by anonymous auth 
-                                 by * none
-- 
+olcAccess: to attrs=userPassword by self write
+  by anonymous auth
+  by * none
+-
 add: olcAccess
-olcAccess: to * by self write 
-                by * read
+olcAccess: to * by self write
+  by * read
 EOF
 
 #----------------------------------------------------------------------------
