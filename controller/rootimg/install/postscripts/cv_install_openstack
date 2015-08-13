@@ -156,7 +156,7 @@ keystone tenant-create --name ${FIRST_TENANT}
 keystone user-create --name ${FIRST_TENANT} --tenant ${FIRST_USER} --pass ${FIRST_PASS}
 nova floating-ip-bulk-create --pool ${FIRST_POOL} ${FIRST_FLOATING}
 mkdir -p /cluster/${FIRST_CLUSTER}
-cp -r /cluster/${SKEL}/* /cluster/${FIRST_CLUSTER}/ 
+cp -r /cluster/${SKEL}/. /cluster/${FIRST_CLUSTER}/ 
 
 useradd -u 1002 -U munge --no-create-home
 mkdir -p /cluster/${FIRST_CLUSTER}/etc/munge
