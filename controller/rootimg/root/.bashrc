@@ -11,7 +11,7 @@ if [ -f /etc/bashrc ]; then
 	. /etc/bashrc
 fi
 
-PS1="[\u@\h(\$(cat /trinity/site || echo "unknown" | head -1)\$([ \$(git status -s | wc -l) == 0 ] || echo *)) \W]\\$ "
+PS1="[\u@\h(\$(cat /trinity/site 2> /dev/null || echo "unknown" | head -1)\$([ \$(git status -s | wc -l) == 0 ] || echo *)) \W]\\$ "
 
 if [ -f /home/$(logname)/.gitconfig ]; then
     export GIT_AUTHOR_EMAIL=$(cat /home/$(logname)/.gitconfig | grep "email =" | awk -F= '{print $2}')
