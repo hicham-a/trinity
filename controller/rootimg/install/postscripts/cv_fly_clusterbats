@@ -1,0 +1,47 @@
+#! /usr/bin/bash
+##title          : cv_fly_clusterbats
+##description    : Automatically test controller installation and deploys the cluster. 
+##                 You need to edit the params file in /trinity/testing. (to be writter)
+##author         : Themis Athanassiaodu
+##email          : themis.athanassiadou@clustervision.com
+
+# Install the the Bash Automated Testing System:
+sh /trinity/testing/install_bats.sh
+
+# Run the controller bats for test case 1.1
+bats /trinity/testing/clusterbats/t1.1.bats
+
+# Add an if to test if all the test pass
+
+
+#Configure xcat tables to deploy cluster 
+##FIXME make environment variables and define in different file.
+source /etc/profile.d/xcat.sh
+
+chtab node=switch hosts.ip=10.141.253.1
+chtab switch=switch switch.node=compute
+chtab switch=switch switch.port="|\D+(\d+)|fa($1+0)|"
+makehosts switch
+makedns switch
+
+# do a switch ping test before proceeding
+
+nodeadd node[001-003] groups=compute
+makehosts compute
+makedns compute
+
+nodeadd c001-c002 groups=vc-a
+makehosts vc-a
+makedns vc-a 
+
+mkdef -t group -o hw-GenericNodes members=c001,c002
+
+#reboot nodes so they go into genesis
+rpower node001-node003 reset
+#need to make sure no error
+
+#make sure they go into genesis
+#while ! ssh node uname -a; do sleep 1; done
+
+#nodeset nodes to appropriate image
+
