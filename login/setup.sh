@@ -25,7 +25,7 @@ done
 #--------------------------------------------------------------------------
 mkdir -p /trinity
 mount ${controller}:/trinity /trinity
-cp --dereference --recursive --verbose --preserve /trinity/login/rootimg/* /
+cp -LrT /trinity/login/rootimg /
 
 # Make sure that /tmp is world writable
 chmod -R 777 /tmp
