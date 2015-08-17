@@ -89,21 +89,21 @@ copy(){
         fi  
       done 
       # Copy the files to the nodes root filesystem
-      cp --dereference --recursive --verbose --preserve ${REPO}/rootimg/* /
+      cp --dereference --recursive  --preserve ${REPO}/rootimg/* /
       # TODO: There should be a list of excludes here
       LOCAL=/trinity/site-local/$1
       if [ -d "${LOCAL}/rootimg" ] ; then
-        cp --dereference --recursive --verbose --preserve ${LOCAL}/rootimg/* /
+        cp --dereference --recursive  --preserve ${LOCAL}/rootimg/* /
       else
         echo "No site-local rootimg found"
       fi
     ;;
     openstack )
       # Assumes that /trinity is mounted on the openstack node as /trinity    
-      cp --dereference --recursive --verbose --preserve /trinity/$1/rootimg/* /
+      cp --dereference --recursive  --preserve /trinity/$1/rootimg/* /
       LOCAL=/trinity/site-local/$1
       if [ -d "${LOCAL}/rootimg" ] ; then
-        cp --dereference --recursive --verbose --preserve ${LOCAL}/rootimg/* /
+        cp --dereference --recursive  --preserve ${LOCAL}/rootimg/* /
       else
         echo "No site-local rootimg found"
       fi
@@ -141,7 +141,7 @@ copy(){
     compute )  
       # Note that the compute profile actually corresponds to the trinity osimge!
       # TODO The osver and arch should not be hardcoded
-      cp --dereference --recursive --verbose --preserve /trinity/$1/rootimg/* /install/netboot/centos7/x86_64/trinity/rootimg/
+      cp --dereference --recursive  --preserve /trinity/$1/rootimg/* /install/netboot/centos7/x86_64/trinity/rootimg/
       genimage centos7-x86_64-netboot-trinity
       packimage centos7-x86_64-netboot-trinity
     ;;
@@ -155,10 +155,18 @@ copy(){
 ##      else
 ##        echo "Enter a valid login node"
 ##      fi   
-      cp  --dereference --recursive --verbose --preserve /trinity/$1/rootimg /
+      cp  --dereference --recursive  --preserve /trinity/$1/rootimg /
       LOCAL=/trinity/site-local/$1
       if [ -d "${LOCAL}/rootimg" ] ; then
-        cp --dereference --recursive --verbose --preserve ${LOCAL}/rootimg/* /
+        cp --dereference --recursive  --preserve ${LOCAL}/rootimg/* /
+      else
+        echo "No site-local rootimg found"
+      fi
+    *)
+      cp  --dereference --recursive  --preserve /trinity/$1/rootimg /
+      LOCAL=/trinity/site-local/$1
+      if [ -d "${LOCAL}/rootimg" ] ; then
+        cp --dereference --recursive  --preserve ${LOCAL}/rootimg/* /
       else
         echo "No site-local rootimg found"
       fi
