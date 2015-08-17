@@ -3,6 +3,6 @@
 "centos7-x86_64-install-controller",,"controller","linux",,"install",,"centos7-x86_64",,,"Linux","centos7","x86_64",,,"cv_install_slapd,cv_install_controller",,,,,
 "centos7-x86_64-install-master",,"master","linux",,"install",,"centos7-x86_64",,,"Linux","centos7","x86_64",,,"cv_install_master,cv_install_synology",,,,,
 "centos7-x86_64-netboot-trinity",,"trinity","linux",,"netboot",,"centos7-x86_64",,,"Linux","centos7","x86_64",,,"cv_configure_prinic,cv_set_scheduler,cv_configure_storage,cv_install_agent",,,,,
-"centos7-x86_64-netboot-nova",,"nova","linux",,"netboot",,"centos7-x86_64",,,"Linux","centos7","x86_64",,,"cv_install_nova",,,,,
-"centos7-x86_64-netboot-cinder",,"cinder","linux",,"netboot",,"centos7-x86_64",,,"Linux","centos7","x86_64",,,"cv_install_cinder",,,,,
+"centos7-x86_64-netboot-nova",,"nova","linux",,"netboot",,"centos7-x86_64",,,"Linux","centos7","x86_64",,,"cv_configure_prinic,cv_install_nova,cv_install_agent",,,,,
+"centos7-x86_64-netboot-cinder",,"cinder","linux",,"netboot",,"centos7-x86_64",,,"Linux","centos7","x86_64",,,"cv_configure_prinic,cv_install_cinder,cv_install_agent",,,,,
 "centos7-x86_64-install-openstack",,"openstack","linux",,"install",,"centos7-x86_64",,,"Linux","centos7","x86_64",,,"cv_install_slapd,cv_install_openstack",,,,,
