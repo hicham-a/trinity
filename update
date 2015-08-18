@@ -162,6 +162,7 @@ copy(){
       else
         echo "No site-local rootimg found"
       fi
+    ;;
     *)
       cp  --dereference --recursive  --preserve /trinity/$1/rootimg /
       LOCAL=/trinity/site-local/$1
@@ -170,6 +171,7 @@ copy(){
       else
         echo "No site-local rootimg found"
       fi
+    ;;
   esac  
 }  
 
