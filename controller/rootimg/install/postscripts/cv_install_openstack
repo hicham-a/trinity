@@ -32,6 +32,7 @@ packstack --answer-file /tmp/packstack-answers.txt
 #sed -i "s/^#\?inject_key=.*/inject_key=true/g" /etc/nova/nova.conf
 sed -i "s/^#\?service_metadata_proxy=.*/service_metadata_proxy=False/g" /etc/nova/nova.conf
 sed -i "s/'can_set_password':.*/'can_set_password': False,/g" /etc/openstack-dashboard/local_settings
+openstack-config --set /etc/nova/nova.conf DEFAULT resume_guests_state_on_host_boot true
 systemctl restart openstack-nova-compute
 systemctl restart openstack-nova-api
 source ~/keystonerc_admin
