@@ -123,10 +123,10 @@ add: olcRootPW
 olcRootPW: system
 -
 replace: olcSuffix
-olcSuffix: dc=cluster
+olcSuffix: dc=local
 -
 replace: olcRootDN
-olcRootDN: cn=Manager,dc=cluster
+olcRootDN: cn=Manager,dc=local
 EOF
 
 #--------------------------------------------------------------------------
@@ -155,27 +155,27 @@ systemctl restart slapd
 #--------------------------------------------------------------------------
 # Setup the initial database
 #--------------------------------------------------------------------------
-ldapadd -D cn=Manager,dc=cluster -w system << EOF
-dn: dc=cluster
+ldapadd -D cn=Manager,dc=local -w system << EOF
+dn: dc=local
 dc: cluster
 objectClass: domain
 
-dn: ou=People,dc=cluster
+dn: ou=People,dc=local
 ou: People
 objectClass: top
 objectClass: organizationalUnit
 
-dn: ou=Group,dc=cluster
+dn: ou=Group,dc=local
 ou: Group
 objectClass: top
 objectClass: organizationalUnit
 
-dn: cn=uid,dc=cluster
+dn: cn=uid,dc=local
 cn: uid
 objectClass: uidNext
 uidNumber: 1050
 
-dn: cn=gid,dc=cluster
+dn: cn=gid,dc=local
 cn: gid
 objectClass: uidNext
 uidNumber: 150
@@ -204,15 +204,15 @@ cat >> /etc/nslcd.conf << EOF
 uri ldap://localhost
 ssl no
 tls_cacertdir /etc/openldap/cacerts
-base   group  ou=Group,dc=cluster
-base   passwd ou=People,dc=cluster
-base   shadow ou=People,dc=cluster
+base   group  ou=Group,dc=local
+base   passwd ou=People,dc=local
+base   shadow ou=People,dc=local
 EOF
 
 # configure the ldap server. Not sure this is needed.
 cat >> /etc/pam_ldap.conf << EOF
 uri ldap://localhost/
-base dc=cluster
+base dc=local
 ssl no
 tls_cacertdir /etc/openldap/cacerts
 pam_password md5
@@ -224,7 +224,7 @@ sed -e 's/^group:.*$/group:\t\tfiles ldap/g' \
     -e 's/^shadow:.*$/shadow:\t\tfiles ldap/g' \
     -i /etc/nsswitch.conf 
 
-authconfig-tui --kickstart --enableldapauth --ldapbasedn=dc=cluster --ldapserver=localhost
+authconfig-tui --kickstart --enableldapauth --ldapbasedn=dc=local --ldapserver=localhost
 
 
 #---------------------------------------------------------------------------
