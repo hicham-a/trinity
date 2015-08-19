@@ -64,7 +64,6 @@ install -D /etc/nslcd.conf $installroot/etc/nslcd.conf
 install -D /etc/nsswitch.conf $installroot/etc/nsswitch.conf
 chroot $installroot chkconfig nslcd on
 # authconfig did not work, so we just copied the affected config files.
-#chroot $installroot authconfig-tui --kickstart --enableldapauth --ldapbasedn=dc=cluster --ldapserver=controller
 install -D /etc/nsswitch.conf $installroot/etc/nsswitch.conf
 install -d $installroot/etc/pam.d
 cp -r /etc/pam.d/* $installroot/etc/pam.d
