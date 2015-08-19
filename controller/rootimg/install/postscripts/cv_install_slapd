@@ -3,49 +3,46 @@
 #----------------------------------------------------------------------------
 # Install OpenLDAP on the controller node
 #----------------------------------------------------------------------------
-# wait until the network is ready
-sleep 5
-
 yum -y install openldap openldap-clients openldap-servers
 yum -y install python-ldap python-retrying
 yum -y install nss-pam-ldapd authconfig
 
 cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
 
-cp -rLp /trinity/openldap/rootimg/* /
+cp -rLT /trinity/openldap/rootimg /
 systemctl enable slapd 
 systemctl start slapd
 
 #----------------------------------------------------------------------------
 # Setup the initial database
 #----------------------------------------------------------------------------
-ldapadd -D cn=Manager,dc=cluster -w system << EOF
-dn: dc=cluster
-dc: cluster
+ldapadd -D cn=Manager,dc=local -w system << EOF
+dn: dc=local
+dc: local
 objectClass: domain
 
-dn: ou=People,dc=cluster
+dn: ou=People,dc=local
 ou: People
 objectClass: top
 objectClass: organizationalUnit
 
-dn: ou=Group,dc=cluster
+dn: ou=Group,dc=local
 ou: Group
 objectClass: top
 objectClass: organizationalUnit
 
-dn: cn=uid,dc=cluster
+dn: cn=uid,dc=local
 cn: uid
 objectClass: uidNext
 uidNumber: 1050
 
-dn: cn=gid,dc=cluster
+dn: cn=gid,dc=local
 cn: gid
 objectClass: uidNext
 uidNumber: 150
 EOF
 
-authconfig-tui --kickstart --enableldapauth --ldapbasedn=dc=cluster \
+authconfig-tui --kickstart --enableldapauth --ldapbasedn=dc=local \
      --ldapserver=localhost 
 
 echo "$0 finished" >> /var/log/postinstall.log
