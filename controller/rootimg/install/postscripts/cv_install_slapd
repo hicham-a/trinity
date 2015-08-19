@@ -9,6 +9,7 @@ yum -y install nss-pam-ldapd authconfig
 
 cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
 
+rm -rf /etc/openldap/slapd.d
 cp -rLT /trinity/openldap/rootimg /
 systemctl enable slapd 
 systemctl start slapd
