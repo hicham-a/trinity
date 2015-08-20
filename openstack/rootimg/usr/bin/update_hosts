@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+##title          : update_hosts
+##description    : Updates the hosts for a given network 
+##author         : Abhishek Mukherjee
+##email          : abhishek.mukherjee@clustervision.com
+
+## Usage
+# update_hosts <comma_separated_hostname=ip-address_list> <new_bridge> [ <old_bridge> ]
+
+main(){
+  hosts_list=$1
+  new_bridge=$2
+  add_hosts ${new_bridge} ${hosts_list}
+  [ -z "$3" ] && return $? || old_bridge=$3; del_hosts ${old_bridge} ${hosts_list}
+}
+
+add_hosts(){
+  bridge=$1
+  hosts_list=$2
+  addn_hosts="/var/lib/nova/networks/nova-"${bridge}".hosts"
+  echo "${hosts_list}" | tr "," "\n" | awk -F "=" '{print $2"      "$1}' >> ${addn_hosts}
+  kill -HUP $(cat /var/lib/nova/networks/nova-${bridge}.pid)
+}
+
+del_hosts(){
+  bridge=$1
+  hosts_list=$2
+  addn_hosts="/var/lib/nova/networks/nova-"${bridge}".hosts"
+  hosts=$(echo "${hosts_list}" | tr "," "\n" | awk -F "=" '{print $1}')
+  awk -v hosts="${hosts}" '{host=$2; sub(/.$/,"",host); if (hosts !~ host) {print};}' ${addn_hosts} > tmp && mv -f tmp ${addn_hosts}
+  kill -HUP $(cat /var/lib/nova/networks/nova-${bridge}.pid)
+}
+
+## Checks
+[ -z "$2" ] && echo "Usage : update_hosts <comma_separated_hostname=ip-address_list> <new_bridge> [ <old_bridge> ]"; exit 
+main "$@" 
+

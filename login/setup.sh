@@ -319,6 +319,13 @@ service slurm start
 chkconfig munge on
 chkconfig slurm on
 
+
+#---------------------------------------------------------------------------
+# Setup internet access for the containers 
+#---------------------------------------------------------------------------
+/usr/sbin/make_gw 172.16.0.0/12
+
+
 #---------------------------------------------------------------------------
 # Setup security limits
 # Fix for #174

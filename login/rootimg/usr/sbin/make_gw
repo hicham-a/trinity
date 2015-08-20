@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+##title          : make_gw
+##description    : Sets up a gateway for internet access
+##                 Note that no routing is done for the 
+##                 internal network
+##author         : Abhishek Mukherjee
+##email          : abhishek.mukherjee@clustervision.com
+
+## Usage
+# ./make_gw <local_network_cidr>
+
+## Checks
+[ -z "$1" ] && echo "Usage : make_gw <local_network_cidr>"; exit 
+
+## Set the constants
+LOCAL_CIDR=$1
+
+## Setup IP forwarding
+echo 'net.ipv4.ip_forward=1' > /etc/sysctl.d/100-ip-forward.conf
+sysctl -p /etc/sysctl.d/100-ip-forward.conf
+
+## Stop firewalld if running
+systemctl status firewalld > /dev/null && systemctl stop firewalld; systemctld mask firewalld || echo "firewalld not running"
+
+## Setup iptables
+yum info iptables > /dev/null && echo "iptables-service already installed" || yum install -y iptables-services
+systemctl enable iptables
+systemctl start iptables
+iptables -F
+iptables -t nat -F
+iptables -A FORWARD -s ${LOCAL_CIDR} -d ${LOCAL_CIDR} -j DROP
+service iptables save
+

@@ -33,11 +33,16 @@ packstack --answer-file /tmp/packstack-answers.txt
 sed -i "s/^#\?service_metadata_proxy=.*/service_metadata_proxy=False/g" /etc/nova/nova.conf
 sed -i "s/'can_set_password':.*/'can_set_password': False,/g" /etc/openstack-dashboard/local_settings
 openstack-config --set /etc/nova/nova.conf DEFAULT resume_guests_state_on_host_boot true
+openstack-config --set /etc/nova/nova.conf DEFAULT allow_same_net_traffic true
+openstack-config --set /etc/nova/nova.conf DEFAULT dhcp_domain  
+
 systemctl restart openstack-nova-compute
 systemctl restart openstack-nova-api
+systemctl restart openstack-nova-network
+
 source ~/keystonerc_admin
 nova floating-ip-bulk-delete 10.3.4.0/22
-
+/usr/sbin/make_nw /root/keystonerc_admin ${ETH1}
 # Workaround for bug #67
 killall dhclient
 systemctl start network
@@ -142,15 +147,15 @@ glance image-create \
 #-----------------------------------------------------------------------------------
 # Create the default cluster
 #-----------------------------------------------------------------------------------
-FIRST_TENANT="a"
-FIRST_USER="a"
+FIRST_TENANT="hpc"
+FIRST_USER="hpc-admin"
 FIRST_PASS="system"
-FIRST_CLUSTER="vc-a"
-FIRST_POOL="login_a"
+FIRST_CLUSTER="hpc"
+FIRST_POOL="login_hpc"
 FIRST_FLOATING="172.16.255.254"
 LOGIN_SETUP="/trinity/login/setup.sh"
 LOGIN_DATA="/root/.login_data"
-LOGIN_NODE="login-a"
+LOGIN_NODE="login-hpc"
 SKEL=".skel"
 
 keystone tenant-create --name ${FIRST_TENANT}

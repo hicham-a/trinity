@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+##title          : make_nw
+##description    : Sets up the VLAN networks for openstack 
+##                 Note that this script is currently not idempotent.
+##                 It will delete all existing networks, and then 
+##                 create new ones. It should be run during the 
+##                 installation of the openstack node, before launching VMs
+##author         : Abhishek Mukherjee
+##email          : abhishek.mukherjee@clustervision.com
+
+## Usage
+# ./make_nw <keystonerc-admin> <bridge-interface>
+
+## Checks
+[ -z "$2" ] && echo "Usage : make_nw <keystonerc-admin> <bridge_interface>"; exit 
+
+keystonerc_admin=$1
+bridge_interface=$2
+
+source ${keystonerc_admin}
+for net_id in $(nova network-list | awk -F "|" 'NF > 2 && $2 !~ /ID/ {print $2}'); do 
+  echo "Deleting network: ${net_id}" 
+  [ -z $(nova network-show ${net_id} | awk -F "|" '$2 ~ /project_id/ {print $3}') ] || nova network-disassociate ${net_id} 
+  nova network-delete ${net_id}
+done
+
+first="172"
+for second in 16..31; do
+  xy="${first}${second}"
+  prefix="${first}.${second}"
+
+  name="net_${xy}"
+  cidr="${prefix}.0.0/16"
+  vlan="10${second}"
+  bridge="br10${second}"
+  gateway="${prefix}.255.1"
+  dhcp_server="${prefix}.255.1"
+  allowed_start="${prefix}.255.1"
+   
+  nova network-create ${name} \
+                      --fixed-range-v4 ${cidr} \
+                      --vlan  ${vlan}\
+                      --gateway ${gateway} \
+                      --dhcp-server ${dhcp_server} \
+                      --bridge ${bridge} \
+                      --bridge-interface ${bridge_interface} \
+                      --allowed-start ${allowed_start}
+done
+
