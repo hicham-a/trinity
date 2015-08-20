@@ -11,4 +11,4 @@ if [ -f /etc/bashrc ]; then
 	. /etc/bashrc
 fi
 
-PS1="[\u@\h($(cat /trinity/site | head -1)) \W]\\$ "
+PS1="[\u@\h($(cat /trinity/site || echo "unknown" | head -1)) \W]\\$ "

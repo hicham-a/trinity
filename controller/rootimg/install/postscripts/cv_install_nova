@@ -52,7 +52,7 @@ main(){
     mkfs -t ext4 /dev/nova-volumes/nova-volume
     mkdir -p /tmp/var/lib/nova
     mount /dev/nova-volumes/nova-volume /tmp/var/lib/nova
-    cp -r /var/lib/nova/* /tmp/var/lib/nova
+    cp -rT /var/lib/nova /tmp/var/lib/nova
     umount /tmp/var/lib/nova
 
   fi

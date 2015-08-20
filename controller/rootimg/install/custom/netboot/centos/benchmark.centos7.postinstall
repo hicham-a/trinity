@@ -41,7 +41,6 @@ chroot $installroot chkconfig rdma on
 chroot $installroot chkconfig ntpd on
 chroot $installroot chkconfig slurm on
 chroot $installroot chkconfig munge on
-chroot $installroot chkconfig avahi-daemon off
 
 #-- copy slurm and munge configuration files
 install -D /etc/munge/munge.key -m600 $installroot/etc/munge/munge.key
@@ -50,11 +49,11 @@ install -D /etc/slurm/slurm.conf $installroot/etc/slurm/slurm.conf
 
 #-- copy security limits from controller node
 install -d $installroot/etc/security/limits.d
-cp -r /etc/security/limits.d/* $installroot/etc/security/limits.d
+cp -Tr /etc/security/limits.d $installroot/etc/security/limits.d
 
 #-- copy repositories from controller node
 install -d $installroot/etc/yum.repos.d
-cp -r /etc/yum.repos.d/* $installroot/etc/yum.repos.d
+cp -Tr /etc/yum.repos.d $installroot/etc/yum.repos.d
 
 #-- copy modules environment config file
 install -D /usr/share/Modules/init/.modulespath $installroot/usr/share/Modules/init/.modulespath
@@ -67,7 +66,7 @@ chroot $installroot chkconfig nslcd on
 #chroot $installroot authconfig-tui --kickstart --enableldapauth --ldapbasedn=dc=cluster --ldapserver=controller
 install -D /etc/nsswitch.conf $installroot/etc/nsswitch.conf
 install -d $installroot/etc/pam.d
-cp -r /etc/pam.d/* $installroot/etc/pam.d
+cp -Tr /etc/pam.d $installroot/etc/pam.d
 install -D /etc/pam_ldap.conf $installroot/etc/pam_ldap.conf
 
 #-- Uncomment the line contains "cons" in /etc/inittab

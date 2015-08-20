@@ -19,29 +19,29 @@ if [ -f ${img}/logo-splash.png ]; then
   cp  ${img}/logo-splash.png ${img}/logo-splash.png.orig
 fi
 # removing the trinity logos for now, because of the formatting issue
-# cp -rv ./img/* $img
+# cp -rT ./img $img
 
 enabled="${top_dir}/openstack_dashboard/local/enabled/"
 if [ ! -d $enabled ]; then 
   mkdir -pv $enabled
 fi
-cp -rv ./local/enabled/* $enabled
+cp -rT ./local/enabled $enabled
 
 admin="${top_dir}/openstack_dashboard/dashboards/admin/"
 if  [ ! -d $admin ]; then 
   mkdir -pv $admin
 fi
-cp -rv ./dashboards/admin/* $admin
+cp -rT ./dashboards/admin $admin
 
 project="${top_dir}/openstack_dashboard/dashboards/project/"
 if [ ! -d $project ]; then
   mkdir -pv $project 
 fi
-cp -rv ./dashboards/project/* $project
+cp -rT ./dashboards/project $project
 
 api="${top_dir}/openstack_dashboard/api/"
 if [ ! -d $api ]; then 
   mkdir -pv $api 
 fi
-cp -rv ./api/* $api 
+cp -rT ./api $api 
 
