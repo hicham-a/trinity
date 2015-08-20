@@ -85,6 +85,10 @@ case $state in
            --dns-search=${VC} \
            --name=trinity \
            -d controller:5050/${IMAGE}
-        /usr/local/sbin/pipework ${ETH1} trinity ${IP}/16@${GW}
+    #    /usr/local/sbin/pipework ${ETH1} trinity ${IP}/16@${GW}
+        second=$(echo ${IP} | awk -F. '{ print $2 }')
+        VLAN="10${second}"
+        /usr/sbin/pipework ${ETH1} trinity ${IP}/16 @${VLAN}
+        /usr/sbin/default_route trinity
     ;;
 esac

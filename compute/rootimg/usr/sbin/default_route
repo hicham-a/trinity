@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+##title          : default_route
+##description    : Sets up the default route for a trinity container for internet access
+##                 internal network
+##author         : Abhishek Mukherjee
+##email          : abhishek.mukherjee@clustervision.com
+
+## Usage
+# default_route <container_name_or_id>
+
+## Checks
+[ -z "$1" ] && echo "Usage : default_route <container_name_or_id>"; exit 
+
+NAME=$1
+PID=$(docker inspect -f '{{.State.Pid}}' ${NAME})
+mkdir -p /var/run/netns
+ln -s /proc/${PID}/ns/net /var/run/netns/${PID}
+GW=$(docker exec ${NAME} host login | awk '{print $NF}') 
+ETH1=$(docker exec ${NAME} ls /sys/class/net/ | grep "^e" | sort | head -1)
+ip netns exec ${PID} ip route add default via ${GW} dev ${ETH1}  
+
