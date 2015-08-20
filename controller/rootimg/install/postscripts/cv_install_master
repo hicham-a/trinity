@@ -48,7 +48,7 @@ ifup $ETH3
 #---------------------------------------------------------------------------------------
 # Copy files
 #---------------------------------------------------------------------------------------
-cp -rL /root/trinity/master/rootimg/* /
+cp -rLT /root/trinity/master/rootimg /
 
 # FIXME: this mount should be an rsync with the clustervision master environment modules
 # cp -r /tmp/trinity/clustervision /trinity &
