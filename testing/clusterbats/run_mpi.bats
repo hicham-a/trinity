@@ -19,7 +19,7 @@
 }
 
 @test "The user can submit a batch script" {  
-  sshpass -p system ssh login.vc-a "
+  sshpass -p 123 ssh jane@login.vc-a "
   cp /trinity/testing/clusterbats/sbatch.sample .
   sbatch sbatch.sample
   "
