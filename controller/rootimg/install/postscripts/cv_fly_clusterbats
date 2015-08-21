@@ -5,22 +5,39 @@
 ##author         : Themis Athanassiadou
 ##email          : themis.athanassiadou@clustervision.com
 
+
+#LOGFILE="/trinity/testing/$date_log"
+#touch ${LOGFILE}
+#exec 1>${LOGFILE} 2>&1
+
+echo "Now flying clusterbats, hold on to your seats"
+
+source /etc/profile.d/xcat.sh
+yum -y install sshpass
+
+#------------------------------------------------
 # Install the the Bash Automated Testing System:
-if [ ! -d "/trinity/testing/bats" ]; then
+#------------------------------------------------
+if [ ! -d /trinity/testing/bats ]; then
    sh /trinity/testing/install_bats.sh
 fi
 
+#------------------------------------------
 # Run the controller bats for test case 1.1
-bats /trinity/testing/clusterbats/t1.1.bats
+#-------------------------------------------
+bats /trinity/testing/clusterbats/t1.1.bats # > /trinity/testing/$(date)_log
 
-#Outcome of test: if 0, all tests pass, and can proceed.
+#---------------------------------------------------------------------------------
+#Outcome of test: if 0, all tests pass, and can proceed with cluster installation.
+#---------------------------------------------------------------------------------
 outcome="$(echo $?)"
 [[ "$outcome" -eq 0 ]] && { echo "controller passed! proceed"; } || { echo "the controller did not pass all tests, exiting"; exit 1; }
 
-
+#---------------------------------------------------------------
 #Configure xcat tables to deploy cluster 
 ##FIXME make environment variables and define in different file.
-source /etc/profile.d/xcat.sh
+#--------------------------------------------------------------
+
 
 #ip_current="$(gettab node=switch hosts.ip)"
 #echo $(ip_current) 
@@ -30,9 +47,14 @@ chtab switch=switch switch.port="|\D+(\d+)|fa(\$1+0)|"
 makehosts switch
 makedns switch
 
+#------------------------------------------
 # do a switch ping test before proceeding
-# test?
+#------------------------------------------
 ping -c 1 switch &> /dev/null && { echo "can ping switch, proceed"; } || { echo "Cannot ping switch, exiting"; exit 1; }
+
+#--------------------------
+#add nodes to xcat database
+#--------------------------
 
 nodeadd node[001-003] groups=compute
 makehosts compute
@@ -45,33 +67,58 @@ makedns vc-a
 mkdef -t group -o hw-GenericNodes members=c001,c002
 
 
-
+#------------------------------------
 #reboot nodes so they go into genesis
+#------------------------------------
 rpower node001-node003 reset
-#need to make sure no error
 
 sleep 10 
 
 #make sure they go into genesis/ssh (node001 usually slow - need to add multiple node checks)
 #while ! ssh node001; do sleep 1; done -- this will ssh into node, do not want this. 
 
-#until [[ $(nodestat node001 | grep "sshd") -eq 0 ]]; 
-until nodestat node001 | grep "sshd"; 
+ until nodestat node003 | grep "sshd"; 
     do 
 	echo "node still booting, hang in there" 
-	sleep 10 
+	sleep 20 
     done
 
-echo "Nodes are in Genesis" 
+echo "Openstack Node is in Genesis, deploy openstack:" 
 
 #nodeset nodes to appropriate image
-nodeset node001-node002 osimage=centos7-x86_64-netboot-trinity
+
 nodeset node003 osimage=centos7-x86_64-install-openstack
 
-sleep 2
+ until nodestat node001 | grep "sshd";
+    do
+    echo "node still booting, hang in there"
+    sleep 20
+    done
+
+
+nodeset node001-node002 osimage=centos7-x86_64-netboot-trinity
+
+
+sleep 5
 
 rpower node001-node003 reset
 
 echo "Go get a coffee!"
 
 
+# when the login-a is up then run_mpi.bats
+
+#Outcome of test: wait until the floating ip is up
+#-------------------------------------------------------------------------
+loginaip="172.16.255.254"
+access=1;
+while [ ${access} -ne "0" ];
+   do ping -q -c 1 ${loginaip} ; access=$? ; sleep 50;
+   echo "login-a still not up"
+done
+
+echo "login-a is up, wait till slurm installs"
+
+sleep 400
+
+bats /trinity/testing/clusterbats/run_mpi.bats 
