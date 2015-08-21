@@ -1,8 +1,31 @@
 #! /bin/bash
-#title		: login.conf
-#description	: Template script to be passed as userdata for login node creation
+#title		: login/setup.sh
+#description	: Script to be passed as userdata for login node creation
+#                 Note : This script assumes that the following naming convention
+#                 is strictly followed while naming the login node instance (VM)
+#
+#                 Instance name = login.<tenant_name>
+#
+#                 If the convention is not followed then the login node creation
+#                 WILL FAIL
 #author		: Abhishek Mukherjee
 #email		: abhishek.mukherjee@clustervision.com
+
+
+#------------------------------------------------------------------------------
+# Get some metadata info
+#------------------------------------------------------------------------------
+metadata=$(curl -s 169.254.169.254/openstack/latest/meta_data.json)
+name=$(echo ${metadata} | python -c 'import sys,json;data=json.loads(sys.stdin.read()); print data["name"]')
+vc==$(echo ${name} | awk -F "." '{print $2}')
+
+#---------------------------------------------------------------------------
+# Name resolution
+#---------------------------------------------------------------------------
+awk '{if ($1 ~ /search/) {print $0 " cluster cluster."} else {print}}' /etc/resolv.conf > tmp && mv -f tmp /etc/resolv.conf
+read ETH1 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -1)
+sed -e 's/^PEERDNS="yes"/PEERDNS="no"/g' \
+    -i /etc/sysconfig/network-scripts/ifcfg-${ETH1}
 
 #---------------------------------------------------------------------------
 # Enable password authenication 
@@ -12,19 +35,21 @@ sed -e 's/[#]*PasswordAuthentication no/PasswordAuthentication yes/g' -i /etc/ss
 service sshd restart
 
 #-------------------------------------------------------------------------
-# Wait until the floating ip is up
+# Wait until the nfs_server is accessible
 #-------------------------------------------------------------------------
-controller="10.141.255.254"
+## AM : 21/08/2015 => We no longer rely on fixed numerical IPs for the 
+## underlying  physical layer 
+nfs_server="controller"
 access=1;
 while [ ${access} -ne "0" ]; 
-   do ping -c 1 ${controller} ; access=$? ; sleep 1;
+   do ping -c 1 ${nfs_server} ; access=$? ; sleep 1;
 done
 
 #--------------------------------------------------------------------------
-# Copy the required files from controller to the login node  
+# Copy the required files from the nfs_server to the login node  
 #--------------------------------------------------------------------------
 mkdir -p /trinity
-mount ${controller}:/trinity /trinity
+mount ${nfs_server}:/trinity /trinity
 cp -LrT /trinity/login/rootimg /
 
 # Make sure that /tmp is world writable
@@ -34,25 +59,13 @@ chmod +t /tmp
 #--------------------------------------------------------------------------
 # Set hostname and domainname 
 #--------------------------------------------------------------------------
-echo “login” > /etc/hostname
-hostname login
-#domainname vc-a
-chmod +x /usr/sbin/custom_hostname
+## AM : 21/08/2015 => This is no longer required. Note however, that the instance 
+## naming convention should be strictly followed 
+##echo “login” > /etc/hostname
+##hostname login
+##chmod +x /usr/sbin/custom_hostname
 #systemctl start set-hostname.service
-systemctl enable set-hostname.service
-
-#---------------------------------------------------------------------------
-# Hostname resolution
-#---------------------------------------------------------------------------
-##We will use the HERE document for now
-cat << EOF > /etc/resolv.conf
-search cluster. vc-a. cluster
-nameserver 10.141.255.254
-EOF
-
-read ETH1 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -1)
-sed -e 's/^PEERDNS="yes"/PEERDNS="no"/g' \
-    -i /etc/sysconfig/network-scripts/ifcfg-${ETH1}
+##systemctl enable set-hostname.service
 
 #---------------------------------------------------------------------------
 # Setup NFS mounts
@@ -70,9 +83,9 @@ mkdir -p /home
 ##mount -a
 #AM: For now we will use the HERE document
 cat <<EOF >> /etc/fstab
-controller:/cluster/vc-a /cluster nfs rsize=8192,wsize=8192,timeo=14,intr
-controller:/trinity /trinity nfs rsize=8192,wsize=8192,timeo=14,intr
-controller:/home/vc-a /home nfs rsize=8192,wsize=8192,timeo=14,intr
+${nfs_server}:/cluster/${vc} /cluster nfs rsize=8192,wsize=8192,timeo=14,intr
+${nfs_server}:/trinity /trinity nfs rsize=8192,wsize=8192,timeo=14,intr
+${nfs_server}:/home/${vc} /home nfs rsize=8192,wsize=8192,timeo=14,intr
 EOF
 
 mount -a
