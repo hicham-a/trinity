@@ -155,6 +155,7 @@ FIRST_USER="hpc-admin"
 FIRST_PASS="system"
 FIRST_CLUSTER="hpc"
 FIRST_POOL="login_hpc"
+FIRST_NETWORK="net_17216"
 ## FIRST_FLOATING="172.16.255.254"
 LOGIN_SETUP="/trinity/login/setup.sh"
 LOGIN_DATA="/root/.login_data"
@@ -208,9 +209,22 @@ sed -e "s/<TENANT>/${FIRST_TENANT}/g" \
 
 source /root/keystonerc_${FIRST_TENANT}
 cp ${LOGIN_SETUP} ${LOGIN_DATA}
-tenant_id=$(keystone tenant-get ${FIRST_CLUSTER} | awk '$2 ~ /id/ {print $3}')
+tenant_id=$(keystone tenant-get ${FIRST_CLUSTER} |grep -w id | awk -F "|" '{gsub(/^[ \t]+|[ \t]+$, "", $3); print $3}')
 nova-manage network modify 172.16.0.0/16 --project ${tenant_id} 
 nova boot --flavor 2 --image ${LOGIN_IMAGE} --user-data ${LOGIN_DATA} ${LOGIN_NODE}
+
+#------------------------------------------------------------------------------
+# Now add the containers to the bridge hosts file
+#------------------------------------------------------------------------------
+tenant=${FIRST_TENANT}
+bridge=$(nova network-show ${FIRST_NETWORK} | grep -w bridge | awk -F "|" '{gsub(/^[ \t]+|[ \t]+$/, "", $3); print $3})')
+hosts=""
+for container in $(echo ${containers} | tr "," " "); do
+  hostname=${container}.${tenant}
+  num=$(echo ${container//[!0-9]/}) ; ip=172.16.$(( num/256 )).$(( num%256 ))
+  hosts="${hosts},${hostname}=${ip}"
+done
+/usr/sbin/update_hosts ${hosts} ${bridge}
 
 ## We do not need this anymore with VLAN networking
 ## nova floating-ip-create ${FIRST_POOL}
