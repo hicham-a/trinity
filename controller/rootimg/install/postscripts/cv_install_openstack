@@ -217,7 +217,7 @@ nova boot --flavor 2 --image ${LOGIN_IMAGE} --user-data ${LOGIN_DATA} ${LOGIN_NO
 # Now add the containers to the bridge hosts file
 #------------------------------------------------------------------------------
 tenant=${FIRST_TENANT}
-bridge=$(nova network-show ${FIRST_NETWORK} | grep -w bridge | awk -F "|" '{gsub(/^[ \t]+|[ \t]+$/, "", $3); print $3})')
+bridge=$(nova network-show ${FIRST_NETWORK} | grep -w bridge | awk -F "|" '{gsub(/^[ \t]+|[ \t]+$/, "", $3); print $3}')
 hosts=""
 for container in $(echo ${containers} | tr "," " "); do
   hostname=${container}.${tenant}

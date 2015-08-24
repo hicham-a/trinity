@@ -20,7 +20,7 @@ main(){
   elif [ "$1" = "help" ]; then
     help_hosts 
     exit 0
-  elif ["$1" = "add" ]; then
+  elif [ "$1" = "add" ]; then
     if [ -z "$2" ]; then
       help_hosts 
       exit 1
@@ -29,7 +29,7 @@ main(){
     hosts_list=$2
     add_hosts ${bridge} ${hosts_list}
     exit $?
-  elif ["$1" = "del" ]; then
+  elif [ "$1" = "del" ]; then
     if [ -z "$2" ]; then
       help_hosts
       exit 1
@@ -48,9 +48,9 @@ help_hosts(){
   echo \
 "
  Usage:
-   ${bold}update_hosts help${normal} : prints this help message
-   ${bold}update_hosts add <bridge> <comma_separated_hostname=ip-address_list>${normal} : add hosts to bridge
-   ${bold}update_hosts del <bridge> <comma_separated_hostnames>${normal} : delete hosts from bridge
+   update_hosts help : prints this help message
+   update_hosts add <bridge> <comma_separated_hostname=ip-address_list> : add hosts to bridge
+   update_hosts del <bridge> <comma_separated_hostnames> : delete hosts from bridge
 "
 }
 
