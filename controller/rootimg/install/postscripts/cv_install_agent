@@ -7,7 +7,7 @@
 yum install -y wget telnet net-tools
 
 # Workaround for #364
-yum -y install reinstall xinetd
+yum -y reinstall xinetd
 chkconfig xinetd on
 service xinetd start
 # This is a temporary measure 
