@@ -12,8 +12,10 @@
 # ./make_nw <keystonerc-admin> <bridge-interface>
 
 ## Checks
-[ -z "$2" ] && echo "Usage : make_nw <keystonerc-admin> <bridge_interface>"; exit 
-
+if [ -z "$2" ]; then
+  echo "Usage : make_nw <keystonerc-admin> <bridge_interface>" 
+  exit 
+fi
 keystonerc_admin=$1
 bridge_interface=$2
 
@@ -25,7 +27,7 @@ for net_id in $(nova network-list | awk -F "|" 'NF > 2 && $2 !~ /ID/ {print $2}'
 done
 
 first="172"
-for second in 16..31; do
+for second in {16..31}; do
   xy="${first}${second}"
   prefix="${first}.${second}"
 

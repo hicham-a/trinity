@@ -89,6 +89,6 @@ case $state in
         second=$(echo ${IP} | awk -F. '{ print $2 }')
         VLAN="10${second}"
         /usr/sbin/pipework ${ETH1} trinity ${IP}/16 @${VLAN}
-        /usr/sbin/default_route trinity
+        /usr/sbin/make_gw trinity
     ;;
 esac

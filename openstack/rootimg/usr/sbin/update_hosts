@@ -25,8 +25,8 @@ main(){
       help_hosts 
       exit 1
     fi
-    bridge=$1
-    hosts_list=$2
+    bridge=$2
+    hosts_list=$3
     add_hosts ${bridge} ${hosts_list}
     exit $?
   elif [ "$1" = "del" ]; then
@@ -34,8 +34,8 @@ main(){
       help_hosts
       exit 1
     fi
-    bridge=$1
-    hosts_list=$2
+    bridge=$2
+    hosts_list=$3
     del_hosts ${bridge} ${hosts_list}
     exit $?
   else 

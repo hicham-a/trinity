@@ -185,8 +185,8 @@ chmod u=r,go=   /cluster/${FIRST_CLUSTER}/etc/munge/munge.key
 # corresponding container definitions to the slurm-nodes.conf file
 #------------------------------------------------------------------------------
 
-nodes=$(curl -k 'https://controller/xcatws/groups/compute/attrs/members?userName=trinity&password=trinity&pretty=1' | awk -F: '{if (NR==3) {print $2}}' | sed 's/"//g')
-containers=$(echo ${nodes} | tr "," "\n" | awk '$0 ~ /node/ {print}' | tr "node" "c" | tr "\n" ",")
+nodes=$(curl -k -s 'https://controller/xcatws/groups/compute/attrs/members?userName=trinity&password=trinity&pretty=1' | awk -F: '{if (NR==3) {print $2}}' | sed 's/"//g')
+containers=$(echo ${nodes} | tr "," "\n" | awk '$0 ~ /node/ {print}' | sed -e "s/node/c/g" | tr "\n" ",")
 sed -e "s/<NODES>/${containers}/g" -i /cluster/${FIRST_CLUSTER}/etc/slurm/slurm-nodes.conf
 chmod u=rwx,go=rx /cluster/${FIRST_CLUSTER}/etc/slurm
 chmod u=rw,go=rx  /cluster/${FIRST_CLUSTER}/etc/slurm/slurm.conf
@@ -201,6 +201,9 @@ chmod ug=rw,o=r   /cluster/${FIRST_CLUSTER}/etc/slurm/slurm-user.conf
 ## sed -e "s/vc-a/${FIRST_CLUSTER}/g" \
 ##     -i "${LOGIN_DATA}"
 
+tenant_id=$(keystone tenant-get ${FIRST_CLUSTER} |grep -w id | awk -F "|" '{gsub(/^[ \t]+|[ \t]+$/, "", $3); print $3}')
+nova-manage network modify 172.16.0.0/16 --project ${tenant_id} 
+
 sed -e "s/<TENANT>/${FIRST_TENANT}/g" \
     -e "s/<USER>/${FIRST_USER}/g" \
     -e "s/<PASSWORD>/${FIRST_PASS}/g" \
@@ -209,20 +212,19 @@ sed -e "s/<TENANT>/${FIRST_TENANT}/g" \
 
 source /root/keystonerc_${FIRST_TENANT}
 cp ${LOGIN_SETUP} ${LOGIN_DATA}
-tenant_id=$(keystone tenant-get ${FIRST_CLUSTER} |grep -w id | awk -F "|" '{gsub(/^[ \t]+|[ \t]+$/, "", $3); print $3}')
-nova-manage network modify 172.16.0.0/16 --project ${tenant_id} 
 nova boot --flavor 2 --image ${LOGIN_IMAGE} --user-data ${LOGIN_DATA} ${LOGIN_NODE}
 
 #------------------------------------------------------------------------------
 # Now add the containers to the bridge hosts file
 #------------------------------------------------------------------------------
+source /root/keystonerc_admin
 tenant=${FIRST_TENANT}
 bridge=$(nova network-show ${FIRST_NETWORK} | grep -w bridge | awk -F "|" '{gsub(/^[ \t]+|[ \t]+$/, "", $3); print $3}')
 hosts=""
 for container in $(echo ${containers} | tr "," " "); do
   hostname=${container}.${tenant}
   num=$(echo ${container//[!0-9]/}) ; ip=172.16.$(( num/256 )).$(( num%256 ))
-  hosts="${hosts},${hostname}=${ip}"
+  hosts="${hosts}${hostname}=${ip},"
 done
 /usr/sbin/update_hosts add ${bridge} ${hosts}
 

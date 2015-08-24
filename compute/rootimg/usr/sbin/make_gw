@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-##title          : default_route
+##title          : make_gw
 ##description    : Sets up the default route for a trinity container for internet access
 ##                 internal network
 ##author         : Abhishek Mukherjee
@@ -9,7 +9,10 @@
 # default_route <container_name_or_id>
 
 ## Checks
-[ -z "$1" ] && echo "Usage : default_route <container_name_or_id>"; exit 
+if [ -z "$1" ]; then
+  echo "Usage : make_gw <container_name_or_id>"
+  exit
+fi
 
 NAME=$1
 PID=$(docker inspect -f '{{.State.Pid}}' ${NAME})
