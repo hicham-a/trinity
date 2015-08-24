@@ -105,15 +105,29 @@ rpower node001-node003 reset
 
 echo "Go get a coffee!"
 
+sleep 5
 
+# Need to test whether openstack deployed without errors here
+#tail/grep xcat.log for errors
+
+until nodestat node003 | grep "sshd";
+   do
+   echo "node deploying openstack image"
+   sleep 50
+   done
+
+sshpass -p system ssh node003 <<WTF 
+  [ tail -f /var/log/xcat/xcat.log | grep -v "lspci\|setpci" | grep "ERROR" ] exit
+WTF
+
+#--------------------------------------------------
 # when the login-a is up then run_mpi.bats
-
 #Outcome of test: wait until the floating ip is up
-#-------------------------------------------------------------------------
+#---------------------------------------------------
 loginaip="172.16.255.254"
 access=1;
 while [ ${access} -ne "0" ];
-   do ping -q -c 1 ${loginaip} ; access=$? ; sleep 50;
+   do ping -q -c 1 ${loginaip} > dev/null 2>&1 ; access=$? ; sleep 50;
    echo "login-a still not up"
 done
 
@@ -121,4 +135,6 @@ echo "login-a is up, wait till slurm installs"
 
 sleep 400
 
+
+bats /trinity/testing/clusterbats/t1.2.bats
 bats /trinity/testing/clusterbats/run_mpi.bats 
