@@ -136,7 +136,7 @@ CLOUD_IMAGE="CentOS-7-x86_64-GenericCloud.qcow2"
 CLOUD_IMAGE_FORMAT="qcow2"
 CLOUD_CONTAINER_FORMAT="bare"
 LOGIN_IMAGE="login"
-wget ${CLOUD_IMAGE_URL}
+wget -nv ${CLOUD_IMAGE_URL}
 glance image-create \
          --name "${LOGIN_IMAGE}" \
          --disk-format "${CLOUD_IMAGE_FORMAT}" \
