@@ -224,7 +224,7 @@ for container in $(echo ${containers} | tr "," " "); do
   num=$(echo ${container//[!0-9]/}) ; ip=172.16.$(( num/256 )).$(( num%256 ))
   hosts="${hosts},${hostname}=${ip}"
 done
-/usr/sbin/update_hosts ${hosts} ${bridge}
+/usr/sbin/update_hosts add ${bridge} ${hosts}
 
 ## We do not need this anymore with VLAN networking
 ## nova floating-ip-create ${FIRST_POOL}

@@ -4,14 +4,54 @@
 ##author         : Abhishek Mukherjee
 ##email          : abhishek.mukherjee@clustervision.com
 
-## Usage
-# update_hosts <comma_separated_hostname=ip-address_list> <new_bridge> [ <old_bridge> ]
+## Usage:
+##   update_hosts help : prints this help message
+##   update_hosts add <bridge> <comma_separated_hostname=ip-address_list> : add hosts to bridge
+##   update_hosts del <bridge> <comma_separated_hostnames> : delete hosts from bridge
+
+bold=$(tput bold)
+normal=$(tput sgr0)
+red=$(tput setaf 1)
 
 main(){
-  hosts_list=$1
-  new_bridge=$2
-  add_hosts ${new_bridge} ${hosts_list}
-  [ -z "$3" ] && return $? || old_bridge=$3; del_hosts ${old_bridge} ${hosts_list}
+  if [ -z "$1" ]; then
+    help_hosts 
+    exit 1
+  elif [ "$1" = "help" ]; then
+    help_hosts 
+    exit 0
+  elif ["$1" = "add" ]; then
+    if [ -z "$2" ]; then
+      help_hosts 
+      exit 1
+    fi
+    bridge=$1
+    hosts_list=$2
+    add_hosts ${bridge} ${hosts_list}
+    exit $?
+  elif ["$1" = "del" ]; then
+    if [ -z "$2" ]; then
+      help_hosts
+      exit 1
+    fi
+    bridge=$1
+    hosts_list=$2
+    del_hosts ${bridge} ${hosts_list}
+    exit $?
+  else 
+    help_hosts
+    exit 1
+  fi
+}
+
+help_hosts(){
+  echo \
+"
+ Usage:
+   ${bold}update_hosts help${normal} : prints this help message
+   ${bold}update_hosts add <bridge> <comma_separated_hostname=ip-address_list>${normal} : add hosts to bridge
+   ${bold}update_hosts del <bridge> <comma_separated_hostnames>${normal} : delete hosts from bridge
+"
 }
 
 add_hosts(){
@@ -26,12 +66,11 @@ del_hosts(){
   bridge=$1
   hosts_list=$2
   addn_hosts="/var/lib/nova/networks/nova-"${bridge}".hosts"
-  hosts=$(echo "${hosts_list}" | tr "," "\n" | awk -F "=" '{print $1}')
+  hosts=$(echo "${hosts_list}" | tr "," "\n")
   awk -v hosts="${hosts}" '{host=$2; sub(/.$/,"",host); if (hosts !~ host) {print};}' ${addn_hosts} > tmp && mv -f tmp ${addn_hosts}
   kill -HUP $(cat /var/lib/nova/networks/nova-${bridge}.pid)
 }
 
-## Checks
-[ -z "$2" ] && echo "Usage : update_hosts <comma_separated_hostname=ip-address_list> <new_bridge> [ <old_bridge> ]"; exit 
+## Call the main function
 main "$@" 
 
