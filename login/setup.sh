@@ -292,8 +292,8 @@ yum -y install git
 #---------------------------------------------------------------------------
 # Setup permissions
 #---------------------------------------------------------------------------
-obol group add admin
-obol group add power-users
+obol -w system group add admin
+obol -w system group add power-users
 chown root:root /cluster/etc/slurm
 chmod ug=rwx,o=rx /cluster/etc/slurm
 chown root:admin /cluster/etc/slurm/slurm-user.conf  
