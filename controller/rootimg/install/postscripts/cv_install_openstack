@@ -163,10 +163,10 @@ LOGIN_NODE="login.hpc"
 SKEL=".skel"
 
 keystone tenant-create --name ${FIRST_TENANT}
-keystone user-create --name ${FIRST_TENANT} --tenant ${FIRST_USER} --pass ${FIRST_PASS}
+keystone user-create --name ${FIRST_USER} --tenant ${FIRST_TENANT} --pass ${FIRST_PASS}
 ## nova floating-ip-bulk-create --pool ${FIRST_POOL} ${FIRST_FLOATING}
 mkdir -p /cluster/${FIRST_CLUSTER}
-cp -Tr /cluster/${SKEL}/ /cluster/${FIRST_CLUSTER}/
+cp -LTr /cluster/${SKEL}/ /cluster/${FIRST_CLUSTER}/
 
 mkdir -p /home/${FIRST_CLUSTER}
 
@@ -209,7 +209,7 @@ sed -e "s/<TENANT>/${FIRST_TENANT}/g" \
 
 source /root/keystonerc_${FIRST_TENANT}
 cp ${LOGIN_SETUP} ${LOGIN_DATA}
-tenant_id=$(keystone tenant-get ${FIRST_CLUSTER} |grep -w id | awk -F "|" '{gsub(/^[ \t]+|[ \t]+$, "", $3); print $3}')
+tenant_id=$(keystone tenant-get ${FIRST_CLUSTER} |grep -w id | awk -F "|" '{gsub(/^[ \t]+|[ \t]+$/, "", $3); print $3}')
 nova-manage network modify 172.16.0.0/16 --project ${tenant_id} 
 nova boot --flavor 2 --image ${LOGIN_IMAGE} --user-data ${LOGIN_DATA} ${LOGIN_NODE}
 
