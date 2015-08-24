@@ -116,9 +116,9 @@ until nodestat node003 | grep "sshd";
    sleep 50
    done
 
-sshpass -p system ssh node003 <<WTF 
-  [ tail -f /var/log/xcat/xcat.log | grep -v "lspci\|setpci" | grep "ERROR" ] exit
-WTF
+#sshpass -p system ssh -T  node003 <<WTF 
+#  [ tail -f /var/log/xcat/xcat.log | grep -v "lspci\|setpci" | grep "ERROR" ] exit
+#WTF
 
 #--------------------------------------------------
 # when the login-a is up then run_mpi.bats
@@ -127,7 +127,7 @@ WTF
 loginaip="172.16.255.254"
 access=1;
 while [ ${access} -ne "0" ];
-   do ping -q -c 1 ${loginaip} > dev/null 2>&1 ; access=$? ; sleep 50;
+   do ping -q -c 1 ${loginaip} > /dev/null 2>&1 ; access=$? ; sleep 50;
    echo "login-a still not up"
 done
 
