@@ -28,7 +28,7 @@
 
 @test "1.1.8 Hostname is set correctly" {
    s1=$HOSTNAME
-   s2='controller'
+   s2='controller.cluster'
    [ $s1 = $s2 ] 
 }
 
