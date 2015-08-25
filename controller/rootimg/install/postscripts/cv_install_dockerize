@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+##title          : cv_install_dockerize
+##description    : Sets up a dockerized infrastructure.
+##                 The following services are dockerized
+##                 MariaDB (Database)
+##                 RabbitMQ (Message Queue)
+##                 Keystone (OpenStack Identity)
+##                 Glance (OpenStack Image)
+##                 Nova controller (OpenStack Compute: controller part)
+##author         : Abhishek Mukherjee
+##email          : abhishek.mukherjee@clustervision.com
+
+
+REGISTRY="controller:5050"
+TOPDIR="/trinity"
+profiles=(
+  "mariadb"
+  "rabbitmq"
+  "keystone"
+  "glance"
+  "nova-controller"        
+)
+
+declare -A ports
+ports=(
+  ["mariadb"]="3306"
+  ["rabbitmq"]="5672 15672 4369 25672"
+  ["keystone"]="5000 35357"
+  ["glance"]="9191 9292"
+  ["nova-controller"]="8773 8774 8775 6080 5900"
+)
+
+for profile in "${profiles[@]}"; do
+  docker build -t ${REGISTRY}/${profile} /${TOPDIR}/${profile}
+  docker push ${REGISTRY}/${profile}
+  cmd_string=""
+  for port in ${ports[${profile}]}; do
+    cmd_string="${cmd_string} -p ${port}:${port}"
+  done
+  cmd_string="${cmd_string} --name=${profile} ${REGISTRY}/${profile}"
+  docker run ${cmd_string}
+  case ${profile} in 
+    keystone)
+      for setup in $(ls ${TOPDIR}/${profile}/*-setup.sh); do
+        . ${setup}
+      done
+    ;;
+  esac
+done
+
