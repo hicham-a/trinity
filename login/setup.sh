@@ -21,22 +21,25 @@ while [ ${access} -ne "0" ];
 done
 
 #--------------------------------------------------------------------------
-# Set hostname and domainname 
-#--------------------------------------------------------------------------
-echo “login” >> /etc/hostname
-hostname login.vc-a
-#domainname vc-a
-
-#--------------------------------------------------------------------------
 # Copy the required files from controller to the login node  
 #--------------------------------------------------------------------------
 mkdir -p /trinity
 mount ${controller}:/trinity /trinity
-cp --dereference --recursive --verbose --preserve /trinity/login/rootimg/* /
+cp -LrT /trinity/login/rootimg /
 
 # Make sure that /tmp is world writable
 chmod -R 777 /tmp
 chmod +t /tmp
+
+#--------------------------------------------------------------------------
+# Set hostname and domainname 
+#--------------------------------------------------------------------------
+echo “login” > /etc/hostname
+hostname login
+#domainname vc-a
+chmod +x /usr/sbin/custom_hostname
+#systemctl start set-hostname.service
+systemctl enable set-hostname.service
 
 #---------------------------------------------------------------------------
 # Hostname resolution
