@@ -7,17 +7,17 @@ export OS_SERVICE_TOKEN=$(openstack-config --get /etc/keystone/keystone.conf DEF
 export OS_SERVICE_ENDPOINT=http://localhost:35357/v2.0
 
 openstack-config --set /etc/keystone/keystone.conf ldap url ldap://controller
-openstack-config --set /etc/keystone/keystone.conf ldap user cn=Manager,dc=cluster
+openstack-config --set /etc/keystone/keystone.conf ldap user cn=Manager,dc=local
 openstack-config --set /etc/keystone/keystone.conf ldap query_scope sub
 openstack-config --set /etc/keystone/keystone.conf ldap password system
-openstack-config --set /etc/keystone/keystone.conf ldap suffix dc=cluster
+openstack-config --set /etc/keystone/keystone.conf ldap suffix dc=local
 openstack-config --set /etc/keystone/keystone.conf ldap use_dumb_member  False
 openstack-config --set /etc/keystone/keystone.conf ldap allow_subtree_delete  False
 
-openstack-config --set /etc/keystone/keystone.conf ldap user_tree_dn dc=cluster
+openstack-config --set /etc/keystone/keystone.conf ldap user_tree_dn dc=local
 openstack-config --set /etc/keystone/keystone.conf ldap user_objectclass posixAccount
 
-openstack-config --set /etc/keystone/keystone.conf ldap group_tree_dn dc=cluster
+openstack-config --set /etc/keystone/keystone.conf ldap group_tree_dn dc=local
 openstack-config --set /etc/keystone/keystone.conf ldap group_objectclass posixGroup
 
 openstack-config --set /etc/keystone/keystone.conf ldap user_enabled_attribute disabled
