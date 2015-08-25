@@ -24,4 +24,4 @@ XCATBYPASS=y restorexCATdb -p /tmp/xcattables
 systemctl restart xcatd
 
 echo "The xcat db is now running from a dockerized mariadb"
-echo $0 finished > /var/log/postinstall.log
+echo $0 finished >> /var/log/postinstall.log
