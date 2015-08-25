@@ -110,6 +110,16 @@ chown -R slurm:slurm /var/log/slurm
 # chkconfig munge on
 # chkconfig slurm on
 
+
+
+#--------------------------------------------------------------------------
+# Enable mkhomedir
+#--------------------------------------------------------------------------
+yum -y install oddjob-mkhomedir
+sed -i 's/0022/0077/g' /etc/oddjobd.conf.d/oddjobd-mkhomedir.conf
+systemctl enable oddjob
+systemctl start oddjob
+
 #--------------------------------------------------------------------------
 # Install LDAP
 #--------------------------------------------------------------------------
