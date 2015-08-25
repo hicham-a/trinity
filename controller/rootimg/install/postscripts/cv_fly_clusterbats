@@ -7,8 +7,8 @@
 
 
 LOGFILE="/trinity/testing/$(date)_log"
-touch ${LOGFILE}
-exec 1>${LOGFILE} 2>&1
+#touch ${LOGFILE}
+exec >> ${LOGFILE} 2>&1
 
 echo "Now flying clusterbats, hold on to your seats"
 
