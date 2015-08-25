@@ -43,7 +43,6 @@ objectClass: uidNext
 uidNumber: 150
 EOF
 
-<<<<<<< HEAD
 #----------------------------------------------------------------------------
 # Change access rights to allow for PAM users to authenticate
 #----------------------------------------------------------------------------
@@ -52,9 +51,9 @@ dn: olcDatabase={2}hdb,cn=config
 changetype: modify
 add: olcAccess
 olcAccess: to attrs=userPassword by self write
-  by anonymous auth 
+  by anonymous auth
   by * none
-- 
+-
 add: olcAccess
 olcAccess: to * by self write
   by * read
@@ -90,12 +89,8 @@ sed -e 's/^group:.*$/group:\t\tfiles ldap/g' \
     -e 's/^shadow:.*$/shadow:\t\tfiles ldap/g' \
     -i /etc/nsswitch.conf 
 
-authconfig-tui --kickstart --enableldapauth --ldapbasedn=dc=cluster \
-     --ldapserver=localhost
-=======
 authconfig-tui --kickstart --enableldapauth --ldapbasedn=dc=local \
      --ldapserver=localhost 
->>>>>>> r5_fix_222
 
 echo "$0 finished" >> /var/log/postinstall.log
 exit 0

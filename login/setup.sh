@@ -110,6 +110,16 @@ chown -R slurm:slurm /var/log/slurm
 # chkconfig munge on
 # chkconfig slurm on
 
+
+
+#--------------------------------------------------------------------------
+# Enable mkhomedir
+#--------------------------------------------------------------------------
+yum -y install oddjob-mkhomedir
+sed -i 's/0022/0077/g' /etc/oddjobd.conf.d/oddjobd-mkhomedir.conf
+systemctl enable oddjob
+systemctl start oddjob
+
 #--------------------------------------------------------------------------
 # Install LDAP
 #--------------------------------------------------------------------------
@@ -292,8 +302,8 @@ yum -y install git
 #---------------------------------------------------------------------------
 # Setup permissions
 #---------------------------------------------------------------------------
-obol group add admin
-obol group add power-users
+obol -w system group add admin
+obol -w system group add power-users
 chown root:root /cluster/etc/slurm
 chmod ug=rwx,o=rx /cluster/etc/slurm
 chown root:admin /cluster/etc/slurm/slurm-user.conf  

@@ -43,7 +43,8 @@ def user_add(username, cn, sn, givenName, password, shell, groups):
 
     # now add the user 
     password = make_secret(password)
-    dn = 'uid=%s,ou=People,dc=cluster' % username
+    dn = 'uid=%s,ou=People,dc=local' % username
+
     add_record = [
      ('objectclass', ['top','person', 'organizationalPerson', 'inetOrgPerson', 'posixAccount', 'shadowAccount']),
      ('uid', [username] ),
@@ -61,28 +62,6 @@ def user_add(username, cn, sn, givenName, password, shell, groups):
     if groups:
         for group in groups:
             group_addusers(group, [username])
-
-    # Now setup the home directories and generate keys.
-    if os.path.isdir("/home/%s/.ssh" % username):
-        print '/home/%s/.ssh already exists, we will not create new keys' % username
-    else:
-        os.makedirs('/home/%s/.ssh' % username)
-        os.chown('/home/%s' % username, int(uidNumber), int(uidNumber))
-        os.chown('/home/%s/.ssh' % username, int(uidNumber), int(uidNumber))
-        os.system('su %s -c "cp -r /etc/skel -T /home/%s/"' % (username, username))
-        os.system('su - %s -c "ssh-keygen -f /home/%s/.ssh/id_dsa -q -t dsa -N \'\'"' % (username, username))
-        shutil.copy('/home/%s/.ssh/id_dsa.pub' % username, 
-                    '/home/%s/.ssh/authorized_keys' % username)
-        with open('/home/%s/.ssh/config' % username, 'w') as file:
-            print >>file, dedent(
-                    """\
-                       UserKnownHostsFile /dev/null
-                       Host *
-                          StrictHostKeyChecking no
-                       LogLevel QUIET
-                    """)
-        os.chown('/home/%s/.ssh/config' % username, int(uidNumber), int(uidNumber))
-        os.chmod('/home/%s/.ssh/config' % username, 0600)
 
 
 def user_delete(username):
@@ -112,11 +91,6 @@ def user_delete(username):
     try:
         dn = 'cn=%s,ou=Group,dc=local' % username
         conn.delete_s(dn)
-    except Exception, error:
-        print error
-    # And delete the users home directory.
-    try:
-        shutil.rmtree('/home/%s' % username)
     except Exception, error:
         print error
 
