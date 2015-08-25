@@ -70,6 +70,9 @@ cp -r /etc/yum.repos.d/* $installroot/etc/yum.repos.d
 chroot $installroot yum -y update device-mapper
 chroot $installroot yum -y install device-mapper-event-libs
 
+#-- Create a stateless rpm db
+mkdir -p $installroot/.var/lib
+mv $installroot/var/lib/rpm $installroot/.var/lib/rpm
 
 #-- copy modules environment config file
 ##cp-rootimg
