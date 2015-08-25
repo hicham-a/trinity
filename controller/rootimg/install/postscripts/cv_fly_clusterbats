@@ -6,9 +6,9 @@
 ##email          : themis.athanassiadou@clustervision.com
 
 
-#LOGFILE="/trinity/testing/$date_log"
-#touch ${LOGFILE}
-#exec 1>${LOGFILE} 2>&1
+LOGFILE="/trinity/testing/$(date)_log"
+touch ${LOGFILE}
+exec 1>${LOGFILE} 2>&1
 
 echo "Now flying clusterbats, hold on to your seats"
 
@@ -135,6 +135,8 @@ echo "login-a is up, wait till slurm installs"
 
 sleep 400
 
-
+echo "running t1.2.bats"
 bats /trinity/testing/clusterbats/t1.2.bats
+
+echo "running run_mpi.bats"
 bats /trinity/testing/clusterbats/run_mpi.bats 
