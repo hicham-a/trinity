@@ -231,7 +231,7 @@ def csep(s):
         raise argparse.ArgumentTypeError("Illegal groups value")
 
 parser = argparse.ArgumentParser(prog='obol', description='Manage Cluster Users.')
-parser.add_argument('-D', metavar="BIND DN", default='cn=Manager,dc=cluster')
+parser.add_argument('-D', metavar="BIND DN", default='cn=Manager,dc=local')
 parser.add_argument('-w', metavar="BIND PASSWORD", required=True)
 parser.add_argument('-H', metavar="HOST", default='ldap://localhost')
 subparsers = parser.add_subparsers(help='commands', dest='target')
