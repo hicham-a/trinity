@@ -6,9 +6,10 @@
 ##email          : themis.athanassiadou@clustervision.com
 
 
-LOGFILE="/trinity/testing/$(date)_log"
-#touch ${LOGFILE}
-exec >> ${LOGFILE} 2>&1
+LOGFILE="/trinity/testing/bats.log"
+touch ${LOGFILE}
+exec >> ${LOGFILE} 
+exec 2>&1
 
 echo "Now flying clusterbats, hold on to your seats"
 
