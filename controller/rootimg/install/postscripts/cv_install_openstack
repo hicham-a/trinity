@@ -44,7 +44,7 @@ source ~/keystonerc_admin
 nova floating-ip-bulk-delete 10.3.4.0/22
 
 # Create the all the VLANS
-/usr/sbin/make_nw /root/keystonerc_admin ${ETH1}
+##/usr/sbin/make_nw /root/keystonerc_admin ${ETH1}
 
 # Workaround for bug #67
 killall dhclient
@@ -202,7 +202,28 @@ chmod ug=rw,o=r   /cluster/${FIRST_CLUSTER}/etc/slurm/slurm-user.conf
 ##     -i "${LOGIN_DATA}"
 
 tenant_id=$(keystone tenant-get ${FIRST_CLUSTER} |grep -w id | awk -F "|" '{gsub(/^[ \t]+|[ \t]+$/, "", $3); print $3}')
-nova-manage network modify 172.16.0.0/16 --project ${tenant_id} 
+first="172"
+second="16"
+xy="${first}${second}"
+prefix="${first}.${second}"
+name="net_${xy}"
+cidr="${prefix}.0.0/16"
+vlan="10${second}"
+bridge="br10${second}"
+gateway="${prefix}.255.1"
+dhcp_server="${prefix}.255.1"
+allowed_start="${prefix}.255.1"
+nova network-create ${name} \
+                    --project-id ${tenant_id} \
+                    --fixed-range-v4 ${cidr} \
+                    --vlan  ${vlan}\
+                    --gateway ${gateway} \
+                    --dhcp-server ${dhcp_server} \
+                    --bridge ${bridge} \
+                    --bridge-interface ${bridge_interface} \
+                    --allowed-start ${allowed_start}
+
+#nova-manage network modify 172.16.0.0/16 --project ${tenant_id} 
 
 sed -e "s/<TENANT>/${FIRST_TENANT}/g" \
     -e "s/<USER>/${FIRST_USER}/g" \
