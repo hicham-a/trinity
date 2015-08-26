@@ -8,7 +8,6 @@ import shutil
 from textwrap import dedent
 import hashlib
 
-# FIXME: this should not always run on the localhost
 def make_secret(password):
     """Encodes the given password as a base64 SSHA hash+salt buffer"""
     if password.startswith('{SSHA}'):
@@ -45,6 +44,7 @@ def user_add(username, cn, sn, givenName, password, shell, groups):
     # now add the user 
     password = make_secret(password)
     dn = 'uid=%s,ou=People,dc=local' % username
+
     add_record = [
      ('objectclass', ['top','person', 'organizationalPerson', 'inetOrgPerson', 'posixAccount', 'shadowAccount']),
      ('uid', [username] ),
@@ -231,7 +231,7 @@ def csep(s):
         raise argparse.ArgumentTypeError("Illegal groups value")
 
 parser = argparse.ArgumentParser(prog='obol', description='Manage Cluster Users.')
-parser.add_argument('-D', metavar="BIND DN", default='cn=Manager,dc=cluster')
+parser.add_argument('-D', metavar="BIND DN", default='cn=Manager,dc=local')
 parser.add_argument('-w', metavar="BIND PASSWORD", required=True)
 parser.add_argument('-H', metavar="HOST", default='ldap://localhost')
 subparsers = parser.add_subparsers(help='commands', dest='target')
