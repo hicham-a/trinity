@@ -10,7 +10,6 @@
 ##author         : Abhishek Mukherjee
 ##email          : abhishek.mukherjee@clustervision.com
 
-
 REGISTRY="controller:5050"
 TOPDIR="/trinity"
 profiles=(
@@ -18,7 +17,7 @@ profiles=(
   "rabbitmq"
   "keystone"
   "glance"
-  "nova-controller"        
+  "nova_controller"        
 )
 
 declare -A ports
@@ -27,22 +26,39 @@ ports=(
   ["rabbitmq"]="5672 15672 4369 25672"
   ["keystone"]="5000 35357"
   ["glance"]="9191 9292"
-  ["nova-controller"]="8773 8774 8775 6080 5900"
+  ["nova_controller"]="8773 8774 8775 6080 5900"
 )
 
+services=(
+  "keystone"
+  "glance"
+  "nova"
+)
+
+keystone_endpoint="http://$(hostname -i):35357/v2.0"
+
 for profile in "${profiles[@]}"; do
-  docker build -t ${REGISTRY}/${profile} /${TOPDIR}/${profile}
+  docker build --rm=true -t ${REGISTRY}/${profile} ${TOPDIR}/${profile}
   docker push ${REGISTRY}/${profile}
   cmd_string=""
   for port in ${ports[${profile}]}; do
     cmd_string="${cmd_string} -p ${port}:${port}"
   done
-  cmd_string="${cmd_string} --name=${profile} ${REGISTRY}/${profile}"
-  docker run ${cmd_string}
+  cmd_string="${cmd_string} --name=${profile} -d ${REGISTRY}/${profile}"
+  docker run --net=host --privileged=true ${cmd_string}
   case ${profile} in 
     keystone)
-      for setup in $(ls ${TOPDIR}/${profile}/*-setup.sh); do
-        . ${setup}
+      up=1;
+      while [ ${up} -ne "0" ]; do 
+        echo "Waiting for keystone to come up!"
+        curl -s ${keystone_endpoint} 
+        up=$?  
+        sleep 1
+      done
+      for service in "${services[@]}"; do
+        setup_service="${TOPDIR}/${profile}/${service}-setup.sh"
+        echo ${setup_service}
+        . ${setup_service}
       done
     ;;
   esac

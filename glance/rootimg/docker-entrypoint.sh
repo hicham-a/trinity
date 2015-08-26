@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e 
 
 sed -e "s/<HOST_IP>/$(hostname -i)/g" -i /etc/glance/glance-api.conf
 sed -e "s/<HOST_IP>/$(hostname -i)/g" -i /etc/glance/glance-registry.conf
