@@ -36,6 +36,10 @@ else
 fi
 echo "/dev/storage/$PROFILE	/var/ 	ext4	defaults,errors=remount-ro  0  2" >> /etc/fstab 
 mount -a
+# Fix for #411 : symlink to stateless var
+rm -rf /var/lib/rpm
+ln -s /.var/lib/rpm /var/lib/
+
 # FIXME: move this into a separate script
 systemctl start docker
 systemctl start trinity
