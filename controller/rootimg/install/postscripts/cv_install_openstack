@@ -124,8 +124,10 @@ echo 'Include "/etc/httpd/conf.modules.d/*.conf"' >> /etc/httpd/conf/httpd.conf
 
 # Ensure that the dashboard is accessible using the short hostname
 sed -e "s/ServerAlias openstack.cluster/ServerAlias openstack/g" -i /etc/httpd/conf.d/15-horizon_vhost.conf
-
 service httpd restart
+
+#-- Delete default network
+nova network-delete novanetwork
 
 
 #-----------------------------------------------------------------------------------
@@ -242,11 +244,21 @@ nova boot --flavor 2 --image ${LOGIN_IMAGE} --user-data ${LOGIN_DATA} ${LOGIN_NO
 source /root/keystonerc_admin
 tenant=${FIRST_TENANT}
 bridge=$(nova network-show ${FIRST_NETWORK} | grep -w bridge | awk -F "|" '{gsub(/^[ \t]+|[ \t]+$/, "", $3); print $3}')
+
+#-- Wait for the bridge to show up 
 hosts=""
 for container in $(echo ${containers} | tr "," " "); do
   hostname=${container}.${tenant}
   num=$(echo ${container//[!0-9]/}) ; ip=172.16.$(( num/256 )).$(( num%256 ))
   hosts="${hosts}${hostname}=${ip},"
+done
+pidfile="/var/lib/nova/networks/nova-${bridge}"
+up=1;
+while [ ${up} -ne "0" ]; do
+    echo "Waiting for bridge to come up!"
+    cat ${pidfile} > /dev/null 2>&1 
+    up=$? 
+    sleep 1
 done
 /usr/sbin/update_hosts add ${bridge} ${hosts}
 
