@@ -210,6 +210,7 @@ name="net_${xy}"
 cidr="${prefix}.0.0/16"
 vlan="10${second}"
 bridge="br10${second}"
+bridge_interface=${ETH1}
 gateway="${prefix}.255.1"
 dhcp_server="${prefix}.255.1"
 allowed_start="${prefix}.255.1"
