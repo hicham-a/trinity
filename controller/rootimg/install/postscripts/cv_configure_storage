@@ -42,5 +42,7 @@ ln -s /.var/lib/rpm /var/lib/
 
 # FIXME: move this into a separate script
 systemctl start docker
+docker stop trinity 2> /dev/null
+docker rm trinity 2> /dev/null
 systemctl start trinity
 echo "$0 finished" >> /var/log/postinstall.log
