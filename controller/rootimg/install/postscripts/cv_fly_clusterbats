@@ -79,7 +79,7 @@ sleep 10
 #while ! ssh node001; do sleep 1; done -- this will ssh into node, do not want this. 
 
 
-while [ !-e "/tftpboot/xcat/xnba/nodes/node003" ]; do sleep 1; done
+while [ ! -e "/tftpboot/xcat/xnba/nodes/node003" ]; do sleep 1; done
 
  until nodestat node003 | grep "sshd"; 
     do 
@@ -96,7 +96,7 @@ rpower node003 reset
 
 #now compute nodes
 
-while while [ !-e "/tftpboot/xcat/xnba/nodes/node001" ]; do sleep 1; done 
+while [ ! -e "/tftpboot/xcat/xnba/nodes/node001" ]; do sleep 1; done 
 
  until nodestat node001 | grep "sshd";
     do
