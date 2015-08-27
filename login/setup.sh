@@ -129,40 +129,9 @@ cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
 chkconfig slapd on
 service slapd start
 
-ldapmodify -Y EXTERNAL -H ldapi:/// << EOF
-dn: olcDatabase={2}hdb,cn=config
-changetype: modify
-add: olcRootPW
-olcRootPW: system
--
-replace: olcSuffix
-olcSuffix: dc=local
--
-replace: olcRootDN
-olcRootDN: cn=Manager,dc=local
-EOF
+rm -rf /etc/openldap/slapd.d
+cp -LrT /trinity/openldap/rootimg/etc/openldap /etc/openldap
 
-#--------------------------------------------------------------------------
-# Install the required schema's + custom one for the uid
-#--------------------------------------------------------------------------
-slapadd -n 0  -l /etc/openldap/schema/cosine.ldif
-slapadd -n 0  -l /etc/openldap/schema/nis.ldif
-slapadd -n 0  -l /etc/openldap/schema/inetorgperson.ldif
-
-##cp-rootimg
-##cat > /tmp/trinity.ldif << EOF
-##dn: cn=trinity,cn=schema,cn=config
-##objectClass: olcSchemaConfig
-##cn: trinity
-##olcObjectClasses: {0}( 1.3.6.1.4.1.19173.2.2.2.8
-## NAME 'uidNext'
-## DESC 'Where we get the next uidNumber from'
-## MUST ( cn $ uidNumber ) )
-##EOF
-
-slapadd -n 0  -l /tmp/trinity.ldif
-
-chown ldap:ldap /etc/openldap/slapd.d/cn\=config/cn\=schema/*
 systemctl restart slapd
 
 #--------------------------------------------------------------------------
@@ -192,19 +161,6 @@ dn: cn=gid,dc=local
 cn: gid
 objectClass: uidNext
 uidNumber: 150
-EOF
-
-#--------------------------------------------------------------------------
-# Change access rights to allow for PAM users to authenticate
-#--------------------------------------------------------------------------
-ldapmodify -Y EXTERNAL -H ldapi:/// << EOF
-dn: olcDatabase={2}hdb,cn=config
-changetype: modify
-add: olcAccess
-olcAccess: to attrs=userPassword by self write by anonymous auth by * none
--
-add: olcAccess
-olcAccess: to * by self write by * read
 EOF
 
 #--------------------------------------------------------------------------
