@@ -117,8 +117,11 @@ chown -R slurm:slurm /var/log/slurm
 #--------------------------------------------------------------------------
 yum -y install oddjob-mkhomedir
 sed -i 's/0022/0077/g' /etc/oddjobd.conf.d/oddjobd-mkhomedir.conf
-systemctl enable oddjob
-systemctl start oddjob
+systemctl enable oddjobd
+systemctl start oddjobd
+setenforce 0
+sed -i s/enforcing/permissive/ /etc/sysconfig/selinux 
+authconfig --enablemkhomedir --update
 
 #--------------------------------------------------------------------------
 # Install LDAP
@@ -139,7 +142,7 @@ systemctl restart slapd
 #--------------------------------------------------------------------------
 ldapadd -D cn=Manager,dc=local -w system << EOF
 dn: dc=local
-dc: cluster
+dc: local
 objectClass: domain
 
 dn: ou=People,dc=local
@@ -173,9 +176,9 @@ cat >> /etc/nslcd.conf << EOF
 uri ldap://localhost
 ssl no
 tls_cacertdir /etc/openldap/cacerts
-base   group  ou=Group,dc=local
-base   passwd ou=People,dc=local
-base   shadow ou=People,dc=local
+base group ou=Group,dc=local
+base passwd ou=People,dc=local
+base shadow ou=People,dc=local
 EOF
 
 # configure the ldap server. Not sure this is needed.
