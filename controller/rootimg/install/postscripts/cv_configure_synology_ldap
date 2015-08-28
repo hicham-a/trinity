@@ -27,5 +27,5 @@ uri             "ldap://controller/dc=syndir,dc=cluster"
 suffixmassage   "dc=syndir,dc=cluster" "dc=syndir,dc=clustervision,dc=com"
 EOF
 
-else fi [  "$PROFILE" -eq openstack ]; then
+else if [  "$PROFILE" -eq openstack ]; then
 fi
