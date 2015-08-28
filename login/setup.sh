@@ -139,7 +139,7 @@ systemctl restart slapd
 #--------------------------------------------------------------------------
 ldapadd -D cn=Manager,dc=local -w system << EOF
 dn: dc=local
-dc: cluster
+dc: local
 objectClass: domain
 
 dn: ou=People,dc=local
