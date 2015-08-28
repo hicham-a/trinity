@@ -1,0 +1,31 @@
+#!/bin/bash
+
+echo $PROFILE
+if [ "$PROFILE" -eq controller ]; then
+echo > /etc/openldap/slapd.conf << EOF
+include         /etc/openldap/schema/core.schema
+include         /etc/openldap/schema/cosine.schema
+include         /etc/openldap/schema/inetorgperson.schema
+include         /etc/openldap/schema/trinity.schema
+include         /etc/openldap/schema/nis.schema
+
+pidfile         /var/run/openldap/slapd.pid
+
+include         /etc/openldap/cv_local.conf
+include 	/etc/openldap/cv_clustervision.conf
+
+database        meta
+suffix          "dc=cluster"
+
+rootdn "cn=Manager,dc=cluster"
+rootpw {SSHA}QXcoGwQHTHSRtLfP5QfGqICYA9sHHOJJ
+
+uri             "ldap://controller/dc=local,dc=cluster"
+suffixmassage   "dc=local,dc=cluster" "dc=local"
+
+uri             "ldap://controller/dc=syndir,dc=cluster"
+suffixmassage   "dc=syndir,dc=cluster" "dc=syndir,dc=clustervision,dc=com"
+EOF
+
+else fi [  "$PROFILE" -eq openstack ]; then
+fi
