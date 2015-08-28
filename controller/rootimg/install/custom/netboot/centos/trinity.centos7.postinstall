@@ -49,5 +49,5 @@ if [ -d /trinity/site-local/compute/rootimg/ ]; then
 fi
 
 #-- Fix for #411 : create a stateless var
-mkdir -p /.var/lib/
+mkdir -p $installroot/.var/lib/
 mv $installroot/var/lib/rpm $installroot/.var/lib/rpm
