@@ -28,4 +28,5 @@ suffixmassage   "dc=syndir,dc=cluster" "dc=syndir,dc=clustervision,dc=com"
 EOF
 
 else if [  "$PROFILE" -eq openstack ]; then
+    echo openstack node
 fi
