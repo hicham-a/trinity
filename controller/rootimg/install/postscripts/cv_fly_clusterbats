@@ -6,9 +6,10 @@
 ##email          : themis.athanassiadou@clustervision.com
 
 
-#LOGFILE="/trinity/testing/$date_log"
-#touch ${LOGFILE}
-#exec 1>${LOGFILE} 2>&1
+LOGFILE="/trinity/testing/bats2.log"
+touch ${LOGFILE}
+exec >> ${LOGFILE} 
+exec 2>&1
 
 echo "Now flying clusterbats, hold on to your seats"
 
@@ -77,9 +78,12 @@ sleep 10
 #make sure they go into genesis/ssh (node001 usually slow - need to add multiple node checks)
 #while ! ssh node001; do sleep 1; done -- this will ssh into node, do not want this. 
 
+
+while [ ! -e "/tftpboot/xcat/xnba/nodes/node003" ]; do sleep 1; done
+
  until nodestat node003 | grep "sshd"; 
     do 
-	echo "node still booting, hang in there" 
+	echo "node003 still booting, hang in there" 
 	sleep 20 
     done
 
@@ -88,20 +92,25 @@ echo "Openstack Node is in Genesis, deploy openstack:"
 #nodeset nodes to appropriate image
 
 nodeset node003 osimage=centos7-x86_64-install-openstack
+rpower node003 reset
+
+#now compute nodes
+
+while [ ! -e "/tftpboot/xcat/xnba/nodes/node001" ]; do sleep 1; done 
 
  until nodestat node001 | grep "sshd";
     do
-    echo "node still booting, hang in there"
-    sleep 20
+    echo "node001 still booting, hang in there"
+    sleep 5
     done
 
 
 nodeset node001-node002 osimage=centos7-x86_64-netboot-trinity
 
 
-sleep 5
+sleep 10
 
-rpower node001-node003 reset
+rpower node001-node002 reset
 
 echo "Go get a coffee!"
 
@@ -135,6 +144,8 @@ echo "login-a is up, wait till slurm installs"
 
 sleep 400
 
-
+echo "running t1.2.bats"
 bats /trinity/testing/clusterbats/t1.2.bats
+
+echo "running run_mpi.bats"
 bats /trinity/testing/clusterbats/run_mpi.bats 
