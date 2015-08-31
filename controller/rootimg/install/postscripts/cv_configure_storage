@@ -31,7 +31,7 @@ else
    mkfs -t ext4 /dev/storage/$PROFILE
    mkdir /tmp/var
    mount /dev/storage/$PROFILE /tmp/var
-   cp -r /var/* /tmp/var
+   cp -rT /var /tmp/var
    umount /tmp/var
 fi
 echo "/dev/storage/$PROFILE	/var/ 	ext4	defaults,errors=remount-ro  0  2" >> /etc/fstab 

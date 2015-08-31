@@ -17,17 +17,13 @@
 systemctl stop NetworkManager
 systemctl disable NetworkManager
 killall dhclient
+# disable the dhcp based ntp
+rm /etc/dhcp/dhclient.d/ntp.sh
 systemctl restart network
 
 mkdir /tmp/trinity
 mount ${SITEMASTER}:/trinity /tmp/trinity       
 mkdir /trinity
-
-#--------------------------------------------------------------------------------------
-# copy required files from the master node to the controller node
-#--------------------------------------------------------------------------------------
-cp --dereference --recursive --preserve /tmp/trinity/controller/rootimg/* /
-cp /tmp/trinity/version /trinity/version
 
 # copy all required module files etc to the right locations
 # note to self: only /trinity/env needs be mounted inside the container
@@ -94,7 +90,7 @@ service iptables save
 #--------------------------------------------------------------------------------------
 # copy required files from the master node to the controller node
 #--------------------------------------------------------------------------------------
-cp --dereference --recursive --verbose --preserve /tmp/trinity/controller/rootimg/* /
+cp -LrT /tmp/trinity/controller/rootimg /
 cp /tmp/trinity/version /trinity/version
 
 #--------------------------------------------------------------------------------------
@@ -111,8 +107,6 @@ for file in /etc/sysconfig/network-scripts/ifcfg-{$ETH2,$ETH3}; do
     sed -i $file -e "s/DEFROUTE=\(.*\)/DEFROUTE=no/"
 done
 
-# disable the dhcp based ntp
-rm /etc/dhclient.d/ntp.sh
 
 # disable peerdns
 sed -i /etc/sysconfig/network-scripts/ifcfg-$ETH1 -e "s/DEFROUTE=\(.*\)/DEFROUTE=yes/" -e "s/PEERDNS=\(.*\)/PEERDNS=no/"
@@ -160,14 +154,6 @@ createrepo /install/post/otherpkgs/centos7/x86_64/
 
 genimage centos7-x86_64-netboot-trinity
 packimage centos7-x86_64-netboot-trinity
-
-#---------------------------------------------------------------------------------------
-# Workaround: create a default munge key for vc-a cluster
-#---------------------------------------------------------------------------------------
-mkdir -p /cluster/vc-a/etc/munge/
-dd if=/dev/urandom bs=1 count=1024 >/cluster/vc-a/etc/munge/munge.key
-chmod 400 /cluster/vc-a/etc/munge/munge.key
-chown 1002:1002 /cluster/vc-a/etc/munge/munge.key
 
 #--------------------------------------------------------------------------------------
 # install docker and docker-registry

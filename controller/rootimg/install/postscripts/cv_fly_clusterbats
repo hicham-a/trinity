@@ -1,0 +1,143 @@
+#! /usr/bin/bash
+##title          : cv_fly_clusterbats
+##description    : Automatically test controller installation and deploys the cluster. 
+##                 You need to edit the params file in /trinity/testing. (to be writter)
+##author         : Themis Athanassiadou
+##email          : themis.athanassiadou@clustervision.com
+
+
+LOGFILE="/trinity/testing/bats.log"
+#touch ${LOGFILE}
+exec >> ${LOGFILE} 
+exec 2>&1
+
+echo "Now flying clusterbats, hold on to your seats"
+
+source /etc/profile.d/xcat.sh
+yum -y install sshpass
+
+#------------------------------------------------
+# Install the the Bash Automated Testing System:
+#------------------------------------------------
+if [ ! -d /trinity/testing/bats ]; then
+   sh /trinity/testing/install_bats.sh
+fi
+
+#------------------------------------------
+# Run the controller bats for test case 1.1
+#-------------------------------------------
+bats /trinity/testing/clusterbats/t1.1.bats # > /trinity/testing/$(date)_log
+
+#---------------------------------------------------------------------------------
+#Outcome of test: if 0, all tests pass, and can proceed with cluster installation.
+#---------------------------------------------------------------------------------
+outcome="$(echo $?)"
+[[ "$outcome" -eq 0 ]] && { echo "controller passed! proceed"; } || { echo "the controller did not pass all tests, exiting"; exit 1; }
+
+#---------------------------------------------------------------
+#Configure xcat tables to deploy cluster 
+##FIXME make environment variables and define in different file.
+#--------------------------------------------------------------
+
+
+#ip_current="$(gettab node=switch hosts.ip)"
+#echo $(ip_current) 
+chtab node=switch hosts.ip=10.141.253.1
+chtab switch=switch switch.node=compute
+chtab switch=switch switch.port="|\D+(\d+)|fa(\$1+0)|"
+makehosts switch
+makedns switch
+
+#------------------------------------------
+# do a switch ping test before proceeding
+#------------------------------------------
+ping -c 1 switch &> /dev/null && { echo "can ping switch, proceed"; } || { echo "Cannot ping switch, exiting"; exit 1; }
+
+#--------------------------
+#add nodes to xcat database
+#--------------------------
+
+nodeadd node[001-003] groups=compute
+makehosts compute
+makedns compute
+
+nodeadd c001-c002 groups=vc-a
+makehosts vc-a
+makedns vc-a 
+
+mkdef -t group -o hw-GenericNodes members=c001,c002
+
+
+#------------------------------------
+#reboot nodes so they go into genesis
+#------------------------------------
+rpower node001-node003 reset
+
+sleep 10 
+
+#make sure they go into genesis/ssh (node001 usually slow - need to add multiple node checks)
+#while ! ssh node001; do sleep 1; done -- this will ssh into node, do not want this. 
+
+ until nodestat node003 | grep "sshd"; 
+    do 
+	echo "node still booting, hang in there" 
+	sleep 20 
+    done
+
+echo "Openstack Node is in Genesis, deploy openstack:" 
+
+#nodeset nodes to appropriate image
+
+nodeset node003 osimage=centos7-x86_64-install-openstack
+
+ until nodestat node001 | grep "sshd";
+    do
+    echo "node still booting, hang in there"
+    sleep 20
+    done
+
+
+nodeset node001-node002 osimage=centos7-x86_64-netboot-trinity
+
+
+sleep 5
+
+rpower node001-node003 reset
+
+echo "Go get a coffee!"
+
+sleep 5
+
+# Need to test whether openstack deployed without errors here
+#tail/grep xcat.log for errors
+
+until nodestat node003 | grep "sshd";
+   do
+   echo "node deploying openstack image"
+   sleep 50
+   done
+
+#sshpass -p system ssh -T  node003 <<WTF 
+#  [ tail -f /var/log/xcat/xcat.log | grep -v "lspci\|setpci" | grep "ERROR" ] exit
+#WTF
+
+#--------------------------------------------------
+# when the login-a is up then run_mpi.bats
+#Outcome of test: wait until the floating ip is up
+#---------------------------------------------------
+loginaip="172.16.255.254"
+access=1;
+while [ ${access} -ne "0" ];
+   do ping -q -c 1 ${loginaip} > /dev/null 2>&1 ; access=$? ; sleep 50;
+   echo "login-a still not up"
+done
+
+echo "login-a is up, wait till slurm installs"
+
+sleep 400
+
+echo "running t1.2.bats"
+bats /trinity/testing/clusterbats/t1.2.bats
+
+echo "running run_mpi.bats"
+bats /trinity/testing/clusterbats/run_mpi.bats 

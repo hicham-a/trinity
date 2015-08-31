@@ -12,6 +12,7 @@
 
 bold=$(tput bold)
 normal=$(tput sgr0)
+red=$(tput setaf 1)
 main(){
   PROFILES=(
     master
@@ -26,25 +27,29 @@ Usage:
   ${bold}update <profile> [<options>]${normal}
 
   The following profiles are supported:
-    master, controller, openstack, login, compute and container
+    ${red}master${normal}, ${red}controller${normal}, ${red}openstack${normal}, ${red}login${normal}, ${red}compute${normal} and ${red}container${normal}
 
-  For profiles master and controller,
+  For profiles master, controller, openstack and login 
   run this script locally.
 
-  For all other profiles, the script should be run from the controller
-  and after running update controller.
+  For all other profiles, the script should be run from the controller.
+
+  For profiles other than master and controller, this script should be 
+  run after running update controller.
 
   The following options are supported:
     master | controller
       --tables : restore xCAT tables from repo
 
-    login 
-      --name <login_IP> : (mandatory option) update the particular login node,
-                          you may need to enter the root password for 
-                          the login node
-
-    compute | container
-      --reboot <node_range> : reboot the nodes or containers with the new image
+    openstack | login 
+      --restart : restart services after update.
+                  This includes
+                   - openstack : API, httpd
+                   - login : slurm
+    compute | container 
+      --reboot <node_range> : reboot the nodes ( for <profile> = compute ) 
+                              or containers in the nodes (for <profile> = containers) 
+                              with the new image
     "
     echo "${help}"
     return 0
@@ -54,13 +59,15 @@ Usage:
   # TODO: should also check if profile is in PROFILES
     echo "This will update the current node using the from source code repository"
     echo "using the profile: ${bold}$1${normal}"
-    read -e -p "Do you want to continue? (y/n) [n]: " proceed
-    proceed=${proceed:="n"}
-    if [[ "${proceed}" == 'Y' || "${proceed}" == 'y' || "${proceed}" == 'Yes' || "${proceed}" == 'YES'|| "${proceed}" == 'yes' ]]; then
-      echo ${proceed}
+    #echo "${bold}To abort, enter any character, now!${normal} "
+    #read -t 5 -s proceed
+    #if [ -z "${proceed}" ]; then
+    #  echo "Proceeding with update!"
       copy $1
       extras "$@"
-    fi
+    #else
+    #  echo "Aborting!"
+    #fi
     return $?
   else
     echo "No such profile: $1"
@@ -71,26 +78,70 @@ Usage:
 copy(){
   case $1 in
     master | controller )
-      # Copy the files to the nodes root filesystem
       REPO=$( cd "$1" && pwd )
-      cp --dereference --recursive --verbose --preserve ${REPO}/rootimg/* /
+      # Remove stale files under /trinity
+      # [ -d /trinity ] && rm -rf /trinity/*
+      for profile in $( ls /trinity ) ; do
+        if [ -d /trinity/${profile}/rootimg  ] ; then
+           echo "Removing stale /trinity/${profile}/rootimg"
+           rm -rf /trinity/${profile}/rootimg
+           # rmdir  /trinity/${profile}/rootimg
+        fi  
+      done 
+      # Copy the files to the nodes root filesystem
+      cp --dereference --recursive  --preserve ${REPO}/rootimg/. /
       # TODO: There should be a list of excludes here
       LOCAL=/trinity/site-local/$1
       if [ -d "${LOCAL}/rootimg" ] ; then
-        cp --dereference --recursive --verbose --preserve ${LOCAL}/rootimg/* /
+        cp --dereference --recursive  --preserve ${LOCAL}/rootimg/. /
       else
         echo "No site-local rootimg found"
       fi
     ;;
     openstack )
       # Assumes that /trinity is mounted on the openstack node as /trinity    
-      # Assumes that the 'openstack' hostname is resolvable on the controller
-      xdsh openstack "cp --dereference --recursive --verbose --preserve /trinity/$1/rootimg/* /"
+      cp --dereference --recursive  --preserve /trinity/$1/rootimg/. /
+      LOCAL=/trinity/site-local/$1
+      if [ -d "${LOCAL}/rootimg" ] ; then
+        cp --dereference --recursive  --preserve ${LOCAL}/rootimg/. /
+      else
+        echo "No site-local rootimg found"
+      fi
+
+      #--------------------------------------------------
+      # Install  the Trinity API
+      #--------------------------------------------------
+      cd /opt/trinity/trinity_api
+      python setup.py install
+      cd -
+      sed "s/127.0.0.1/$(hostname -I| awk '{print $1}')/g" /etc/trinity/trinity_api.conf > /tmp/trinity_api.conf
+      mv -f /tmp/trinity_api.conf /etc/trinity/trinity_api.conf
+      mkdir -p /var/log/trinity
+
+      #--------------------------------------------------
+      # Install the python client
+      #--------------------------------------------------
+      cd /opt/trinity/trinity_client
+      python setup.py install
+      cd -
+      sed "s/127.0.0.1/$(hostname -I| awk '{print $1}')/g" /etc/trinity/trinity_client.conf > /tmp/trinity_client.conf
+      mv -f /tmp/trinity_client.conf /etc/trinity/trinity_client.conf
+
+      #--------------------------------------------------
+      # Install the dashboard additions
+      #--------------------------------------------------
+      cd /opt/trinity/trinity_dashboard
+      sh setup.sh
+      cd -
+
+      # This is to fix a bug in the httpd configuration needed for Juno
+      echo 'Include "/etc/httpd/conf.modules.d/*.conf"' >> /etc/httpd/conf/httpd.conf
+
     ;;  
     compute )  
       # Note that the compute profile actually corresponds to the trinity osimge!
       # TODO The osver and arch should not be hardcoded
-      cp --dereference --recursive --verbose --preserve /trinity/$1/rootimg/* /install/netboot/centos7/x86_64/trinity/rootimg/
+      cp --dereference --recursive  --preserve /trinity/$1/rootimg/. /install/netboot/centos7/x86_64/trinity/rootimg/
       genimage centos7-x86_64-netboot-trinity
       packimage centos7-x86_64-netboot-trinity
     ;;
@@ -99,11 +150,28 @@ copy(){
       docker push controller:5050/trinity
     ;;
     login )
-      if [[ "$2" == "--name" ]] && ping -c 1 "$3" > /dev/null 2>&1 ; then
-        ssh root@"$3" "/trinity/login/rootimg/* /" 
+##      if [[ "$2" == "--name" ]] && ping -c 1 "$3" > /dev/null 2>&1 ; then
+##        ssh root@"$3" "cp /trinity/login/rootimg/* /" 
+##      else
+##        echo "Enter a valid login node"
+##      fi   
+      cp  --dereference --recursive  --preserve /trinity/$1/rootimg/. /
+      LOCAL=/trinity/site-local/$1
+      if [ -d "${LOCAL}/rootimg" ] ; then
+        cp --dereference --recursive  --preserve ${LOCAL}/rootimg/. /
       else
-        echo "Enter a valid login node"
-      fi   
+        echo "No site-local rootimg found"
+      fi
+    ;;
+    *)
+      cp  --dereference --recursive  --preserve /trinity/$1/rootimg/. /
+      LOCAL=/trinity/site-local/$1
+      if [ -d "${LOCAL}/rootimg" ] ; then
+        cp --dereference --recursive  --preserve ${LOCAL}/rootimg/. /
+      else
+        echo "No site-local rootimg found"
+      fi
+    ;;
   esac  
 }  
 
@@ -113,21 +181,49 @@ extras(){
     master | controller)
       (git branch | grep "*"; git rev-parse --short HEAD; git status --porcelain) > /trinity/version
 #      cp /trinity/version /trinity/$1/rootimg/install/postscripts/cv_trinity_version
-      if [ -z $2 ]; then
+      if [ "$2" = "--tables" ]; then
+        source /etc/profile.d/xcat.sh
+        mkdir -p /tmp/xcattables
+        read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
+        for table in $(ls ${REPO}/tables); do
+          sed -e "s/\<eno1\>/$ETH1/g" -e "s/\<eno2\>/$ETH2/g"  -e "s/\<eno3\>/$ETH3/g" ${REPO}/tables/$table > /tmp/xcattables/$table;
+        done
+        restorexCATdb -Vp /tmp/xcattables     
         return 0
       fi
-      source /etc/profile.d/xcat.sh
-      mkdir -p /tmp/xcattables
-      read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
-      for table in $(ls ${REPO}/tables); do
-        sed -e "s/\<eno1\>/$ETH1/g" -e "s/\<eno2\>/$ETH2/g"  -e "s/\<eno3\>/$ETH3/g" ${REPO}/tables/$table > /tmp/xcattables/$table;
-      done
-      restorexCATdb -Vp /tmp/xcattables     
-      return 0
     ;;
     openstack)
-      service trinity_api restart
-      service httpd restart
+      if [ "$2" = "--restart" ]; then
+        service trinity_api restart
+        service httpd restart
+        return 0
+      fi
+    ;;
+    compute)
+      if [ "$2" = "--restart" ]; then
+        if [ -z $3 ]; then
+          echo "A valid node range required for restart"
+          return 1
+        fi 
+        nodeset $3 osimage=centos7.0-x86_64-netboot-trinity 
+        rpower $3 reset
+      fi   
+    ;;
+    container)
+      if [ "$2" = "--restart" ]; then
+        if [-z $3]; then
+          echo "A valid node range required for restart"
+          return 1
+        fi
+        xdsh $3 "service trinity restart" 
+      fi   
+     
+    ;;
+    login)
+      if [ "$2" = "--restart" ]; then
+        service slurm restart
+        return 0
+      fi
     ;;
     *)
       return 0
