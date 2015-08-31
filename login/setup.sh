@@ -136,10 +136,10 @@ add: olcRootPW
 olcRootPW: system
 -
 replace: olcSuffix
-olcSuffix: dc=local
+olcSuffix: dc=cluster
 -
 replace: olcRootDN
-olcRootDN: cn=Manager,dc=local
+olcRootDN: cn=Manager,dc=cluster
 EOF
 
 #--------------------------------------------------------------------------
@@ -168,27 +168,27 @@ systemctl restart slapd
 #--------------------------------------------------------------------------
 # Setup the initial database
 #--------------------------------------------------------------------------
-ldapadd -D cn=Manager,dc=local -w system << EOF
-dn: dc=local
+ldapadd -D cn=Manager,dc=cluster -w system << EOF
+dn: dc=cluster
 dc: cluster
 objectClass: domain
 
-dn: ou=People,dc=local
+dn: ou=People,dc=cluster
 ou: People
 objectClass: top
 objectClass: organizationalUnit
 
-dn: ou=Group,dc=local
+dn: ou=Group,dc=cluster
 ou: Group
 objectClass: top
 objectClass: organizationalUnit
 
-dn: cn=uid,dc=local
+dn: cn=uid,dc=cluster
 cn: uid
 objectClass: uidNext
 uidNumber: 1050
 
-dn: cn=gid,dc=local
+dn: cn=gid,dc=cluster
 cn: gid
 objectClass: uidNext
 uidNumber: 150
@@ -217,15 +217,15 @@ cat >> /etc/nslcd.conf << EOF
 uri ldap://localhost
 ssl no
 tls_cacertdir /etc/openldap/cacerts
-base   group  ou=Group,dc=local
-base   passwd ou=People,dc=local
-base   shadow ou=People,dc=local
+base group ou=Group,dc=cluster
+base passwd ou=People,dc=cluster
+base shadow ou=People,dc=cluster
 EOF
 
 # configure the ldap server. Not sure this is needed.
 cat >> /etc/pam_ldap.conf << EOF
 uri ldap://localhost/
-base dc=local
+base dc=cluster
 ssl no
 tls_cacertdir /etc/openldap/cacerts
 pam_password md5
@@ -237,7 +237,7 @@ sed -e 's/^group:.*$/group:\t\tfiles ldap/g' \
     -e 's/^shadow:.*$/shadow:\t\tfiles ldap/g' \
     -i /etc/nsswitch.conf 
 
-authconfig-tui --kickstart --enableldapauth --ldapbasedn=dc=local --ldapserver=localhost
+authconfig-tui --kickstart --enableldapauth --ldapbasedn=dc=cluster --ldapserver=localhost
 
 
 #---------------------------------------------------------------------------

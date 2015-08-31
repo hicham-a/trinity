@@ -17,27 +17,27 @@ systemctl start slapd
 #----------------------------------------------------------------------------
 # Setup the initial database
 #----------------------------------------------------------------------------
-ldapadd -D cn=Manager,dc=local -w system << EOF
-dn: dc=local
+ldapadd -D cn=Manager,dc=cluster -w system << EOF
+dn: dc=cluster
 dc: local
 objectClass: domain
 
-dn: ou=People,dc=local
+dn: ou=People,dc=cluster
 ou: People
 objectClass: top
 objectClass: organizationalUnit
 
-dn: ou=Group,dc=local
+dn: ou=Group,dc=cluster
 ou: Group
 objectClass: top
 objectClass: organizationalUnit
 
-dn: cn=uid,dc=local
+dn: cn=uid,dc=cluster
 cn: uid
 objectClass: uidNext
 uidNumber: 1050
 
-dn: cn=gid,dc=local
+dn: cn=gid,dc=cluster
 cn: gid
 objectClass: uidNext
 uidNumber: 150
@@ -89,7 +89,7 @@ sed -e 's/^group:.*$/group:\t\tfiles ldap/g' \
     -e 's/^shadow:.*$/shadow:\t\tfiles ldap/g' \
     -i /etc/nsswitch.conf 
 
-authconfig-tui --kickstart --enableldapauth --ldapbasedn=dc=local \
+authconfig-tui --kickstart --enableldapauth --ldapbasedn=dc=cluster \
      --ldapserver=localhost 
 
 echo "$0 finished" >> /var/log/postinstall.log

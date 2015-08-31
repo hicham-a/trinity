@@ -32,7 +32,7 @@ def user_add(username, cn, sn, givenName, password, shell, groups):
     uidNumber = increment_uid()
 
     # first add the group 
-    dn = 'cn=%s,ou=Group,dc=local' % username
+    dn = 'cn=%s,ou=Group,dc=cluster' % username
     add_record = [
      ('objectclass', ['top','posixGroup']),
      ('cn', [username] ),
@@ -43,7 +43,7 @@ def user_add(username, cn, sn, givenName, password, shell, groups):
 
     # now add the user 
     password = make_secret(password)
-    dn = 'uid=%s,ou=People,dc=local' % username
+    dn = 'uid=%s,ou=People,dc=cluster' % username
 
     add_record = [
      ('objectclass', ['top','person', 'organizationalPerson', 'inetOrgPerson', 'posixAccount', 'shadowAccount']),
@@ -68,12 +68,12 @@ def user_delete(username):
     """Delete a user from the system"""
     # First delete the user
     try:
-        dn = 'uid=%s,ou=People,dc=local' % username
+        dn = 'uid=%s,ou=People,dc=cluster' % username
         conn.delete_s(dn)
     except Exception, error:
         print error
 
-    base_dn = 'ou=Group,dc=local'
+    base_dn = 'ou=Group,dc=cluster'
     filter = '(memberuid=%s)' % username
     attrs = ['']
     groups = conn.search_s(base_dn, ldap.SCOPE_SUBTREE, filter, attrs)
@@ -89,7 +89,7 @@ def user_delete(username):
 
     # Next delete the group
     try:
-        dn = 'cn=%s,ou=Group,dc=local' % username
+        dn = 'cn=%s,ou=Group,dc=cluster' % username
         conn.delete_s(dn)
     except Exception, error:
         print error
@@ -97,7 +97,7 @@ def user_delete(username):
 
 def user_list():
     """List users defined in the system"""
-    base_dn = 'ou=People,dc=local'
+    base_dn = 'ou=People,dc=cluster'
     filter = '(objectclass=person)'
     attrs = ['uid']
     for dn, attrs in conn.search_s( base_dn, ldap.SCOPE_SUBTREE, filter, attrs ):
@@ -107,12 +107,12 @@ def user_list():
 def user_reset(username, password):
     """Reset a users password"""
     password = make_secret(password)
-    dn = 'uid=%s,ou=People,dc=local' % username
+    dn = 'uid=%s,ou=People,dc=cluster' % username
     conn.passwd_s(dn, None, password)
 
 
 def user_show(username):
-    base_dn = 'ou=People,dc=local'
+    base_dn = 'ou=People,dc=cluster'
     filter = '(uid=%s)' % username
     for dn, attrs in conn.search_s( base_dn, ldap.SCOPE_SUBTREE, filter ):
         print attrs
@@ -120,7 +120,7 @@ def user_show(username):
 
 def user_uidNumber(username):
     """Utility function to get the numeric id from a username"""
-    base_dn = 'ou=People,dc=local'
+    base_dn = 'ou=People,dc=cluster'
     filter = '(uid=%s)' % username
     attrs = ['uidNumber']
     for dn, attrs in conn.search_s( base_dn, ldap.SCOPE_SUBTREE, filter, attrs ):
@@ -129,7 +129,7 @@ def user_uidNumber(username):
 
 def group_list():
     """List groups defined in the system"""
-    base_dn = 'ou=Group,dc=local'
+    base_dn = 'ou=Group,dc=cluster'
     filter = '(objectclass=posixGroup)'
     for dn, attrs in conn.search_s( base_dn, ldap.SCOPE_SUBTREE, filter ):
         print attrs['gidNumber'][0], attrs['cn'][0]
@@ -139,7 +139,7 @@ def group_delete(groupname):
     """Delete a user from the system"""
     # First delete the user
     try:
-        dn = 'cn=%s,ou=Group,dc=local' % groupname
+        dn = 'cn=%s,ou=Group,dc=cluster' % groupname
         conn.delete_s(dn)
     except Exception, error:
         pass
@@ -150,7 +150,7 @@ def group_add(groupname):
     gidNumber = increment_gid()
 
     # first add the group 
-    dn = 'cn=%s,ou=Group,dc=local' % groupname
+    dn = 'cn=%s,ou=Group,dc=cluster' % groupname
     add_record = [
      ('objectclass', ['top','posixGroup']),
      ('cn', [groupname] ),
@@ -161,7 +161,7 @@ def group_add(groupname):
 
 def group_addusers(groupname, username):
     """Add users to a group"""
-    dn = 'cn=%s,ou=Group,dc=local' % groupname
+    dn = 'cn=%s,ou=Group,dc=cluster' % groupname
     for name in username:
         try:
             mod_attrs = []
@@ -173,7 +173,7 @@ def group_addusers(groupname, username):
 
 def group_delusers(groupname, username):
     """Remove users from a group"""
-    dn = 'cn=%s,ou=Group,dc=local' % groupname
+    dn = 'cn=%s,ou=Group,dc=cluster' % groupname
     mod_attrs = []
     for name in username:
         mod_attrs.append((ldap.MOD_DELETE, 'memberuid', name))
@@ -181,7 +181,7 @@ def group_delusers(groupname, username):
 
 
 def group_show(groupname):
-    base_dn = 'ou=Group,dc=local'
+    base_dn = 'ou=Group,dc=cluster'
     filter = '(cn=%s)' % groupname
     for dn, attrs in conn.search_s( base_dn, ldap.SCOPE_SUBTREE, filter ):
         print attrs
@@ -190,7 +190,7 @@ def group_show(groupname):
 @retry(stop_max_delay=10000)
 def increment_uid():
     """Generate a new userid"""
-    dn = 'cn=uid,dc=local'
+    dn = 'cn=uid,dc=cluster'
     filter = 'objectclass=*'
     attrs = ['uidNumber']
 
@@ -206,7 +206,7 @@ def increment_uid():
 @retry(stop_max_delay=10000)
 def increment_gid():
     """Generate a new groupid"""
-    dn = 'cn=gid,dc=local'
+    dn = 'cn=gid,dc=cluster'
     filter = 'objectclass=*'
     attrs = ['uidNumber']
 
@@ -231,7 +231,7 @@ def csep(s):
         raise argparse.ArgumentTypeError("Illegal groups value")
 
 parser = argparse.ArgumentParser(prog='obol', description='Manage Cluster Users.')
-parser.add_argument('-D', metavar="BIND DN", default='cn=Manager,dc=local')
+parser.add_argument('-D', metavar="BIND DN", default='cn=Manager,dc=cluster')
 parser.add_argument('-w', metavar="BIND PASSWORD", required=True)
 parser.add_argument('-H', metavar="HOST", default='ldap://localhost')
 subparsers = parser.add_subparsers(help='commands', dest='target')
