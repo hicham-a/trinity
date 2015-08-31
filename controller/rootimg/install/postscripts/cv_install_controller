@@ -11,6 +11,10 @@
 #exec > >(tee /var/log/postinstall.log)
 #exec 2>&1
 
+# Save the local nameserver
+NAMESERVER=$(grep nameserver /etc/resolv.conf | cut -d' ' -f2)
+echo $NAMESERVER
+
 #--------------------------------------------------------------------------------------
 # install xcat
 #--------------------------------------------------------------------------------------
@@ -50,6 +54,10 @@ read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
 for table in $(ls /tmp/trinity/controller/xcat/tables); do
     sed -e "s/\<eno1\>/$ETH1/g" -e "s/\<eno2\>/$ETH2/g"  -e "s/\<eno3\>/$ETH3/g" /tmp/trinity/controller/xcat/tables/$table > /tmp/xcattables/$table;
 done
+if [ -n $NAMESERVER ]; then
+   sed -e -i "s/\"forwarders\",\"8.8.8.8,8.8.4.4\",,/\"forwarders\",\"$NAMESERVER,8.8.8.8,8.8.4.4\"" /tmp/xcattables/site.csv
+   echo "Changing $NAMESERVER"
+fi 
 
 restorexCATdb -p /tmp/xcattables  
 

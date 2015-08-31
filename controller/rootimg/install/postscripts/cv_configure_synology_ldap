@@ -1,6 +1,21 @@
 #!/bin/bash
 
 set -x
+if [ ! ping -c 5 "syndir.clustervision.com" > /dev/null 2>&1 ]; then
+cat > /etc/openldap/cv_clustervision.conf << EOF
+moduleload back_ldap.la
+database        ldap
+
+suffix          "dc=syndir,dc=clustervision,dc=com"
+uri             ldap://syndir.clustervision.com
+binddn          "uid=readonly,cn=users,dc=syndir,dc=clustervision,dc=com"
+bindpw          "TbQ7GHnG"
+
+rootdn "cn=Manager,dc=syndir,dc=clustervision,dc=com"
+rootpw {SSHA}QXcoGwQHTHSRtLfP5QfGqICYA9sHHOJJ
+EOF
+fi 
+
 echo $PROFILE
 if [ "$PROFILE" == controller ]; then
 cat > /etc/openldap/slapd.conf << EOF
