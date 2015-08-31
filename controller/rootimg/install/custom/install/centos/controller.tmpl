@@ -162,36 +162,4 @@ EOF
 %post
 exec < /dev/console > /dev/console
 #INCLUDE:#ENV:XCATROOT#/share/xcat/install/scripts/post.xcat#
-
-echo setup nat
-read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
-
-echo install extra rpms
-# Install required utilities and turn on ntp
-yum -y install createrepo net-snmp-utils bind-utils wget ntp
-chkconfig ntpd on
-systemctl disable avahi-daemon
-
-echo install xcat repositories
-#wget --no-check-certificate #COMMAND:cat /etc/yum.repos.d/xCAT-core.repo | grep baseurl | awk -F= '{print $2}'#/xCAT-core.repo -O /etc/yum.repos.d/xCAT-core.repo
-#wget --no-check-certificate #COMMAND:cat /etc/yum.repos.d/xCAT-dep.repo | grep baseurl | awk -F= '{print $2}'#/xCAT-dep.repo -O /etc/yum.repos.d/xCAT-dep.repo
-
-# TODO:
-# we need to download and install the trinity patches (which we basically need to copy from the benchmark/master node
-
-for file in /etc/sysconfig/network-scripts/ifcfg-{$ETH2,$ETH3}; do
-    #cat $file > /var/log/$(basename $file);
-    #echo "adapting $file" >> /var/log/postinstall.log
-    sed -i $file -e "s/DEFROUTE=\(.*\)/DEFROUTE=no/"
-done
-sed -i /etc/sysconfig/network-scripts/ifcfg-$ETH1 -e "s/DEFROUTE=\(.*\)/DEFROUTE=yes/" -e "s/PEERDNS=\(.*\)/PEERDNS=no/"
-
-# Fix for #85
-cat >> /etc/sysconfig/network-scripts/ifcfg-$ETH2 << EOF
-IPADDR1=10.148.255.254
-PREFIX1=16
-GATEWAY1=10.148.255.254
-EOF
-
-echo done
 %end

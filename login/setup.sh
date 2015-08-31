@@ -34,15 +34,14 @@ mkdir -p /trinity
 mount ${controller}:/trinity /trinity
 cp --dereference --recursive --verbose --preserve /trinity/login/rootimg/* /
 
-#Make sure that /tmp is world writable
+# Make sure that /tmp is world writable
 chmod -R 777 /tmp
 chmod +t /tmp
- 
 
 #---------------------------------------------------------------------------
 # Hostname resolution
 #---------------------------------------------------------------------------
-##For now using a HERE document
+##We will use the HERE document for now
 cat << EOF > /etc/resolv.conf
 search cluster. vc-a. cluster
 nameserver 10.141.255.254

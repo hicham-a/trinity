@@ -90,9 +90,9 @@ copy(){
     compute )  
       # Note that the compute profile actually corresponds to the trinity osimge!
       # TODO The osver and arch should not be hardcoded
-      cp --dereference --recursive --verbose --preserve /trinity/$1/rootimg/* /install/netboot/centos7.0/x86_64/trinity/rootimg/
-      genimage centos7.0-x86_64-netboot-trinity
-      packimage centos7.0-x86_64-netboot-trinity
+      cp --dereference --recursive --verbose --preserve /trinity/$1/rootimg/* /install/netboot/centos7/x86_64/trinity/rootimg/
+      genimage centos7-x86_64-netboot-trinity
+      packimage centos7-x86_64-netboot-trinity
     ;;
     container )
       docker build -t controller:5050/trinity /trinity/container
