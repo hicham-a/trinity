@@ -43,7 +43,8 @@ for file in $files; do
     fi
 done
 
-obol -H ldap://controller -w system user add "admin" --password "bdfadb5ccccb4ad4" --cn "admin" --sn "admin" --givenName "admin"
+password=$(grep "export OS_PASSWORD=" /root/keystonerc_admin | cut -d= -f2)
+obol -H ldap://controller -w system user add "admin" --password "$password" --cn "admin" --sn "admin" --givenName "admin"
 keystone user-role-add --user=admin --tenant=admin --role=admin
 keystone user-role-add --user=admin --tenant=admin --role=_member_
 
