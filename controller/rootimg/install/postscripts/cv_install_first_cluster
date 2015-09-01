@@ -1,0 +1,91 @@
+#! /usr/bin/env bash
+##title          : cv_install_first_cluster
+##description    : Installs an first virtual cluster. 
+##                 and then start the API server # service trinity_api start
+##author         :  Abhishek Mukherjee
+##email          :  abhishek.mukherjee@clustervision.com
+
+
+
+sed -e "s/<TENANT>/admin/g" \
+    -e "s/<USER>/admin/g" \
+    -e "s/<PASSWORD>/system/g" \
+    -e "s/<OPENSTACK>/$(hostname -I | awk '{print $1}')/g" \
+    /trinity/openstack/keystonerc > /root/keystonerc_admin
+source /root/keystonerc_admin
+
+
+#-----------------------------------------------------------------------------------
+# Download the base login node image (CentOS cloud image) and upload it to glance
+#-----------------------------------------------------------------------------------
+CLOUD_IMAGE_URL="http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2"
+CLOUD_IMAGE="CentOS-7-x86_64-GenericCloud.qcow2"
+CLOUD_IMAGE_FORMAT="qcow2"
+CLOUD_CONTAINER_FORMAT="bare"
+LOGIN_IMAGE="login"
+wget ${CLOUD_IMAGE_URL}
+glance image-create \
+         --name "${LOGIN_IMAGE}" \
+         --disk-format "${CLOUD_IMAGE_FORMAT}" \
+         --container-format "${CLOUD_CONTAINER_FORMAT}" \
+         --is-public True \
+         --file "${CLOUD_IMAGE}"
+
+
+
+
+#-----------------------------------------------------------------------------------
+# Create the default cluster
+#-----------------------------------------------------------------------------------
+FIRST_TENANT="a"
+FIRST_USER="a"
+FIRST_PASS="system"
+FIRST_CLUSTER="a"
+FIRST_POOL="login_a"
+FIRST_FLOATING="172.16.255.254"
+LOGIN_SETUP="/trinity/login/setup.sh"
+LOGIN_DATA="/root/.login_data"
+LOGIN_NODE="login-a"
+SKEL=".skel"
+
+keystone tenant-create --name ${FIRST_TENANT}
+keystone user-create --name ${FIRST_USER} --tenant ${FIRST_TENANT} --pass ${FIRST_PASS}
+nova floating-ip-bulk-create --pool ${FIRST_POOL} ${FIRST_FLOATING}
+mkdir -p /cluster/${FIRST_CLUSTER}
+cp -Tr /cluster/${SKEL}/ /cluster/${FIRST_CLUSTER}/
+mkdir -p /home/${FIRST_CLUSTER}
+
+useradd -u 1002 -U munge --no-create-home
+mkdir -p /cluster/${FIRST_CLUSTER}/etc/munge
+[ -e  /cluster/${FIRST_CLUSTER}/etc/munge/munge.key ] && rm /cluster/${FIRST_CLUSTER}/etc/munge/munge.key
+dd if=/dev/urandom bs=1 count=1024 > /cluster/${FIRST_CLUSTER}/etc/munge/munge.key
+chown -R munge:munge /cluster/${FIRST_CLUSTER}/etc/munge
+chmod u=rwx,go= /cluster/${FIRST_CLUSTER}/etc/munge
+chmod u=r,go=   /cluster/${FIRST_CLUSTER}/etc/munge/munge.key
+
+nodes=$(curl -k 'https://controller/xcatws/groups/vc-a/attrs/members?userName=trinity&password=trinity&pretty=1' | awk -F: '{if (NR==3) {print $2}}' | sed 's/"//g')
+sed -e "s/<NODES>/${nodes}/g" -i /cluster/${FIRST_CLUSTER}/etc/slurm/slurm-nodes.conf
+chmod u=rwx,go=rx /cluster/${FIRST_CLUSTER}/etc/slurm
+chmod u=rw,go=rx  /cluster/${FIRST_CLUSTER}/etc/slurm/slurm.conf
+chmod u=rw,go=r   /cluster/${FIRST_CLUSTER}/etc/slurm/slurm-nodes.conf
+chmod ug=rw,o=r   /cluster/${FIRST_CLUSTER}/etc/slurm/slurm-user.conf
+
+cp ${LOGIN_SETUP} ${LOGIN_DATA}
+
+sed -e "s/FLOATING_IP=127.0.0.1/FLOATING_IP=${FIRST_FLOATING}/g" \
+    -e "s/vc-a/${FIRST_CLUSTER}/g" \
+    -i "${LOGIN_DATA}"
+
+sed -e "s/<TENANT>/${FIRST_TENANT}/g" \
+    -e "s/<USER>/${FIRST_USER}/g" \
+    -e "s/<PASSWORD>/${FIRST_PASS}/g" \
+    -e "s/<OPENSTACK>/$(hostname -I | awk '{print $1}')/g" \
+    /trinity/openstack/keystonerc > /root/keystonerc_${FIRST_TENANT}
+source /root/keystonerc_${FIRST_TENANT}
+
+nova floating-ip-create ${FIRST_POOL}
+nova secgroup-add-rule default tcp 1 65535 0.0.0.0/0
+nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0 
+nova boot --flavor 2 --image ${LOGIN_IMAGE} --security-groups default --user-data ${LOGIN_DATA} ${LOGIN_NODE}
+sleep 5
+nova floating-ip-associate ${LOGIN_NODE} ${FIRST_FLOATING}
