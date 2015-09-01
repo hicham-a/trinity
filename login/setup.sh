@@ -117,8 +117,11 @@ chown -R slurm:slurm /var/log/slurm
 #--------------------------------------------------------------------------
 yum -y install oddjob-mkhomedir
 sed -i 's/0022/0077/g' /etc/oddjobd.conf.d/oddjobd-mkhomedir.conf
-systemctl enable oddjob
-systemctl start oddjob
+systemctl enable oddjobd
+systemctl start oddjobd
+setenforce 0
+sed -i s/enforcing/permissive/ /etc/sysconfig/selinux 
+authconfig --enablemkhomedir --update
 
 #--------------------------------------------------------------------------
 # Install LDAP
@@ -129,6 +132,7 @@ cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
 chkconfig slapd on
 service slapd start
 
+<<<<<<< HEAD
 ldapmodify -Y EXTERNAL -H ldapi:/// << EOF
 dn: olcDatabase={2}hdb,cn=config
 changetype: modify
@@ -161,16 +165,19 @@ slapadd -n 0  -l /etc/openldap/schema/inetorgperson.ldif
 ##EOF
 
 slapadd -n 0  -l /tmp/trinity.ldif
+=======
+rm -rf /etc/openldap/slapd.d
+cp -LrT /trinity/openldap/rootimg/etc/openldap /etc/openldap
+>>>>>>> r5_fixes
 
-chown ldap:ldap /etc/openldap/slapd.d/cn\=config/cn\=schema/*
 systemctl restart slapd
 
 #--------------------------------------------------------------------------
 # Setup the initial database
 #--------------------------------------------------------------------------
-ldapadd -D cn=Manager,dc=cluster -w system << EOF
-dn: dc=cluster
-dc: cluster
+ldapadd -D cn=Manager,dc=local -w system << EOF
+dn: dc=local
+dc: local
 objectClass: domain
 
 dn: ou=People,dc=cluster
@@ -195,19 +202,6 @@ uidNumber: 150
 EOF
 
 #--------------------------------------------------------------------------
-# Change access rights to allow for PAM users to authenticate
-#--------------------------------------------------------------------------
-ldapmodify -Y EXTERNAL -H ldapi:/// << EOF
-dn: olcDatabase={2}hdb,cn=config
-changetype: modify
-add: olcAccess
-olcAccess: to attrs=userPassword by self write by anonymous auth by * none
--
-add: olcAccess
-olcAccess: to * by self write by * read
-EOF
-
-#--------------------------------------------------------------------------
 # Setup PAM
 #--------------------------------------------------------------------------
 yum -y install nss-pam-ldapd authconfig
@@ -217,9 +211,6 @@ cat >> /etc/nslcd.conf << EOF
 uri ldap://localhost
 ssl no
 tls_cacertdir /etc/openldap/cacerts
-base group ou=Group,dc=cluster
-base passwd ou=People,dc=cluster
-base shadow ou=People,dc=cluster
 EOF
 
 # configure the ldap server. Not sure this is needed.
