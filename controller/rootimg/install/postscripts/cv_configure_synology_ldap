@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -x
-if [ ! ping -c 5 "syndir.clustervision.com" > /dev/null 2>&1 ]; then
+if [ ping -c 5 "syndir.clustervision.com" > /dev/null 2>&1 ]; then
 cat > /etc/openldap/cv_clustervision.conf << EOF
 moduleload back_ldap.la
 database        ldap
@@ -14,6 +14,8 @@ bindpw          "TbQ7GHnG"
 rootdn "cn=Manager,dc=syndir,dc=clustervision,dc=com"
 rootpw {SSHA}QXcoGwQHTHSRtLfP5QfGqICYA9sHHOJJ
 EOF
+else
+   echo "ping failed, keep defaults"
 fi 
 
 echo $PROFILE
@@ -44,18 +46,5 @@ uri             "ldap://controller/dc=syndir,dc=cluster"
 suffixmassage   "dc=syndir,dc=cluster" "dc=syndir,dc=clustervision,dc=com"
 EOF
 
-cat > /etc/openldap/cv_clustervision.conf << EOF
-moduleload back_ldap.la
-database        ldap
-
-suffix          "dc=syndir,dc=clustervision,dc=com"
-uri             ldap://syndir.clustervision.com
-binddn          "uid=readonly,cn=users,dc=syndir,dc=clustervision,dc=com"
-bindpw          "TbQ7GHnG"
-
-rootdn "cn=Manager,dc=syndir,dc=clustervision,dc=com"
-rootpw {SSHA}QXcoGwQHTHSRtLfP5QfGqICYA9sHHOJJ
-EOF
-
-systemctl restart slapd
 fi
+systemctl restart slapd
