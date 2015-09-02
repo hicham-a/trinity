@@ -6,7 +6,7 @@
 ##email          : themis.athanassiadou@clustervision.com
 
 
-LOGFILE="/trinity/testing/bats2.log"
+LOGFILE="/trinity/testing/bats.log"
 touch ${LOGFILE}
 exec >> ${LOGFILE} 
 exec 2>&1
@@ -42,9 +42,17 @@ outcome="$(echo $?)"
 
 #ip_current="$(gettab node=switch hosts.ip)"
 #echo $(ip_current) 
+#change hosts table with correct switch ip address
 chtab node=switch hosts.ip=10.141.253.1
+#change hosttable with openstack node attributes
+chtab node=openstack hosts.ip=10.141.255.250
+chtab node=openstack hosts.hostnames="openstack"
+chtab node=openstack hosts.otherinterfaces="openstack-bmc:10.148.255.250"
+#change switch table
 chtab switch=switch switch.node=compute
 chtab switch=switch switch.port="|\D+(\d+)|fa(\$1+0)|"
+chtab node=openstack switch.port="fa3"
+
 makehosts switch
 makedns switch
 
@@ -57,7 +65,8 @@ ping -c 1 switch &> /dev/null && { echo "can ping switch, proceed"; } || { echo 
 #add nodes to xcat database
 #--------------------------
 
-nodeadd node[001-003] groups=compute
+nodeadd node[001-002] groups=compute
+nodeadd openstack groups=compute
 makehosts compute
 makedns compute
 
@@ -71,7 +80,9 @@ mkdef -t group -o hw-GenericNodes members=c001,c002
 #------------------------------------
 #reboot nodes so they go into genesis
 #------------------------------------
-rpower node001-node003 reset
+
+rpower openstack reset
+rpower node001-node002 reset
 
 sleep 10 
 
@@ -79,11 +90,11 @@ sleep 10
 #while ! ssh node001; do sleep 1; done -- this will ssh into node, do not want this. 
 
 
-while [ ! -e "/tftpboot/xcat/xnba/nodes/node003" ]; do sleep 1; done
+while [ ! -e "/tftpboot/xcat/xnba/nodes/openstack" ]; do sleep 1; done
 
- until nodestat node003 | grep "sshd"; 
+ until nodestat openstack | grep "sshd"; 
     do 
-	echo "node003 still booting, hang in there" 
+	echo "openstack still booting, hang in there" 
 	sleep 20 
     done
 
@@ -91,8 +102,9 @@ echo "Openstack Node is in Genesis, deploy openstack:"
 
 #nodeset nodes to appropriate image
 
-nodeset node003 osimage=centos7-x86_64-install-openstack
-rpower node003 reset
+nodeset openstack osimage=centos7-x86_64-install-openstack
+sleep 5
+rpower openstack reset
 
 #now compute nodes
 
@@ -119,7 +131,7 @@ sleep 5
 # Need to test whether openstack deployed without errors here
 #tail/grep xcat.log for errors
 
-until nodestat node003 | grep "sshd";
+until nodestat openstack | grep "sshd";
    do
    echo "node deploying openstack image"
    sleep 50
