@@ -49,9 +49,11 @@ chtab node=openstack hosts.ip=10.141.255.250
 chtab node=openstack hosts.hostnames="openstack"
 chtab node=openstack hosts.otherinterfaces="openstack-bmc:10.148.255.250"
 #change switch table
-chtab switch=switch switch.node=compute
-chtab switch=switch switch.port="|\D+(\d+)|fa(\$1+0)|"
+#chtab switch=switch switch.node=compute
+chtab node=compute switch.port="|\D+(\d+)|fa(\$1+0)|"
+chtab node=compute switch.switch="switch"
 chtab node=openstack switch.port="fa3"
+chtab node=openstack switch.switch="switch"
 
 makehosts switch
 makedns switch
