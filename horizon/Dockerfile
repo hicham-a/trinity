@@ -2,7 +2,7 @@ FROM centos:centos7
 MAINTAINER abhishek.mukherjee@clustervision.com
 
 RUN yum -y install --setopt=tsflags=nodocs epel-release && \ 
-    yum -y install --setopt=tsglags=nodocs http://rdo.fedorapeople.org/openstack-juno/rdo-release-juno.rpm && \
+    yum -y install --setopt=tsflags=nodocs http://rdo.fedorapeople.org/openstack-juno/rdo-release-juno.rpm && \
     yum -y install --setopt=tsflags=nodocs openstack-selinux openstack-utils && \
     yum -y install --setopt=tsflags=nodocs openstack-dashboard httpd mod_wsgi memcached python-memcached && \
     yum -y install --setopt=tsflags=nodocs python-keystoneclient python-glanceclient python-novaclient python-cinderclient && \ 

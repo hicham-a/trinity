@@ -6,6 +6,10 @@
 ##email          :  abhishek.mukherjee@clustervision.com
 
 
+yum -y install --setopt=tsflags=nodocs epel-release
+yum -y install --setopt=tsflags=nodocs http://rdo.fedorapeople.org/openstack-juno/rdo-release-juno.rpm
+# yum -y install --setopt=tsflags=nodocs openstack-selinux openstack-utils
+yum -y install --setopt=tsflags=nodocs python-keystoneclient python-glanceclient python-novaclient python-cinderclient
 
 sed -e "s/<TENANT>/admin/g" \
     -e "s/<USER>/admin/g" \
@@ -19,11 +23,11 @@ source /root/keystonerc_admin
 # Download the base login node image (CentOS cloud image) and upload it to glance
 #-----------------------------------------------------------------------------------
 CLOUD_IMAGE_URL="http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2"
-CLOUD_IMAGE="CentOS-7-x86_64-GenericCloud.qcow2"
+CLOUD_IMAGE="/tmp/CentOS-7-x86_64-GenericCloud.qcow2"
 CLOUD_IMAGE_FORMAT="qcow2"
 CLOUD_CONTAINER_FORMAT="bare"
 LOGIN_IMAGE="login"
-wget ${CLOUD_IMAGE_URL}
+curl -s ${CLOUD_IMAGE_URL} -o ${CLOUD_IMAGE}
 glance image-create \
          --name "${LOGIN_IMAGE}" \
          --disk-format "${CLOUD_IMAGE_FORMAT}" \
@@ -31,8 +35,18 @@ glance image-create \
          --is-public True \
          --file "${CLOUD_IMAGE}"
 
-
-
+#-----------------------------------------------------------------------------------
+# Create the Flat Network 
+#-----------------------------------------------------------------------------------
+read ETH1 ETH2 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -2)
+BRIDGE="br100"
+NETWORK_LABEL="novanetwork"
+nova network-create \
+       --fixed-range-v4 192.168.32.0/24 \
+       --fixed-cidr 192.168.32.0/24 \
+       --bridge-interface ${ETH2} \
+       --bridge ${BRIDGE} \
+       ${NETWORK_LABEL}
 
 #-----------------------------------------------------------------------------------
 # Create the default cluster

@@ -1,8 +1,18 @@
 #! /usr/bin/bash
-##title          : cv_install_nova
-##description    : Configures nova on a compute node.
+##title          : cv_install_nova_controller
+##description    : Installs and configures nova compute on the controller.
 ##author         : Abhishek Mukherjee
 ##email          : abhishek.mukherjee@clustervision.com
+
+
+# generic required packages
+yum -y install openstack-selinux openstack-utils
+# required for nova compute
+yum -y install openstack-nova-compute openstack-nova-network openstack-nova-api
+yum -y install sysfsutils
+
+# Needed for nova-compute (no-mac-spoofing error)
+yum -y install libvirt-daemon-config-nwfilter libvirt-daemon-driver-nwfilter
 
 # Get config info
 source /trinity/nova/config.sh
@@ -10,7 +20,8 @@ source /trinity/nova/config.sh
 # Main function
 main(){
   # Parameters and constants
-  NODE_IP=$(hostname -I| awk '{print $1}')
+  #  NODE_IP=$(hostname -I| awk '{print $1}')
+  NODE_IP=$(hostname -i)
 
 # Set SeLinux to permissive mode
   setenforce 0
