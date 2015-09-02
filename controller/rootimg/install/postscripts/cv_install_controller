@@ -203,4 +203,11 @@ mkdef -t policy 6 name=trinity rule=allow
 sed  -e "/<Directory \/>/,/<\/Directory>/ s/Require/#Require/" -i /etc/httpd/conf/httpd.conf
 service httpd restart
 
+#-----------------------------------------------
+# Nice to have, clone the git repo into the /root directory
+#-----------------------------------------------
+cd /root
+git clone https://github.com/clustervision/trinity.git
+cd -
+
 echo "$0 finished" >> /var/log/postinstall.log
