@@ -73,7 +73,7 @@ def user_delete(b, username):
     except Exception, error:
         print error
 
-    base_dn = 'ou=Group,%b' % b
+    base_dn = 'ou=Group,%s' % b
     filter = '(memberuid=%s)' % username
     attrs = ['']
     groups = conn.search_s(base_dn, ldap.SCOPE_SUBTREE, filter, attrs)
@@ -181,8 +181,8 @@ def group_delusers(b, groupname, username):
 
 
 def group_show(b, groupname):
-    base_dn = 'ou=Group,%b'
-    filter = '(cn=%s)' % (groupname, b)
+    base_dn = 'ou=Group,%s' % b
+    filter = '(cn=%s)' % groupname
     for dn, attrs in conn.search_s( base_dn, ldap.SCOPE_SUBTREE, filter ):
         print attrs
 
