@@ -13,6 +13,7 @@ exec 2>&1
 
 echo "Now flying clusterbats, hold on to your seats"
 
+source /trinity/testing/clusterbats/cluster.cfg
 source /etc/profile.d/xcat.sh
 yum -y install sshpass
 
@@ -26,7 +27,7 @@ fi
 #------------------------------------------
 # Run the controller bats for test case 1.1
 #-------------------------------------------
-bats /trinity/testing/clusterbats/t1.1.bats # > /trinity/testing/$(date)_log
+bats /trinity/testing/clusterbats/t1.1.bats 
 
 #---------------------------------------------------------------------------------
 #Outcome of test: if 0, all tests pass, and can proceed with cluster installation.
@@ -42,18 +43,26 @@ outcome="$(echo $?)"
 
 #ip_current="$(gettab node=switch hosts.ip)"
 #echo $(ip_current) 
+
 #change hosts table with correct switch ip address
-chtab node=switch hosts.ip=10.141.253.1
+chtab node=switch hosts.ip=${switch_ip}  #10.141.253.1
+
+
 #change hosttable with openstack node attributes
-chtab node=openstack hosts.ip=10.141.255.250
-chtab node=openstack hosts.hostnames="openstack"
-chtab node=openstack hosts.otherinterfaces="openstack-bmc:10.148.255.250"
+chtab node=openstack hosts.ip=${openstack_ip} #10.141.255.250
+chtab node=openstack hosts.hostnames=${openstack_hostname} #"openstack"
+chtab node=openstack hosts.otherinterfaces="openstack-bmc:${openstack_bmc_ip}"
+
+tabdump hosts
+
 #change switch table
 #chtab switch=switch switch.node=compute
-chtab node=compute switch.port="|\D+(\d+)|fa(\$1+0)|"
+chtab node=compute switch.port=${compute_switch_port} #"|\D+(\d+)|fa(\$1+0)|"
 chtab node=compute switch.switch="switch"
-chtab node=openstack switch.port="fa3"
+chtab node=openstack switch.port=${openstack_switch_port} #"fa3"
 chtab node=openstack switch.switch="switch"
+
+tabdump switch
 
 makehosts switch
 makedns switch
