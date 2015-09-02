@@ -68,7 +68,7 @@ def user_delete(b, username):
     """Delete a user from the system"""
     # First delete the user
     try:
-        dn = 'uid=%s,ou=People,dc=cluster' % username
+        dn = 'uid=%s,ou=People,%s' % (username, b)
         conn.delete_s(dn)
     except Exception, error:
         print error
