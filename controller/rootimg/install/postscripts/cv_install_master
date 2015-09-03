@@ -48,7 +48,7 @@ ifup $ETH3
 #---------------------------------------------------------------------------------------
 # Copy files
 #---------------------------------------------------------------------------------------
-cp -rL /root/trinity/master/rootimg/* /
+cp -rLT /root/trinity/master/rootimg /
 
 # FIXME: this mount should be an rsync with the clustervision master environment modules
 # cp -r /tmp/trinity/clustervision /trinity &
@@ -101,11 +101,11 @@ echo "Creating installation tree"
 # updates and extras are required to install docker
 yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno-1.noarch.rpm
 yum -y install --enablerepo=extras epel-release
-wget http://sourceforge.net/projects/xcat/files/yum/2.8/xcat-core/xCAT-core.repo -O /etc/yum.repos.d/xCAT-core.repo
+wget http://sourceforge.net/projects/xcat/files/yum/2.9/xcat-core/xCAT-core.repo -O /etc/yum.repos.d/xCAT-core.repo
 wget http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo -O /etc/yum.repos.d/xCAT-dep.repo
 mkdir /trinity/iso
 wget http://linux.cs.uu.nl/centos/7/isos/x86_64/CentOS-7-x86_64-Everything-1503-01.iso -q -O /trinity/iso/CentOS-7-x86_64-Everything-1503-01.iso
-copycds -n centos7.0 -o /trinity/iso/*.iso
+copycds -n centos7 -o /trinity/iso/*.iso
 
 /root/trinity/master/create_repo_snapshot.sh
 

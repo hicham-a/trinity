@@ -12,9 +12,9 @@ RUN yum -y install openssh-server openssh-clients python-pip vim-minimal \
     infiniband-diags munge rsyslog bind-utils perl perl-DBI perl-Switch \
     openldap-clients nss-pam-ldapd authconfig environment-modules \
     infinipath-psm \
-    xauth \
+    xauth xorg-x11-xauth \
     vim-enhanced \
-    hostname  && yum clean all
+    hostname && yum clean all
 
 RUN mkdir -p /var/run/sshd && \
     chmod -rx /var/run/sshd && \

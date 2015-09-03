@@ -174,17 +174,17 @@ exportfs -a
 #--------------------------------------------------------------------------------------
 echo "Creating installation tree"
 # updates and extras are required to install docker
-reposync -n -r updates -r extras -p /install/post/otherpkgs/centos7.0/x86_64/
+reposync -n -r updates -r extras -p /install/post/otherpkgs/centos7/x86_64/
 copycds -o /tmp/trinity/iso/*.iso
 # copy openvswitch
-mkdir -p /install/post/otherpkgs/centos7.0/x86_64/openstack
+mkdir -p /install/post/otherpkgs/centos7/x86_64/openstack
 yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-icehouse/rdo-release-icehouse-4.noarch.rpm
-yum -y install --downloadonly --downloaddir=/install/post/otherpkgs/centos7.0/x86_64/openstack openvswitch
+yum -y install --downloadonly --downloaddir=/install/post/otherpkgs/centos7/x86_64/openstack openvswitch
 # now bundle into a repository
-createrepo /install/post/otherpkgs/centos7.0/x86_64/
+createrepo /install/post/otherpkgs/centos7/x86_64/
 # generate the image
-genimage centos7.0-x86_64-netboot-trinity
-packimage centos7.0-x86_64-netboot-trinity
+genimage centos7-x86_64-netboot-trinity
+packimage centos7-x86_64-netboot-trinity
 
 #---------------------------------------------------------------------------------------
 # Workaround: create a default munge key for vc-a cluster

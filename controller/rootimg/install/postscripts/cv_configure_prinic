@@ -1,4 +1,4 @@
-read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
+ETH1=$(ip route | grep default | awk  '{print $5}' | head -1)
 cat > /etc/sysconfig/network-scripts/ifcfg-$ETH1 << EOF
 ONBOOT=yes
 BOOTPROTO=dhcp
