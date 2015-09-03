@@ -1,2 +1,2 @@
 #node,bmc,bmcport,taggedvlan,bmcid,username,password,comments,disable
-"controllers","/\z/-bmc/","0",,,"root","system",,
+"compute","/\z/-bmc/","0",,,"root","system",,

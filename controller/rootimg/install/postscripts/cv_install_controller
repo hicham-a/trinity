@@ -1,0 +1,198 @@
+#! /usr/bin/bash
+##title          : cv_install_controller
+##description    : Installs an xCAT controller node. Additionally it also configures
+##                 the xCAT web service 
+##author         : Hans Then & Abhishek Mukherjee
+##email          : hans.then@clustervision
+##                 abhishek.mukherjee@clustervision.com
+
+
+# see http://stackoverflow.com/questions/3173131/redirect-copy-of-stdout-to-log-file-from-within-bash-script-itself
+#exec > >(tee /var/log/postinstall.log)
+#exec 2>&1
+
+#--------------------------------------------------------------------------------------
+# install xcat
+#--------------------------------------------------------------------------------------
+systemctl stop NetworkManager
+systemctl disable NetworkManager
+killall dhclient
+# disable the dhcp based ntp
+rm /etc/dhcp/dhclient.d/ntp.sh
+systemctl restart network
+
+mkdir /tmp/trinity
+mount ${SITEMASTER}:/trinity /tmp/trinity       
+mkdir /trinity
+
+# copy all required module files etc to the right locations
+# note to self: only /trinity/env needs be mounted inside the container
+# FIXME: this takes an awful amount of time
+cp --dereference --recursive  --preserve /tmp/trinity/clustervision /trinity &
+
+#--------------------------------------------------------------------------------------
+# create runimages
+#--------------------------------------------------------------------------------------
+for file in $(ls /install/runimages); do
+    if [ -d /install/runimages/${file} ]; then 
+        tar czf /install/runimages/${file}.tgz -C /install/runimages/${file}/ .
+    fi
+done
+
+
+#--------------------------------------------------------------------------------------
+# copy default database configuration
+# and patch the installation
+#--------------------------------------------------------------------------------------
+source /etc/profile.d/xcat.sh
+mkdir -p /tmp/xcattables
+read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
+for table in $(ls /tmp/trinity/controller/xcat/tables); do
+    sed -e "s/\<eno1\>/$ETH1/g" -e "s/\<eno2\>/$ETH2/g"  -e "s/\<eno3\>/$ETH3/g" /tmp/trinity/controller/xcat/tables/$table > /tmp/xcattables/$table;
+done
+
+restorexCATdb -p /tmp/xcattables  
+
+# Fix for #149
+ip addr a 10.141.255.254/16 dev $ETH2
+cd /opt/xcat/share/xcat/netboot/centos
+ln -s ../rh/dracut_033 .
+ln -s ../rh/dracut .
+
+cd /
+cat /tmp/trinity/controller/xcat/patches/*.patch | patch -p0
+systemctl restart xcatd
+makedhcp -n
+makehosts -n
+makedns -n
+
+cat << EOF > /etc/resolv.conf
+domain cluster
+search cluster
+nameserver localhost
+EOF
+
+#--------------------------------------------------------------------------------------
+# correct any network settings
+#--------------------------------------------------------------------------------------
+
+# setup NAT, so nodes can access the internet (see manual step 1.f)
+# FIXME: maybe move iptables save output to the rootimg profile.
+chkconfig iptables on
+service iptables start
+modprobe iptable_nat
+iptables -A FORWARD -i $ETH2 -j ACCEPT
+iptables -t nat -A POSTROUTING -o $ETH1 -j MASQUERADE
+iptables -D FORWARD -j REJECT --reject-with icmp-host-prohibited
+iptables -D INPUT -j REJECT --reject-with icmp-host-prohibited
+service iptables save
+
+#--------------------------------------------------------------------------------------
+# copy required files from the master node to the controller node
+#--------------------------------------------------------------------------------------
+cp -LrT /tmp/trinity/controller/rootimg /
+cp /tmp/trinity/version /trinity/version
+
+#--------------------------------------------------------------------------------------
+# setup routing for the virtual clusters
+#--------------------------------------------------------------------------------------
+ip route add 172.16.0.0/12 dev $ETH2
+mv /etc/sysconfig/network-scripts/route-eno2 /etc/sysconfig/network-scripts/route-${ETH2} 2> /dev/null
+
+#--------------------------------------------------------------------------------------
+# Additional network processing
+#--------------------------------------------------------------------------------------
+# remove the default route from other devices
+for file in /etc/sysconfig/network-scripts/ifcfg-{$ETH2,$ETH3}; do
+    sed -i $file -e "s/DEFROUTE=\(.*\)/DEFROUTE=no/"
+done
+
+
+# disable peerdns
+sed -i /etc/sysconfig/network-scripts/ifcfg-$ETH1 -e "s/DEFROUTE=\(.*\)/DEFROUTE=yes/" -e "s/PEERDNS=\(.*\)/PEERDNS=no/"
+
+# Fix for #85
+cat >> /etc/sysconfig/network-scripts/ifcfg-$ETH2 << EOF
+IPADDR1=10.148.255.254
+PREFIX1=16
+GATEWAY1=10.148.255.254
+EOF
+ip a a 10.148.255.254/16 dev $ETH2
+
+systemctl restart network
+systemctl enable ntpd
+systemctl start ntpd
+
+#--------------------------------------------------------------------------------------
+# Start opensm on the controller
+#--------------------------------------------------------------------------------------
+yum -y groupinstall "Infiniband Support"
+yum -y install opensm
+yum -y install infiniband-diags
+
+systemctl enable opensm
+systemctl start opensm
+
+#--------------------------------------------------------------------------------------
+# now setup NFS exports
+#--------------------------------------------------------------------------------------
+systemctl enable nfs-server
+systemctl start nfs-server
+
+exportfs -a
+
+#--------------------------------------------------------------------------------------
+# Selective updates
+# Create installation tree
+#--------------------------------------------------------------------------------------
+iso=$(ls -c /tmp/trinity/iso/*.iso | head -1)
+echo "Creating installation tree from $iso"
+copycds -o -n centos7 $iso
+mkdir -p /install/post/otherpkgs/centos7/x86_64
+reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7/x86_64/
+createrepo /install/post/otherpkgs/centos7/x86_64/
+
+genimage centos7-x86_64-netboot-trinity
+packimage centos7-x86_64-netboot-trinity
+
+#--------------------------------------------------------------------------------------
+# install docker and docker-registry
+# and create the trinity image for the compute nodes
+#--------------------------------------------------------------------------------------
+yum -y install docker docker-registry
+# FIXME: move this to the rootimg profile
+sed -i 's/REGISTRY_PORT=.*/REGISTRY_PORT=5050/' /etc/sysconfig/docker-registry
+# FIXME: this is not idempotent
+sed -i 's/OPTIONS=\(.*\)/OPTIONS=--insecure-registry controller:5050 --bip=10.146.255.254\/16 --fixed-cidr=10.146.255.255\/16 \1/' /etc/sysconfig/docker
+
+systemctl enable docker docker-registry
+systemctl start docker docker-registry
+docker build -t controller:5050/trinity /trinity/container
+docker push controller:5050/trinity
+
+#--------------------------------------------------------------------------------------
+# cleanup
+#--------------------------------------------------------------------------------------
+
+#umount /tmp/trinity
+#rmdir /tmp/trinity
+
+#--------------------------------------------
+# Install the xCAT web service
+#--------------------------------------------
+# The xCAT web service requires the following
+yum -y install mod_ssl
+service httpd restart
+yum -y install perl-JSON
+
+# Set up the xCAT web service
+useradd trinity
+echo "trinity" | passwd trinity --stdin
+source /etc/profile.d/xcat.sh
+export HOME=/root
+tabch key=xcat,username=trinity passwd.password=trinity
+mkdef -t policy 6 name=trinity rule=allow
+sed  -e "/<Directory \/>/,/<\/Directory>/ s/Require/#Require/" -i /etc/httpd/conf/httpd.conf
+service httpd restart
+
+echo "$0 finished" >> /var/log/postinstall.log

@@ -33,11 +33,13 @@ perl-Switch
 pam-devel
 
 # Packes required for inifiniband support
+infiniband-diags
 dapl
 ibacm
 #ibsim
 ibutils
 libcxgb3
+libcxgb4
 libibcm
 libibmad
 libibumad
@@ -45,6 +47,7 @@ libibverbs
 libibverbs-utils
 libipathverbs
 libmlx4
+libmlx5
 libmthca
 libnes
 librdmacm
@@ -63,8 +66,19 @@ swig
 tcl
 tk
 urw-fonts
+infinipath-psm
 
 # needed for the trinity startup script
 which
 bind-utils
 bridge-utils
+
+# Fix for #279
+tar
+
+# Fix for #242
+pciutils
+dmidecode
+
+#Fix for 210
+lvm2

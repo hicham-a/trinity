@@ -1,1 +1,97 @@
-../../../../master/rootimg/install/postscripts/cv_install_slapd
+#!/bin/bash
+
+#----------------------------------------------------------------------------
+# Install OpenLDAP on the controller node
+#----------------------------------------------------------------------------
+yum -y install openldap openldap-clients openldap-servers
+yum -y install python-ldap python-retrying
+yum -y install nss-pam-ldapd authconfig
+
+cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
+
+rm -rf /etc/openldap/slapd.d
+cp -rLT /trinity/openldap/rootimg /
+systemctl enable slapd 
+systemctl start slapd
+
+#----------------------------------------------------------------------------
+# Setup the initial database
+#----------------------------------------------------------------------------
+ldapadd -D cn=Manager,dc=local -w system << EOF
+dn: dc=local
+dc: local
+objectClass: domain
+
+dn: ou=People,dc=local
+ou: People
+objectClass: top
+objectClass: organizationalUnit
+
+dn: ou=Group,dc=local
+ou: Group
+objectClass: top
+objectClass: organizationalUnit
+
+dn: cn=uid,dc=local
+cn: uid
+objectClass: uidNext
+uidNumber: 1050
+
+dn: cn=gid,dc=local
+cn: gid
+objectClass: uidNext
+uidNumber: 150
+EOF
+
+#----------------------------------------------------------------------------
+# Change access rights to allow for PAM users to authenticate
+#----------------------------------------------------------------------------
+ldapmodify -Y EXTERNAL -H ldapi:/// << EOF
+dn: olcDatabase={2}hdb,cn=config
+changetype: modify
+add: olcAccess
+olcAccess: to attrs=userPassword by self write
+  by anonymous auth
+  by * none
+-
+add: olcAccess
+olcAccess: to * by self write
+  by * read
+EOF
+
+#----------------------------------------------------------------------------
+# Setup PAM
+#----------------------------------------------------------------------------
+yum -y install nss-pam-ldapd authconfig
+
+# append our config to the ldap nameserver demon
+cat >> /etc/nslcd.conf << EOF 
+uri ldap://localhost
+ssl no
+tls_cacertdir /etc/openldap/cacerts
+base   group  ou=Group,dc=cluster
+base   passwd ou=People,dc=cluster
+base   shadow ou=People,dc=cluster
+EOF
+
+# configure the ldap server. Not sure this is needed.
+cat >> /etc/pam_ldap.conf << EOF
+uri ldap://localhost/
+base dc=cluster
+ssl no
+tls_cacertdir /etc/openldap/cacerts
+pam_password md5
+EOF
+
+# setup nssswitch
+sed -e 's/^group:.*$/group:\t\tfiles ldap/g' \
+    -e 's/^passwd:.*$/passwd:\t\tfiles ldap/g' \
+    -e 's/^shadow:.*$/shadow:\t\tfiles ldap/g' \
+    -i /etc/nsswitch.conf 
+
+authconfig-tui --kickstart --enableldapauth --ldapbasedn=dc=local \
+     --ldapserver=localhost 
+
+echo "$0 finished" >> /var/log/postinstall.log
+exit 0
+

@@ -23,83 +23,7 @@
 . /etc/rc.d/init.d/functions
 
 start() {
-    echo "Starting Trinity"
-
-    # disable the docker bridge
-    ip link set docker0 down || true
-    brctl delbr docker0 || true
-
-    # Determine our container name
-    NAME=$(hostname -s | sed s/node/c/)
-
-    # Determine in which virtual cluster this node is active
-    for VC in vc-{a..l}; do
-        if host $NAME.$VC; then found=1; break; fi
-    done
-
-    # Fix for #90
-    if [ ! $found ]; then
-        echo "Error, could not determine cluster membership for this node"
-        exit 1
-    fi
-
-    IP=$(host ${NAME}.${VC} | awk -F' ' '{print $4}')
-    GW=$(echo $IP | awk -F. '{ print $1"."$2".255.254" }')
- 
-    # Check a few directories and files
-    if [ ! -d /cluster/${VC} ]; then
-        logger -p syslog.err "No cluster directory found for ${VC}, exiting."; exit 1
-    fi
-    if [ ! -f /cluster/${VC}/etc/slurm/slurm.conf ]; then
-        logger -p syslog.err "No slurm.conf found, exiting."; exit 1
-    fi
-    if [ ! -f /cluster/${VC}/etc/munge/munge.key ]; then
-        logger -p syslog.err "No munge.key found, exiting."; exit 1
-    fi
-
-    # check if there is a cluster specific image
-    if wget http://controller:5050/v1/repositories/library/${VC}/tags -q -O-; then
-       IMAGE=${VC}
-    else
-       IMAGE=trinity
-    fi
-
-    # if there is a newer image, remove the container
-    if docker pull controller:5050/${IMAGE} | tail -1 | grep "Downloaded newer"; then 
-        docker stop trinity
-        docker rm trinity
-    fi
-
-    # determine the ethernet device name
-    read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
-
-    state=$(docker inspect --format='{{.State.Running}}' trinity)
-    case $state in
-        true)
-            ;;
-        false)
-            docker start trinity
-            /usr/local/sbin/pipework ${ETH1} trinity ${IP}/16@${GW}
-            ;;
-        *)
-            docker run \
-               --net=none \
-               --privileged \
-               -v /dev/infiniband:/dev/infiniband \
-               -v /trinity/clustervision:/trinity/clustervision \
-               -v /usr/share/Modules/init/.modulespath:/usr/share/Modules/init/.modulespath \
-               -v /root:/root \
-               -v /home/${VC}:/home \
-               -v /cluster/${VC}:/cluster \
-               -v /cluster/${VC}/etc/slurm:/etc/slurm \
-               -v /cluster/${VC}/etc/munge:/etc/munge \
-               --hostname=${NAME}.${VC} \
-               --dns-search=${VC} \
-               --name=trinity \
-               -d controller:5050/${IMAGE}
-            /usr/local/sbin/pipework ${ETH1} trinity ${IP}/16@${GW}
-        ;;
-    esac
+    /usr/sbin/trinity-start &
 }
 
 stop() {
@@ -123,7 +47,8 @@ force-reload() {
 }
 
 rh_status() {
-    test $(docker inspect --format='{{.State.Running}}' trinity) = true
+    state=$(docker inspect --format='{{.State.Running}}' trinity 2>/dev/null)
+    test -n "$state" -a "$state" = true
 }
 
 rh_status_q() {

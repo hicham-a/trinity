@@ -31,8 +31,8 @@ END
 # Setup exports
 chroot $installroot mkdir -p /srv/nfs
 
-
 #-- Enable services
-chroot $installroot chkconfig rdma on
-chroot $installroot chkconfig ntpd on
+chroot $installroot systemctl enable rdma
+chroot $installroot systemctl enable ntpd
+chroot $installroot systemctl enable nfs-server
 

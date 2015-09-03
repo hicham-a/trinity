@@ -1,0 +1,17 @@
+#!/bin/bash
+if [ $# -lt 1 ]; then echo "Please specify a fix"; exit 1; fi
+commit=$1
+if [ -z "$2" ]; then 
+    version=$(cat /trinity/version | head -n2 | tail -n1)
+else
+    version=$2
+fi
+
+echo git merge-base --is-ancestor $commit $version
+if git merge-base --is-ancestor $commit $version; then
+    echo included
+else
+    echo not included
+fi
+
+

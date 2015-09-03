@@ -1,8 +1,10 @@
-read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
+ETH1=$(ip route | grep default | awk  '{print $5}' | head -1)
 cat > /etc/sysconfig/network-scripts/ifcfg-$ETH1 << EOF
-ONBOOT=no
+ONBOOT=yes
 BOOTPROTO=dhcp
 DEVICE=$ETH1
+MTU=9000
 EOF
 
 ifup $ETH1
+echo "$0 finished" >> /var/log/postinstall.log

@@ -1,1 +1,34 @@
-../../../../install_scripts/api+dash/cv_install_dash
+#! /usr/bin/bash
+##title          : cv_install_dash
+##description    : Installs the Trinity dashboard (and client).
+##                 You will need to edit the conf file under /etc/trinity/ 
+##                 and then restart httpd
+##author         : Abhishek Mukherjee
+##email          : abhishek.mukherjee@clustervision.com
+
+remote_host="controller"
+remote_file_root="/trinity"
+remote_nfs="${remote_host}:$remote_file_root"
+file_root="/tmp${remote_file_root}"
+mkdir -p ${file_root}
+mountpoint -q ${file_root} && echo "${file_root} is already mounted" || mount ${remote_nfs} ${file_root} 
+
+# Trinity python client setup
+cd ${file_root}/api+dash/trinity_client
+python setup.py install
+cd /
+sed "s/127.0.0.1/$(hostname -I| awk '{print $1}')/g" /etc/trinity/trinity_client.conf > /tmp/trinity_client.conf
+mv /tmp/trinity_client.conf /etc/trinity/trinity_client.conf
+
+# Trinity dashboard additions
+cd ${file_root}/api+dash/trinity_dashboard
+sh setup.sh
+cd /
+
+# This is to fix a bug in the httpd configuration needed for Juno
+echo 'Include "/etc/httpd/conf.modules.d/*.conf"' >> /etc/httpd/conf/httpd.conf
+
+umount ${file_root}
+
+service httpd restart
+echo "$0 finished" >> /var/log/postinstall.log

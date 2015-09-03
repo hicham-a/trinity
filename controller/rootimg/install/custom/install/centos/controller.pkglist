@@ -1,0 +1,29 @@
+#Please make sure there is a space between @ and group name
+wget
+ntp
+nfs-utils
+net-snmp
+rsync
+yp-tools
+openssh-server
+util-linux-ng
+net-tools
+
+# X fwding
+xorg-x11-xauth
+yum-utils
+bind-utils
+iptables-services
+
+# See #230
+firefox
+
+# See #204
+perl-Digest-SHA1
+
+# see #242
+pciutils
+createrepo
+net-snmp-utils
+
+#

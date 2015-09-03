@@ -20,47 +20,35 @@ arch=$3
 profile=$4
 workdir=$5
 
-#-- Example how /etc/fstab can be automatically generated during image generation:
-cat <<END >$installroot/etc/fstab
-proc            /proc    proc   rw 0 0
-sysfs           /sys     sysfs  rw 0 0
-devpts          /dev/pts devpts rw,gid=5,mode=620 0 0
-/dev/sda1	/var/lib/docker 	ext4	defaults,errors=remount-ro  0  2
-controller:/cluster /cluster nfs rsize=8192,wsize=8192,timeo=14,intr
-controller:/trinity /trinity nfs rsize=8192,wsize=8192,timeo=14,intr
-controller:/home /home nfs rsize=8192,wsize=8192,timeo=14,intr
-END
+#-- Copy supporting files
+cp -LrT /trinity/compute/rootimg $installroot
 
 #-- A small docker patch
 sed -i 's/OPTIONS=\(.*\)/OPTIONS=--insecure-registry controller:5050 \1/' $installroot/etc/sysconfig/docker
 
-#-- Copy supporting files
-install -D /trinity/compute/rootimg/etc/rc.d/init.d/trinity $installroot/etc/rc.d/init.d/trinity
-install -D /trinity/compute/rootimg/usr/local/sbin/pipework $installroot/usr/local/sbin/pipework
-install -D /trinity/compute/rootimg/usr/local/sbin/docker-enter $installroot/usr/local/sbin/docker-enter
-install -D /trinity/compute/rootimg/lib/systemd/system/docker.service.d/remote-fs.conf $installroot/lib/systemd/system/docker.service.d/remote-fs.conf
-
 #-- Enable services
 chroot $installroot chkconfig rdma on
 chroot $installroot chkconfig ntpd on
-chroot $installroot chkconfig docker on
 chroot $installroot chkconfig openvswitch on
-chroot $installroot chkconfig trinity on
-chroot $installroot chkconfig avahi-daemon off
+chroot $installroot chkconfig trinity off
+chroot $installroot chkconfig docker off
+
+echo "mlx4_ib" > $installroot/etc/modules-load.d/mlx4_ib.conf
 
 #-- copy security limits from controller node
 install -d $installroot/etc/security/limits.d
-cp -r /etc/security/limits.d/* $installroot/etc/security/limits.d
+cp -rT /etc/security/limits.d $installroot/etc/security/limits.d
 
 #-- copy repositories from controller node
 install -d $installroot/etc/yum.repos.d
-cp -r /etc/yum.repos.d/* $installroot/etc/yum.repos.d
+cp -rT /etc/yum.repos.d $installroot/etc/yum.repos.d
 
-#-- copy modules environment config file
-#install -D /usr/share/Modules/init/.modulespath $installroot/usr/share/Modules/init/.modulespath
-mkdir -p $installroot/usr/share/Modules/init/
-cat << EOF > $installroot/usr/share/Modules/init/.modulespath
-/usr/share/Modules/modulefiles                  # Module pkg modulefiles (if no versioning)
-/etc/modulefiles                                # General module files
-/trinity/clustervision/modulefiles
-EOF
+#-- Copy supporting files from the local environment
+if [ -d /trinity/site-local/compute/rootimg/ ]; then
+    cp -LrT /trinity/cinder/rootimg/ $installroot
+fi
+
+#-- Fix for #411 : create a stateless var
+rm -rf $installroot/.var
+mkdir -p $installroot/.var/lib/
+mv -f $installroot/var/lib/rpm $installroot/.var/lib/rpm
