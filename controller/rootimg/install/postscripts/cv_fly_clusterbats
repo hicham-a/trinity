@@ -56,7 +56,7 @@ chtab node=openstack hosts.otherinterfaces="openstack-bmc:${openstack_bmc_ip}"
 tabdump hosts
 
 #change switch table
-#chtab switch=switch switch.node=compute
+chtab -d node=node001 switch.switch="switch"
 chtab node=compute switch.port=${compute_switch_port} #"|\D+(\d+)|fa(\$1+0)|"
 chtab node=compute switch.switch="switch"
 chtab node=openstack switch.port=${openstack_switch_port} #"fa3"
