@@ -30,6 +30,18 @@ def make_secret(password):
 def user_add(username, cn, sn, givenName, password, shell, groups):
     """Add a user to the LDAP"""
     uidNumber = increment_uid()
+    # massage parameters
+    if sn and givenName and not cn:
+        cn = "%s, %s" % (sn, givenName)
+    elif cn and not givenName and not sn and ',' in cn:
+        sn, givenName = cn.split(',', 1)
+
+    if not cn:
+        cn = username
+    if not sn:
+        sn = cn
+    if not givenName
+        givenName = cn
 
     # first add the group 
     dn = 'cn=%s,ou=Group,dc=local' % username
@@ -39,7 +51,10 @@ def user_add(username, cn, sn, givenName, password, shell, groups):
      ('memberuid', [uidNumber] ),
      ('gidNumber', [uidNumber])
     ]
-    conn.add_s(dn, add_record)
+    try:
+        conn.add_s(dn, add_record)
+    except Exception, e:
+        print e
 
     # now add the user 
     password = make_secret(password)
@@ -57,7 +72,10 @@ def user_add(username, cn, sn, givenName, password, shell, groups):
      ('gidNumber', [uidNumber] ),
      ('homeDirectory', ['/home/%s' % username] )
     ]
-    conn.add_s(dn, add_record)
+    try:
+        conn.add_s(dn, add_record)
+    except Exception, e:
+        print e
 
     if groups:
         for group in groups:
