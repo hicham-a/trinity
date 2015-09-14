@@ -20,6 +20,15 @@ while [ ${access} -ne "0" ];
    do ping -c 1 ${controller} ; access=$? ; sleep 1;
 done
 
+
+#--------------------------------------------------------------------------
+# Setup timezone and ntp
+#--------------------------------------------------------------------------
+ln -sf /usr/share/zoneinfo/CET /etc/localtime
+yum -y install ntp
+echo "server 10.141.255.254  prefer" >> /etc/ntp.conf
+service ntpd start
+
 #--------------------------------------------------------------------------
 # Copy the required files from controller to the login node  
 #--------------------------------------------------------------------------
