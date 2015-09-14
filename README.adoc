@@ -2,20 +2,18 @@
 
 == Tell me more about Trinity!
 
-*Trinity* is an open source software platform which provides *HPC as a
-Service*. *Trinity* is a private HPC Cloud solution, engineered for *high
-performance computing*. It provides a *complete HPC cluster manager* on
-top of a cloud platform capable of managing HPC, general IT, and Big
-Data.
+*Trinity* is a unified management environment for both Cloud and HPC. It allows you to create and manage virtualized HPC clusters from inside your http://www.openstack.org/[OpenStack]® dashboard.
 
-*Trinity* brings the flexibility of Platform-as-a-Service to HPC. With it, you
-can give your users access to virtual HPC clusters, all managed from inside
-your http://www.openstack.org/[OpenStack]® dashboard.
+*Trinity* was developed by ClusterVision from early 2013, in response to customers requesting OpenStack to manage their HPC clusters. We looked at OpenStack and we found that there was a mismatch between Cloud and what we have come to expect from an HPC environment.
 
-*Trinity* was designed to solve an impedance mismatch between Cloud and HPC. A
-typical cloud infrastructure (e.g. OpenStack) has no (physical) provisioning
-tools. Traditional virtualization (based on e.g., KVM ) imposes a performance
-hit, which often makes it unacceptable for HPC applications. Virtual machines
+When we started development of Trinity, OpenStack had no mature tools for provisioning
+and deploying large amounts of nodes. One can install OpenStack manually on a small number of physical machines, but this is not an approach that will scale to thousands of nodes. So we used our experience at ClusterVision with deploying and managing clusters that scale to thousands and tens of thousands of nodes to build a scalable OpenStack deployment tool. 
+
+A second challenge posed was that the OpenStack dashboard is great at managing a few diverse virtual machines, but not clusters that scale into thousands of nodes. We needed a tool that would allow us to manage large groups of nodes as a single unit. For this we extended the OpenStack dashboard with a separate cluster panel. The cluster panel allows the user to slice and dice large groups of nodes as single units.
+
+The last challenge we ran into when experimenting with OpenStack was the performance loss.
+Traditional virtualization (based on e.g., KVM ) imposes a performance
+hit, which makes it unacceptable for HPC applications. Virtual machines
 provided by typical cloud infrastructures come with generic hardware and
 software stacks, whereas HPC applications usually run on specialized hardware
 (GPU, IB) and software stacks (MPI, compilers, modules environment).
@@ -30,7 +28,7 @@ Power of HPC
  * Scheduler - SLURM
  * MPI libraries - OpenMPI, Intel MPI, MVAPICH, MPICH2
  * Compilers - GNU and Intel
- * No performance loss (http://www.docker.com/[Docker] based containerization)
+ * Full HPC performance (http://www.docker.com/[Docker] based containerization)
  * Load balancing (HPC) partitions
 
 Agility of the Cloud
