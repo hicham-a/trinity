@@ -170,13 +170,6 @@ systemctl start docker docker-registry
 docker build -t controller:5050/trinity /trinity/container
 docker push controller:5050/trinity
 
-#--------------------------------------------------------------------------------------
-# cleanup
-#--------------------------------------------------------------------------------------
-
-#umount /tmp/trinity
-#rmdir /tmp/trinity
-
 #--------------------------------------------
 # Install the xCAT web service
 #--------------------------------------------
@@ -194,5 +187,13 @@ tabch key=xcat,username=trinity passwd.password=trinity
 mkdef -t policy 6 name=trinity rule=allow
 sed  -e "/<Directory \/>/,/<\/Directory>/ s/Require/#Require/" -i /etc/httpd/conf/httpd.conf
 service httpd restart
+
+#--------------------------------------------------------------------------------------
+# cleanup
+#--------------------------------------------------------------------------------------
+umount /tmp/trinity
+rmdir /tmp/trinity
+rm /etc/yum.repos.d/local-repository.repo
+rm /etc/yum.repos.d/xCAT-otherpkgs*.repo
 
 echo "$0 finished" >> /var/log/postinstall.log
