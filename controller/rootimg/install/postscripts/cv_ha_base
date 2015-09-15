@@ -54,6 +54,7 @@ if [ ! -z $filename ]; then
     ip addr del 10.148.255.254/16 dev $dev
     ip addr add 10.141.255.$octet/16 dev $dev
     ip addr add 10.148.255.$octet/16 dev $dev
+    ip route add 172.16.0.0/12 dev $dev
     echo "Checking IP addresses"
     ip addr show dev $dev
 else
