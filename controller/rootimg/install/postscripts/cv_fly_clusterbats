@@ -37,9 +37,7 @@ outcome="$(echo $?)"
 
 #---------------------------------------------------------------
 #Configure xcat tables to deploy cluster 
-##FIXME make environment variables and define in different file.
 #--------------------------------------------------------------
-
 
 #ip_current="$(gettab node=switch hosts.ip)"
 #echo $(ip_current) 
@@ -56,7 +54,7 @@ chtab node=openstack hosts.otherinterfaces="openstack-bmc:${openstack_bmc_ip}"
 tabdump hosts
 
 #change switch table
-chtab -d node=node001 switch.switch="switch"
+chtab -d node=node001 switch
 chtab node=compute switch.port=${compute_switch_port} #"|\D+(\d+)|fa(\$1+0)|"
 chtab node=compute switch.switch="switch"
 chtab node=openstack switch.port=${openstack_switch_port} #"fa3"
