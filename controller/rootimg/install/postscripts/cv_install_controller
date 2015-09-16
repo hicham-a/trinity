@@ -201,6 +201,7 @@ service httpd restart
 #--------------------------------------------
 version=$(cat /trinity/version | head -2)
 cd /
+mv gitignore .gitignore
 git init 
 git add .
 git commit -m "Initial system setup based on Trinity: ${version//\*/}"
