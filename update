@@ -56,18 +56,9 @@ Usage:
   fi  
   profile=$1
   if [ -d "${profile}/rootimg" ] ; then
-  # TODO: should also check if profile is in PROFILES
-    echo "This will update the current node using the from source code repository"
-    echo "using the profile: ${bold}$1${normal}"
-    #echo "${bold}To abort, enter any character, now!${normal} "
-    #read -t 5 -s proceed
-    #if [ -z "${proceed}" ]; then
-    #  echo "Proceeding with update!"
-      copy $1
-      extras "$@"
-    #else
-    #  echo "Aborting!"
-    #fi
+    echo "update $profile"
+    copy $1
+    extras "$@"
     return $?
   else
     echo "No such profile: $1"
@@ -136,7 +127,6 @@ copy(){
 
       # This is to fix a bug in the httpd configuration needed for Juno
       echo 'Include "/etc/httpd/conf.modules.d/*.conf"' >> /etc/httpd/conf/httpd.conf
-
     ;;  
     compute )  
       # Note that the compute profile actually corresponds to the trinity osimge!
