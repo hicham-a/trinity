@@ -193,7 +193,5 @@ service httpd restart
 #--------------------------------------------------------------------------------------
 umount /tmp/trinity
 rmdir /tmp/trinity
-rm /etc/yum.repos.d/local-repository.repo
-rm /etc/yum.repos.d/xCAT-otherpkgs*.repo
 
 echo "$0 finished" >> /var/log/postinstall.log
