@@ -110,6 +110,19 @@ chown -R slurm:slurm /var/log/slurm
 # chkconfig munge on
 # chkconfig slurm on
 
+
+
+#--------------------------------------------------------------------------
+# Enable mkhomedir
+#--------------------------------------------------------------------------
+yum -y install oddjob-mkhomedir
+sed -i 's/0022/0077/g' /etc/oddjobd.conf.d/oddjobd-mkhomedir.conf
+systemctl enable oddjobd
+systemctl start oddjobd
+setenforce 0
+sed -i s/enforcing/permissive/ /etc/sysconfig/selinux 
+authconfig --enablemkhomedir --update
+
 #--------------------------------------------------------------------------
 # Install LDAP
 #--------------------------------------------------------------------------
@@ -119,82 +132,38 @@ cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
 chkconfig slapd on
 service slapd start
 
-ldapmodify -Y EXTERNAL -H ldapi:/// << EOF
-dn: olcDatabase={2}hdb,cn=config
-changetype: modify
-add: olcRootPW
-olcRootPW: system
--
-replace: olcSuffix
-olcSuffix: dc=cluster
--
-replace: olcRootDN
-olcRootDN: cn=Manager,dc=cluster
-EOF
+rm -rf /etc/openldap/slapd.d
+cp -LrT /trinity/openldap/rootimg/etc/openldap /etc/openldap
 
-#--------------------------------------------------------------------------
-# Install the required schema's + custom one for the uid
-#--------------------------------------------------------------------------
-slapadd -n 0  -l /etc/openldap/schema/cosine.ldif
-slapadd -n 0  -l /etc/openldap/schema/nis.ldif
-slapadd -n 0  -l /etc/openldap/schema/inetorgperson.ldif
-
-##cp-rootimg
-##cat > /tmp/trinity.ldif << EOF
-##dn: cn=trinity,cn=schema,cn=config
-##objectClass: olcSchemaConfig
-##cn: trinity
-##olcObjectClasses: {0}( 1.3.6.1.4.1.19173.2.2.2.8
-## NAME 'uidNext'
-## DESC 'Where we get the next uidNumber from'
-## MUST ( cn $ uidNumber ) )
-##EOF
-
-slapadd -n 0  -l /tmp/trinity.ldif
-
-chown ldap:ldap /etc/openldap/slapd.d/cn\=config/cn\=schema/*
 systemctl restart slapd
 
 #--------------------------------------------------------------------------
 # Setup the initial database
 #--------------------------------------------------------------------------
-ldapadd -D cn=Manager,dc=cluster -w system << EOF
-dn: dc=cluster
-dc: cluster
+ldapadd -D cn=Manager,dc=local -w system << EOF
+dn: dc=local
+dc: local
 objectClass: domain
 
-dn: ou=People,dc=cluster
+dn: ou=People,dc=local
 ou: People
 objectClass: top
 objectClass: organizationalUnit
 
-dn: ou=Group,dc=cluster
+dn: ou=Group,dc=local
 ou: Group
 objectClass: top
 objectClass: organizationalUnit
 
-dn: cn=uid,dc=cluster
+dn: cn=uid,dc=local
 cn: uid
 objectClass: uidNext
 uidNumber: 1050
 
-dn: cn=gid,dc=cluster
+dn: cn=gid,dc=local
 cn: gid
 objectClass: uidNext
 uidNumber: 150
-EOF
-
-#--------------------------------------------------------------------------
-# Change access rights to allow for PAM users to authenticate
-#--------------------------------------------------------------------------
-ldapmodify -Y EXTERNAL -H ldapi:/// << EOF
-dn: olcDatabase={2}hdb,cn=config
-changetype: modify
-add: olcAccess
-olcAccess: to attrs=userPassword by self write by anonymous auth by * none
--
-add: olcAccess
-olcAccess: to * by self write by * read
 EOF
 
 #--------------------------------------------------------------------------
@@ -207,15 +176,15 @@ cat >> /etc/nslcd.conf << EOF
 uri ldap://localhost
 ssl no
 tls_cacertdir /etc/openldap/cacerts
-base   group  ou=Group,dc=cluster
-base   passwd ou=People,dc=cluster
-base   shadow ou=People,dc=cluster
+base group ou=Group,dc=local
+base passwd ou=People,dc=local
+base shadow ou=People,dc=local
 EOF
 
 # configure the ldap server. Not sure this is needed.
 cat >> /etc/pam_ldap.conf << EOF
 uri ldap://localhost/
-base dc=cluster
+base dc=local
 ssl no
 tls_cacertdir /etc/openldap/cacerts
 pam_password md5
@@ -227,7 +196,7 @@ sed -e 's/^group:.*$/group:\t\tfiles ldap/g' \
     -e 's/^shadow:.*$/shadow:\t\tfiles ldap/g' \
     -i /etc/nsswitch.conf 
 
-authconfig-tui --kickstart --enableldapauth --ldapbasedn=dc=cluster --ldapserver=localhost
+authconfig-tui --kickstart --enableldapauth --ldapbasedn=dc=local --ldapserver=localhost
 
 
 #---------------------------------------------------------------------------
@@ -292,8 +261,8 @@ yum -y install git
 #---------------------------------------------------------------------------
 # Setup permissions
 #---------------------------------------------------------------------------
-obol group add admin
-obol group add power-users
+obol -w system group add admin
+obol -w system group add power-users
 chown root:root /cluster/etc/slurm
 chmod ug=rwx,o=rx /cluster/etc/slurm
 chown root:admin /cluster/etc/slurm/slurm-user.conf  

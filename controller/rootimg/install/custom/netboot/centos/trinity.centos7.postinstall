@@ -52,3 +52,8 @@ mv $installroot/var/lib/rpm $installroot/.var/lib/rpm
 if [ -d /trinity/site-local/compute/rootimg/ ]; then
     cp -LrT /trinity/cinder/rootimg/ $installroot
 fi
+
+#-- Fix for #411 : create a stateless var
+rm -rf $installroot/.var
+mkdir -p $installroot/.var/lib/
+mv -f $installroot/var/lib/rpm $installroot/.var/lib/rpm
