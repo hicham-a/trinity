@@ -262,7 +262,7 @@ glance image-create \
          --file "${CLOUD_IMAGE}"
 
 #-- Create the Flat Network
-read ETH1 ETH2 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -2)
+read ETH0 ETH1 ETH2 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
 BRIDGE="br100"
 NETWORK_LABEL="novanetwork"
 nova network-create \

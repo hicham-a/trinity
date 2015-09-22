@@ -80,11 +80,11 @@ copy(){
         fi  
       done 
       # Copy the files to the nodes root filesystem
-      cp --dereference --recursive  --preserve ${REPO}/rootimg/. /
+      cp -LrT ${REPO}/rootimg /
       # TODO: There should be a list of excludes here
       LOCAL=/trinity/site-local/$1
       if [ -d "${LOCAL}/rootimg" ] ; then
-        cp --dereference --recursive  --preserve ${LOCAL}/rootimg/. /
+        cp -LrT ${LOCAL}/rootimg /
       else
         echo "No site-local rootimg found"
       fi
