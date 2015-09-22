@@ -43,11 +43,6 @@ cp -rT /etc/security/limits.d $installroot/etc/security/limits.d
 install -d $installroot/etc/yum.repos.d
 cp -rT /etc/yum.repos.d $installroot/etc/yum.repos.d
 
-
-#-- Create a stateless rpm db
-mkdir -p $installroot/.var/lib
-mv $installroot/var/lib/rpm $installroot/.var/lib/rpm
-
 #-- Copy supporting files from the local environment
 if [ -d /trinity/site-local/compute/rootimg/ ]; then
     cp -LrT /trinity/cinder/rootimg/ $installroot
@@ -56,4 +51,5 @@ fi
 #-- Fix for #411 : create a stateless var
 rm -rf $installroot/.var
 mkdir -p $installroot/.var/lib/
+mkdir -p $installroot/var/lib/rpm
 mv -f $installroot/var/lib/rpm $installroot/.var/lib/rpm
