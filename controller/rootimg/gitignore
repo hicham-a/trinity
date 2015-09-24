@@ -1,0 +1,6 @@
+/*
+*.rpm
+!etc/
+/etc/xcat/*.sqlite
+!install/custom/
+!install/postscripts/
