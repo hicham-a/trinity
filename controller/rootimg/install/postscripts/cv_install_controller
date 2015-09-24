@@ -195,4 +195,15 @@ mkdef -t policy 6 name=trinity rule=allow
 sed  -e "/<Directory \/>/,/<\/Directory>/ s/Require/#Require/" -i /etc/httpd/conf/httpd.conf
 service httpd restart
 
+
+#--------------------------------------------
+# Initialize the git repository
+#--------------------------------------------
+version=$(cat /trinity/version | head -2)
+cd /
+mv gitignore .gitignore
+git init 
+git add .
+git commit -m "Initial system setup based on Trinity: ${version//\*/}"
+
 echo "$0 finished" >> /var/log/postinstall.log
