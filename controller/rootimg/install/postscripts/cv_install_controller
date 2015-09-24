@@ -24,6 +24,9 @@ systemctl restart network
 mkdir /tmp/trinity
 mount ${SITEMASTER}:/trinity /tmp/trinity       
 mkdir /trinity
+if [ -f /tmp/trinity/site ]; then
+    cp /tmp/trinity/site /trinity/site
+fi
 
 # copy all required module files etc to the right locations
 # note to self: only /trinity/env needs be mounted inside the container
@@ -170,13 +173,6 @@ systemctl start docker docker-registry
 docker build -t controller:5050/trinity /trinity/container
 docker push controller:5050/trinity
 
-#--------------------------------------------------------------------------------------
-# cleanup
-#--------------------------------------------------------------------------------------
-
-#umount /tmp/trinity
-#rmdir /tmp/trinity
-
 #--------------------------------------------
 # Install the xCAT web service
 #--------------------------------------------
@@ -194,5 +190,11 @@ tabch key=xcat,username=trinity passwd.password=trinity
 mkdef -t policy 6 name=trinity rule=allow
 sed  -e "/<Directory \/>/,/<\/Directory>/ s/Require/#Require/" -i /etc/httpd/conf/httpd.conf
 service httpd restart
+
+#--------------------------------------------------------------------------------------
+# cleanup
+#--------------------------------------------------------------------------------------
+umount /tmp/trinity
+rmdir /tmp/trinity
 
 echo "$0 finished" >> /var/log/postinstall.log
