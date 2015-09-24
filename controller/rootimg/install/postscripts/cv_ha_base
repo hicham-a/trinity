@@ -3,6 +3,7 @@
 # FIXME: this should be part of the package lists. Also we need to add the elrepo repo to the 
 #        master repositories.
 #-----------------------------------------------------------------------------------------------
+set -x
 yum -y install epel-release
 yum -y install drbdlinks
 yum -y install pacemaker
@@ -27,6 +28,7 @@ systemctl disable xcatd
 systemctl disable docker
 systemctl disable docker-registry
 systemctl disable slapd
+systemctl disable nfs-server
 
 #-----------------------------------------------------------------------------------------------
 # Determine if this will be the active or passive node. An odd node will become 
@@ -247,6 +249,7 @@ EOF
    pcs resource create mysqld systemd:mysqld op monitor interval="37s"
    pcs resource create dhcpd systemd:dhcpd op monitor interval="37s"
    pcs resource create named systemd:named op monitor interval="37s"
+   pcs resource create nfs-server systemd:nfs-server op monitor interval="37s"
    pcs resource create docker systemd:docker op monitor interval="37s"
    pcs resource create docker-registry systemd:docker-registry op monitor interval="37s"
    pcs resource create slapd systemd:slapd op monitor interval="37s"
@@ -255,7 +258,7 @@ EOF
    # For convenience we create to groups of resources.
    # This will help ordering according to the dependencies.
    pcs resource group add grp_drbd fs_drbd symlinks_xCAT
-   pcs resource group add grp_xCAT httpd dhcpd named mysqld docker docker-registry slapd xCAT
+   pcs resource group add grp_xCAT httpd dhcpd named mysqld docker docker-registry slapd xCAT nfs-server
 
    # We specify that all services and groups should be on
    # the same node as where drbd keeps its master copy of the data.
@@ -291,8 +294,8 @@ else
    systemctl stop xcatd
    systemctl stop docker
    systemctl stop docker-registry
+   systemctl stop nfs-server
    systemctl stop slapd
-
 fi
 
 echo "$0 finished"
