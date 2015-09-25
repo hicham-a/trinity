@@ -1,0 +1,12 @@
+[Unit]
+Description=Dockerized Glance
+Requires=keystone.service
+After=keystone.service
+
+[Service]
+Restart=always
+ExecStart=/usr/bin/docker start  glance
+ExecStop=/usr/bin/docker stop -t 2 glance
+
+[Install]
+WantedBy=local.target
