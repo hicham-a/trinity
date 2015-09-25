@@ -64,7 +64,7 @@ for profile in "${profiles[@]}"; do
         echo "Waiting for keystone to come up!"
         curl -s ${keystone_endpoint} 
         up=$?  
-        sleep 1
+        sleep 10
       done
       for service in "${services[@]}"; do
         setup_service="${TOPDIR}/${profile}/${service}-setup.sh"
