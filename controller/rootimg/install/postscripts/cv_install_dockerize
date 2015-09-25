@@ -148,15 +148,12 @@ openstack-config --set /etc/nova/nova.conf glance host ${OPENSTACK_CONTROLLER}
 openstack-config --set /etc/nova/nova.conf DEFAULT verbose True
 echo "-----------------------------------"
 
-# Start virtualization and nova-compute
-systemctl restart libvirtd.service openstack-nova-compute.service
-systemctl enable  libvirtd.service openstack-nova-compute.service
 
 #-- Configure the openstack-nova-network component
 
 echo "----Configuring openstack-nova-network: editing /etc/nova/nova.conf----"
 # Parameters and constants
-read ETH1 ETH2 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -2)
+read ETH0 ETH1 ETH2 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
 
 openstack-config --set /etc/nova/nova.conf DEFAULT network_api_class  nova.network.api.API
 openstack-config --set /etc/nova/nova.conf DEFAULT security_group_api  nova
@@ -170,9 +167,13 @@ openstack-config --set /etc/nova/nova.conf DEFAULT share_dhcp_address  True
 openstack-config --set /etc/nova/nova.conf DEFAULT force_dhcp_release  True
 openstack-config --set /etc/nova/nova.conf DEFAULT flat_network_bridge  br100
 openstack-config --set /etc/nova/nova.conf DEFAULT flat_interface  ${ETH2}
+openstack-config --set /etc/nova/nova.conf DEFAULT vlan_interface  ${ETH2}
 openstack-config --set /etc/nova/nova.conf DEFAULT public_interface  ${ETH1}
 echo "-----------------------------------"
 
+# Start virtualization and nova-compute
+systemctl restart libvirtd.service openstack-nova-compute.service
+systemctl enable  libvirtd.service openstack-nova-compute.service
 systemctl enable openstack-nova-network.service
 systemctl start openstack-nova-network.service
 systemctl enable openstack-nova-metadata-api.service
