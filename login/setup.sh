@@ -302,3 +302,9 @@ chkconfig slurm on
 ##ulimit -l unlimited
 ##ulimit -s unlimited
 ##EOF
+
+
+#---------------------------------------------------------------------------
+# Install dev tools
+#---------------------------------------------------------------------------
+yum -y group install "Development Tools"
