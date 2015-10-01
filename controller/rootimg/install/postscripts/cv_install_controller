@@ -77,10 +77,6 @@ done
 
 restorexCATdb -p /tmp/xcattables  
 
-# Fix for #149
-ip addr a 10.141.255.254/16 dev $ETH2
-
-# Now apply patches
 cd /opt/xcat/share/xcat/netboot/centos
 
 ln -s ../rh/dracut_033 .
@@ -99,8 +95,32 @@ makehosts -n
 makedns -n
 
 #--------------------------------------------------------------------------------------
+# make xCAT use a mysqldatabase
+#--------------------------------------------------------------------------------------
+ip addr a 10.141.255.254/16 dev $ETH2
+export XCATMYSQLADMIN_PW=system
+export XCATMYSQLROOT_PW=system
+# Hack the mysqlsetup script to show debugging errors
+sed -i -e 's/$mysql->log_stdout($debug)/$mysql->log_stdout(1)/' /opt/xcat/bin/mysqlsetup
+export TERM=dumb
+mysqlsetup -i -V
+#sleep 1
+#echo "GRANT ALL on xcatdb.* TO xcatadmin@'localhost' IDENTIFIED BY 'system';" | mysql -u root -psystem
+#echo "GRANT ALL on xcatdb.* TO xcatadmin@'%' IDENTIFIED BY 'system';" | mysql -u root -psystem
+#sleep 1
+#rm /etc/xcat/cfgloc
+#sleep 1
+#systemctl start xcatd
+#sleep 1
+#mysqlsetup -i -V
+
+#--------------------------------------------------------------------------------------
 # correct any network settings
 #--------------------------------------------------------------------------------------
+systemctl stop NetworkManager
+systemctl disable NetworkManager
+killall dhclient
+systemctl start network
 
 # Fix for #356
 systemctl disable firewalld
