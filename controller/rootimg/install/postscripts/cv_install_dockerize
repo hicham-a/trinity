@@ -105,7 +105,7 @@ setenforce 0
 systemctl stop NetworkManager
 systemctl disable NetworkManager
 killall dhclient
-systemctl start network
+systemctl restart network
 
 systemctl stop openstack-nova-compute.service openstack-nova-network.service openstack-nova-metadata-api.service
 
