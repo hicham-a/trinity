@@ -51,4 +51,5 @@ fi
 #-- Fix for #411 : create a stateless var
 rm -rf $installroot/.var
 mkdir -p $installroot/.var/lib/
+mkdir -p $installroot/var/lib/rpm
 mv -f $installroot/var/lib/rpm $installroot/.var/lib/rpm

@@ -97,13 +97,15 @@ makedns -n
 #--------------------------------------------------------------------------------------
 # make xCAT use a mysqldatabase
 #--------------------------------------------------------------------------------------
-ip addr a 10.141.255.254/16 dev $ETH2
-export XCATMYSQLADMIN_PW=system
-export XCATMYSQLROOT_PW=system
+##-- This should now be done by a separate postbootscript : cv_setup_xcatdb
+
+##ip addr a 10.141.255.254/16 dev $ETH2
+##export XCATMYSQLADMIN_PW=system
+##export XCATMYSQLROOT_PW=system
 # Hack the mysqlsetup script to show debugging errors
-sed -i -e 's/$mysql->log_stdout($debug)/$mysql->log_stdout(1)/' /opt/xcat/bin/mysqlsetup
-export TERM=dumb
-mysqlsetup -i -V
+##sed -i -e 's/$mysql->log_stdout($debug)/$mysql->log_stdout(1)/' /opt/xcat/bin/mysqlsetup
+##export TERM=dumb
+##mysqlsetup -i -V
 #sleep 1
 #echo "GRANT ALL on xcatdb.* TO xcatadmin@'localhost' IDENTIFIED BY 'system';" | mysql -u root -psystem
 #echo "GRANT ALL on xcatdb.* TO xcatadmin@'%' IDENTIFIED BY 'system';" | mysql -u root -psystem
