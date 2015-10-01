@@ -215,8 +215,13 @@ pip install cherrypy
 cd /opt/trinity/trinity_api
 python setup.py install
 cd -
-sed "s/127.0.0.1/$(hostname -i)/g" /etc/trinity/trinity_api.conf > /tmp/trinity_api.conf
-mv -f /tmp/trinity_api.conf /etc/trinity/trinity_api.conf
+# sed "s/127.0.0.1/$(hostname -i)/g" /etc/trinity/trinity_api.conf > /tmp/trinity_api.conf
+# mv -f /tmp/trinity_api.conf /etc/trinity/trinity_api.conf
+DHCP_NIC=$(tabdump -w key==dhcpinterfaces site | grep dhcpinterfaces | awk -F "," '{print $2}' | tr -d '\"')
+sed -e "s/127.0.0.1/$(hostname -i)/g" \
+    -e "s/eno2/${DHCP_NIC}/g" \
+    -i /etc/trinity/trinity_api.conf
+
 mkdir -p /var/log/trinity
 
 # Start the API
@@ -227,8 +232,10 @@ chkconfig trinity_api on
 cd /opt/trinity/trinity_client
 python setup.py install
 cd -
-sed "s/127.0.0.1/$(hostname -i)/g" /etc/trinity/trinity_client.conf > /tmp/trinity_client.conf
-mv -f /tmp/trinity_client.conf /etc/trinity/trinity_client.conf
+# sed "s/127.0.0.1/$(hostname -i)/g" /etc/trinity/trinity_client.conf > /tmp/trinity_client.conf
+# mv -f /tmp/trinity_client.conf /etc/trinity/trinity_client.conf
+sed -e "s/127.0.0.1/$(hostname -i)/g" \
+    -i /etc/trinity/trinity_client.conf
 
 #-- Install the dashboard additions
 cd /opt/trinity/trinity_dashboard
