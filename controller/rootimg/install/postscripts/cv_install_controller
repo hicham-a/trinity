@@ -16,6 +16,7 @@ if [ ! -z $SITEMASTER ]; then
     mkdir /tmp/trinity
     mount ${SITEMASTER}:/trinity /tmp/trinity       
     echo "Creating installation tree"
+    source /etc/profile.d/xcat.sh
     copycds -n centos7 -o $(ls -cr /tmp/trinity/iso/*.iso | head -1)
 else
     echo No master found, checking for a git repository.
