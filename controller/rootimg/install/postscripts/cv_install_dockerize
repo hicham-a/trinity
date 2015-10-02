@@ -217,6 +217,7 @@ python setup.py install
 cd -
 # sed "s/127.0.0.1/$(hostname -i)/g" /etc/trinity/trinity_api.conf > /tmp/trinity_api.conf
 # mv -f /tmp/trinity_api.conf /etc/trinity/trinity_api.conf
+source /etc/profile.d/xcat.sh
 DHCP_NIC=$(tabdump -w key==dhcpinterfaces site | grep dhcpinterfaces | awk -F "," '{print $2}' | tr -d '\"')
 sed -e "s/127.0.0.1/$(hostname -i)/g" \
     -e "s/eno2/${DHCP_NIC}/g" \
