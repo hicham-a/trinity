@@ -16,6 +16,7 @@ if [ ! -z $SITEMASTER ]; then
     mkdir /tmp/trinity
     mount ${SITEMASTER}:/trinity /tmp/trinity       
     echo "Creating installation tree"
+    source /etc/profile.d/xcat.sh
     copycds -n centos7 -o $(ls -cr /tmp/trinity/iso/*.iso | head -1)
 else
     echo No master found, checking for a git repository.
@@ -70,6 +71,8 @@ done
 #--------------------------------------------------------------------------------------
 source /etc/profile.d/xcat.sh
 mkdir -p /tmp/xcattables
+
+# FIXME: make these configurable
 read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
 for table in $(ls /tmp/trinity/controller/xcat/tables); do
     sed -e "s/\<eno1\>/$ETH1/g" -e "s/\<eno2\>/$ETH2/g"  -e "s/\<eno3\>/$ETH3/g" /tmp/trinity/controller/xcat/tables/$table > /tmp/xcattables/$table;
@@ -93,28 +96,6 @@ hostname controller
 makedhcp -n
 makehosts -n
 makedns -n
-
-#--------------------------------------------------------------------------------------
-# make xCAT use a mysqldatabase
-#--------------------------------------------------------------------------------------
-##-- This should now be done by a separate postbootscript : cv_setup_xcatdb
-
-##ip addr a 10.141.255.254/16 dev $ETH2
-##export XCATMYSQLADMIN_PW=system
-##export XCATMYSQLROOT_PW=system
-# Hack the mysqlsetup script to show debugging errors
-##sed -i -e 's/$mysql->log_stdout($debug)/$mysql->log_stdout(1)/' /opt/xcat/bin/mysqlsetup
-##export TERM=dumb
-##mysqlsetup -i -V
-#sleep 1
-#echo "GRANT ALL on xcatdb.* TO xcatadmin@'localhost' IDENTIFIED BY 'system';" | mysql -u root -psystem
-#echo "GRANT ALL on xcatdb.* TO xcatadmin@'%' IDENTIFIED BY 'system';" | mysql -u root -psystem
-#sleep 1
-#rm /etc/xcat/cfgloc
-#sleep 1
-#systemctl start xcatd
-#sleep 1
-#mysqlsetup -i -V
 
 #--------------------------------------------------------------------------------------
 # correct any network settings
@@ -141,6 +122,7 @@ service iptables save
 #--------------------------------------------------------------------------------------
 # copy required files from the master node to the controller node
 #--------------------------------------------------------------------------------------
+cp -LrT /tmp/trinity/clustervision /trinity &
 cp -LrT /tmp/trinity/controller/rootimg /
 cp /tmp/trinity/version /trinity/version
 
