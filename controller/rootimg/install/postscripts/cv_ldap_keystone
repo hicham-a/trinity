@@ -30,17 +30,16 @@ systemctl restart openstack-keystone || (echo Error restarting keystone; exit 0)
 
 files=$(grep -R "^admin_user=" /etc 2> /dev/null | awk -F: '{print $1'})
 for file in $files; do
-    echo $file
     if [ "$file" = "/etc/glance/glance-registry.conf" ]; then continue; fi 
-    user=$(openstack-config --get $file "keystone_authtoken" admin_user)
-    tenant=$(openstack-config --get $file keystone_authtoken admin_tenant_name)
-    password=$(openstack-config --get $file keystone_authtoken admin_password)
+    user=$(openstack-config --get "$file" "keystone_authtoken" admin_user)
+    tenant=$(openstack-config --get "$file" keystone_authtoken admin_tenant_name)
+    password=$(openstack-config --get "$file" keystone_authtoken admin_password)
     if [ -n "$user" ]; then
         # obol user add
         obol -H ldap://controller -w system user delete "$user"
         obol -H ldap://controller -w system user add "$user" --password "$password" --cn "$user" --sn "$user" --givenName "$user" 
         # assign the service admin role in the tenant
-        keystone user-role-add --user=$user --tenant=services --role=admin
+        keystone user-role-add --user="$user" --tenant=services --role=admin
     fi
 done
 
