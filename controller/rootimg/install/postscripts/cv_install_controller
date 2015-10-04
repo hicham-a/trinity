@@ -93,6 +93,14 @@ systemctl enable nfs-server
 systemctl start nfs-server
 exportfs -a
 
+#-------------------------------------------------------------------------------------
+# Setup the xCAT client code
+#-------------------------------------------------------------------------------------
+if ! grep XCATHOST /etc/profile.d/xcat.sh; then
+    echo export XCATHOST=10.141.255.254:3001 >> /etc/profile.d/xcat.sh
+fi
+source /etc/profile.d/xcat.sh
+
 #--------------------------------------------------------------------------------------
 # install docker and docker-registry
 # and create the trinity image for the compute nodes
@@ -116,24 +124,25 @@ docker push controller:5050/trinity
 #-------------------------------------------------------------------------------------
 docker build -t controller:5050/xcat /trinity/xcat-container
 docker push controller:5050/xcat
-docker run -d --privileged --net=host -v /trinity/iso:/trinity/iso --name xcat controller:5050/xcat
+docker run -d --privileged --net=host --name xcat controller:5050/xcat
+docker cp xcat:/install /
+sleep 2
+docker stop xcat
+sleep 5
+docker rm xcat
+docker run -d --privileged --net=host -v /trinity:/trinity -v /install:/install --name xcat controller:5050/xcat
+
 device=$(docker exec xcat losetup -f)
 n=${device#/dev/loop}
 docker exec xcat mknod "$device" b 7 "$n"
 echo docker exec xcat mknod "$device" b 7 "$n"
 
-#-------------------------------------------------------------------------------------
-# Setup the xCAT client code
-#-------------------------------------------------------------------------------------
-if ! grep XCATHOST /etc/profile.d/xcat.sh; then
-    echo export XCATHOST=10.141.255.254:3001 >> /etc/profile.d/xcat.sh
-fi
+# Export the keys, so we can access the commands as root.
 docker cp xcat:/root/.xcat /root
 
 #-------------------------------------------------------------------------------------
 # Do copy cds
 #-------------------------------------------------------------------------------------
-source /etc/profile.d/xcat.sh
 cp -LrT /tmp/trinity/iso /trinity/iso
 copycds -n centos7 -o /trinity/iso/*.iso
 
@@ -143,7 +152,7 @@ for table in $(ls /tmp/trinity/controller/xcat/tables); do
        > /trinity/xcattables/$table;
 done
 
-docker exec xcat bash -c "source /etc/profile.d/xcat.sh; restorexCATdb -p /trinity/xcattables/"
+docker exec xcat restorexCATdb -p /trinity/xcattables
 
 
 
