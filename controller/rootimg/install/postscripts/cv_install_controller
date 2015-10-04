@@ -133,8 +133,19 @@ docker cp xcat:/root/.xcat /root
 #-------------------------------------------------------------------------------------
 # Do copy cds
 #-------------------------------------------------------------------------------------
+source /etc/profile.d/xcat.sh
 cp -LrT /tmp/trinity/iso /trinity/iso
 copycds -n centos7 -o /trinity/iso/*.iso
+
+mkdir -p /trinity/xcattables
+for table in $(ls /tmp/trinity/controller/xcat/tables); do
+    sed -e "s/\<eno1\>/$ETH1/g" -e "s/\<eno2\>/$ETH2/g"  -e "s/\<eno3\>/$ETH3/g" /tmp/trinity/controller/xcat/tables/$table \
+       > /trinity/xcattables/$table;
+done
+
+restorexCATdb -p /trinity/xcattables
+
+
 
 #--------------------------------------------
 # Initialize the git repository

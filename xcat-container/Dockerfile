@@ -9,7 +9,5 @@ RUN rndc-confgen -a
 RUN echo "cache-clear"
 ADD supervisord.conf /usr/etc/supervisord.conf
 ADD dhcpd.conf /etc/dhcp/dhcpd.conf
-ADD tables /tmp/tables
-RUN source /etc/profile.d/xcat.sh && XCATBYPASS=y /opt/xcat/sbin/restorexCATdb -p /tmp/tables && rm /var/run/xcatd.pid
 VOLUME ["/install", "/etc", "/opt/xcat", "/var/named", "/var/lib/dhcpd", "/var/www", "/tftpboot"]
 CMD ["/usr/bin/supervisord", "-c", "/usr/etc/supervisord.conf"]
