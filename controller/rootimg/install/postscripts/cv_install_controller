@@ -6,108 +6,21 @@
 ##email          : hans.then@clustervision
 ##                 abhishek.mukherjee@clustervision.com
 
-
-#--------------------------------------------------------------------------------------
-# install xcat
-#--------------------------------------------------------------------------------------
-# determine if a master is used to install this node:
-if [ ! -z $SITEMASTER ]; then
-    echo master is present
-    mkdir /tmp/trinity
-    mount ${SITEMASTER}:/trinity /tmp/trinity       
-    echo "Creating installation tree"
-    source /etc/profile.d/xcat.sh
-    copycds -n centos7 -o $(ls -cr /tmp/trinity/iso/*.iso | head -1)
-else
-    echo No master found, checking for a git repository.
-    SCRIPT=$(readlink -f $0)
-    SCRIPTDIR=$(dirname $SCRIPT)
-    REPODIR=$(readlink -f $SCRIPTDIR/../../../../)
-    echo Found repository in $REPODIR
-    cp -Lrv --preserve $REPODIR /tmp
-
-    # Fix #379
-    cd $REPODIR
-    (git branch | grep "*"; git rev-parse --short HEAD; git status --porcelain) > /tmp/trinity/version
-    cd -
-
-    # setup repositories
-    yum -y install $(grep -v ^# $REPODIR/controller/rootimg/install/custom/install/centos/controller.pkglist)
-    yum -y install epel-release
-    yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno-1.noarch.rpm
-    wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/2.9/xcat-core/xCAT-core.repo -O /etc/yum.repos.d/xCAT-core.repo
-    wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo -O /etc/yum.repos.d/xCAT-dep.repo
-    yum -y install $(grep -v ^# $REPODIR/controller/rootimg/install/custom/install/centos/controller.otherpkgs)
-    source /etc/profile.d/xcat.sh
-    mkdir -p /tmp/trinity/iso
-    echo Downloading cd, this may take a while
-    wget http://ftp.nluug.nl/ftp/pub/os/Linux/distr/CentOS/7/isos/x86_64/CentOS-7-x86_64-Everything-1503-01.iso \
-         -O /tmp/trinity/iso/CentOS-7-x86_64-DVD-1503-01.iso
-
-    echo "Creating installation tree"
-    copycds -n centos7 -o $(ls -cr /tmp/trinity/iso/*.iso | head -1)
-fi
-
 systemctl stop NetworkManager
 systemctl disable NetworkManager
 killall dhclient
 # disable the dhcp based ntp
 rm /etc/dhcp/dhclient.d/ntp.sh
 systemctl restart network
-
-mkdir -p /trinity
-
-# create runimages
-#--------------------------------------------------------------------------------------
-for file in $(ls /install/runimages); do
-    if [ -d /install/runimages/${file} ]; then 
-        tar czf /install/runimages/${file}.tgz -C /install/runimages/${file}/ .
-    fi
-done
-
-#--------------------------------------------------------------------------------------
-# copy default database configuration
-# and patch the installation
-#--------------------------------------------------------------------------------------
-source /etc/profile.d/xcat.sh
-mkdir -p /tmp/xcattables
-
-# FIXME: make these configurable
-read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
-for table in $(ls /tmp/trinity/controller/xcat/tables); do
-    sed -e "s/\<eno1\>/$ETH1/g" -e "s/\<eno2\>/$ETH2/g"  -e "s/\<eno3\>/$ETH3/g" /tmp/trinity/controller/xcat/tables/$table > /tmp/xcattables/$table;
-done
-
-restorexCATdb -p /tmp/xcattables  
-
-cd /opt/xcat/share/xcat/netboot/centos
-
-ln -s ../rh/dracut_033 .
-ln -s ../rh/dracut .
-
-cd /
-cat /tmp/trinity/controller/xcat/patches/*.patch | patch -p0
-systemctl restart xcatd
-setenforce 0
-sestatus
-
-#
-hostname controller
-makedhcp -n
-makehosts -n
-makedns -n
-
-#--------------------------------------------------------------------------------------
-# correct any network settings
-#--------------------------------------------------------------------------------------
-systemctl stop NetworkManager
-systemctl disable NetworkManager
-killall dhclient
-systemctl start network
-
-# Fix for #356
 systemctl disable firewalld
 
+# Prepare mounts, so we can copy stuffs from master
+mkdir /tmp/trinity
+mount ${SITEMASTER}:/trinity /tmp/trinity
+mkdir -p /trinity
+
+
+read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
 # setup NAT, so nodes can access the internet (see manual step 1.f)
 # FIXME: maybe move iptables save output to the rootimg profile.
 chkconfig iptables on
@@ -125,6 +38,14 @@ service iptables save
 cp -LrT /tmp/trinity/clustervision /trinity &
 cp -LrT /tmp/trinity/controller/rootimg /
 cp /tmp/trinity/version /trinity/version
+cp /tmp/trinity/site /trinity/site
+
+# FIXME (this should be moved out of the rootimg)
+cat > /etc/resolv.conf << EOF
+domain cluster
+search cluster
+nameserver 10.1.101.101
+EOF
 
 #--------------------------------------------------------------------------------------
 # setup routing for the virtual clusters
@@ -139,7 +60,6 @@ mv /etc/sysconfig/network-scripts/route-eno2 /etc/sysconfig/network-scripts/rout
 for file in /etc/sysconfig/network-scripts/ifcfg-{$ETH2,$ETH3}; do
     sed -i $file -e "s/DEFROUTE=\(.*\)/DEFROUTE=no/"
 done
-
 
 # disable peerdns
 sed -i /etc/sysconfig/network-scripts/ifcfg-$ETH1 -e "s/DEFROUTE=\(.*\)/DEFROUTE=yes/" -e "s/PEERDNS=\(.*\)/PEERDNS=no/"
@@ -174,25 +94,13 @@ systemctl start nfs-server
 exportfs -a
 
 #--------------------------------------------------------------------------------------
-# Selective updates
-#--------------------------------------------------------------------------------------
-mkdir -p /install/post/otherpkgs/centos7/x86_64
-
-if [ -z $SITEMASTER ]; then
-    reposync -n -r epel -r extras -r updates -r xcat-2-core -r xcat-dep -r openstack-juno -p /install/post/otherpkgs/centos7/x86_64/
-else
-    reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7/x86_64/
-fi
-
-createrepo /install/post/otherpkgs/centos7/x86_64/
-genimage centos7-x86_64-netboot-trinity
-packimage centos7-x86_64-netboot-trinity
-
-#--------------------------------------------------------------------------------------
 # install docker and docker-registry
 # and create the trinity image for the compute nodes
 #--------------------------------------------------------------------------------------
 yum -y install docker docker-registry
+#FIXME
+echo "10.141.255.254 controller" >> /etc/hosts
+
 # FIXME: move this to the rootimg profile
 sed -i 's/REGISTRY_PORT=.*/REGISTRY_PORT=5050/' /etc/sysconfig/docker-registry
 # FIXME: this is not idempotent
@@ -203,28 +111,19 @@ systemctl start docker docker-registry
 docker build -t controller:5050/trinity /trinity/container
 docker push controller:5050/trinity
 
-#--------------------------------------------------------------------------------------
-# cleanup
-#--------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------
+# Build the xCAT container
+#-------------------------------------------------------------------------------------
+docker build -t controller:5050/xcat /trinity/xcat-container
+docker run -i -t --net=host --name xcat controller:5050/xcat
 
-#--------------------------------------------
-# Install the xCAT web service
-#--------------------------------------------
-# The xCAT web service requires the following
-yum -y install mod_ssl
-service httpd restart
-yum -y install perl-JSON
-
-# Set up the xCAT web service
-useradd trinity
-echo "trinity" | passwd trinity --stdin
-source /etc/profile.d/xcat.sh
-export HOME=/root
-tabch key=xcat,username=trinity passwd.password=trinity
-mkdef -t policy 6 name=trinity rule=allow
-sed  -e "/<Directory \/>/,/<\/Directory>/ s/Require/#Require/" -i /etc/httpd/conf/httpd.conf
-service httpd restart
-
+#-------------------------------------------------------------------------------------
+# Setup the xCAT client code
+#-------------------------------------------------------------------------------------
+if ! grep XCATHOST /etc/profile.d/xcat.sh; then
+    echo export XCATHOST=10.141.255.254:3001 >> /etc/profile.d/xcat.sh
+fi
+docker cp xcat:/root/.xcat /root
 
 #--------------------------------------------
 # Initialize the git repository

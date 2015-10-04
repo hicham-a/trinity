@@ -1,4 +1,3 @@
-xCAT
 # required for mysql setup
 perl-DBD-MySQL
 mysql-server
@@ -6,4 +5,15 @@ mysql
 mysql-devel
 mysql-connector-odbc
 unixODBC
+perl-IO-Socket-INET6
+perl-Net-SSLeay
+perl-DBI
+perl-XML-Parser  
+perl-HTML-Parser
+perl-IO-Socket-SSL
+perl-XML-Simple
+net-snmp-perl
+perl-Expect
+perl-xCAT
+xCAT-client
 
