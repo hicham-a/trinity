@@ -154,7 +154,12 @@ echo "-----------------------------------"
 echo "----Configuring openstack-nova-network: editing /etc/nova/nova.conf----"
 # Parameters and constants
 read ETH0 ETH1 ETH2 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
-
+PUB_NIC=${ETH1}
+if [ -z "${ETH2}" ]; then
+    PRI_NIC=${ETH1} 
+else
+    PRI_NIC=${ETH2}
+fi
 openstack-config --set /etc/nova/nova.conf DEFAULT network_api_class  nova.network.api.API
 openstack-config --set /etc/nova/nova.conf DEFAULT security_group_api  nova
 openstack-config --set /etc/nova/nova.conf DEFAULT firewall_driver  nova.virt.libvirt.firewall.IptablesFirewallDriver
@@ -166,9 +171,9 @@ openstack-config --set /etc/nova/nova.conf DEFAULT send_arp_for_ha  True
 openstack-config --set /etc/nova/nova.conf DEFAULT share_dhcp_address  True
 openstack-config --set /etc/nova/nova.conf DEFAULT force_dhcp_release  True
 openstack-config --set /etc/nova/nova.conf DEFAULT flat_network_bridge  br100
-openstack-config --set /etc/nova/nova.conf DEFAULT flat_interface  ${ETH2}
-openstack-config --set /etc/nova/nova.conf DEFAULT vlan_interface  ${ETH2}
-openstack-config --set /etc/nova/nova.conf DEFAULT public_interface  ${ETH1}
+openstack-config --set /etc/nova/nova.conf DEFAULT flat_interface  ${PRI_NIC}
+openstack-config --set /etc/nova/nova.conf DEFAULT vlan_interface  ${PRI_NIC}
+openstack-config --set /etc/nova/nova.conf DEFAULT public_interface  ${PUB_NIC}
 echo "-----------------------------------"
 
 # Start virtualization and nova-compute
@@ -274,12 +279,17 @@ glance image-create \
 
 #-- Create the Flat Network
 read ETH0 ETH1 ETH2 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
+if [ -z "${ETH2}" ]; then
+    PRI_NIC=${ETH1} 
+else
+    PRI_NIC=${ETH2}
+fi
 BRIDGE="br100"
 NETWORK_LABEL="novanetwork"
 nova network-create \
        --fixed-range-v4 192.168.32.0/24 \
        --fixed-cidr 192.168.32.0/24 \
-       --bridge-interface ${ETH2} \
+       --bridge-interface ${PRI_NIC} \
        --bridge ${BRIDGE} \
        ${NETWORK_LABEL}
        
@@ -339,6 +349,11 @@ nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
 nova boot --flavor 2 --image ${LOGIN_IMAGE} --security-groups default --user-data ${LOGIN_DATA} ${LOGIN_NODE}
 sleep 5
 nova floating-ip-associate ${LOGIN_NODE} ${FIRST_FLOATING}
+
+#--------------------------------------------------------------------------------------
+# setup routing for the virtual clusters
+#--------------------------------------------------------------------------------------
+ip route add 172.16.0.0/12 dev ${BRIDGE}
 
 echo $0 finished >> /var/log/postinstall.log
 
