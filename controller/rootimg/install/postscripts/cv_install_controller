@@ -122,7 +122,7 @@ service iptables save
 #--------------------------------------------------------------------------------------
 # copy required files from the master node to the controller node
 #--------------------------------------------------------------------------------------
-cp -LrT /tmp/trinity/clustervision /trinity &
+cp -LrT /tmp/trinity/clustervision /trinity/clustervision &
 cp -LrT /tmp/trinity/controller/rootimg /
 cp /tmp/trinity/version /trinity/version
 
