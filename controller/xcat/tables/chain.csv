@@ -1,2 +1,2 @@
 #node,currstate,currchain,chain,ondiscover,comments,disable
-"compute",,,"runcmd=bmcsetup,runimage=http://controller/install/runimages/mkfs.tgz,standby",,,
+"compute",,,"runcmd=bmcsetup,standby",,,
