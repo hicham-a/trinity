@@ -45,7 +45,7 @@ cp -rT /etc/yum.repos.d $installroot/etc/yum.repos.d
 
 #-- Copy supporting files from the local environment
 if [ -d /trinity/site-local/compute/rootimg/ ]; then
-    cp -LrT /trinity/cinder/rootimg/ $installroot
+    cp -LrT /trinity/site-local/compute/rootimg/ $installroot
 fi
 
 #-- Fix for #411 : create a stateless var
