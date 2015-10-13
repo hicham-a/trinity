@@ -79,6 +79,7 @@ for table in $(ls /tmp/trinity/controller/xcat/tables); do
 done
 
 restorexCATdb -p /tmp/xcattables  
+mknb x86_64
 
 cd /opt/xcat/share/xcat/netboot/centos
 
