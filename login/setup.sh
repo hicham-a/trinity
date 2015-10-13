@@ -138,7 +138,7 @@ authconfig --enablemkhomedir --update
 # Install LDAP
 #--------------------------------------------------------------------------
 
-. /postscripts/cv_install_slapd
+/postscripts/cv_install_slapd
 
 ##-- The following commented lines should be removed after successful testing
 ##yum -y install openldap openldap-clients openldap-servers
