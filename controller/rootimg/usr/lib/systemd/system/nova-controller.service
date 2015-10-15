@@ -1,0 +1,12 @@
+[Unit]
+Description=Dockerized Nova-controller
+Requires=keystone.service glance.service
+After=keystone.service glance.service
+
+[Service]
+Restart=always
+ExecStart=/usr/bin/docker start  nova_controller
+ExecStop=/usr/bin/docker stop -t 2 nova_controller
+
+[Install]
+WantedBy=local.target

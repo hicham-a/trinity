@@ -21,6 +21,16 @@ while [ ${access} -ne "0" ];
 done
 
 #--------------------------------------------------------------------------
+# Setup timezone and ntp
+#--------------------------------------------------------------------------
+ln -sf /usr/share/zoneinfo/CET /etc/localtime
+yum -y install ntp
+sed -e "s/^server/#server/g" -i /etc/ntp.conf
+echo "server 10.141.255.254  prefer" >> /etc/ntp.conf
+service ntpd start
+chkconfig ntpd on
+
+#--------------------------------------------------------------------------
 # Copy the required files from controller to the login node  
 #--------------------------------------------------------------------------
 mkdir -p /trinity
@@ -127,76 +137,79 @@ authconfig --enablemkhomedir --update
 # Install LDAP
 #--------------------------------------------------------------------------
 
-yum -y install openldap openldap-clients openldap-servers
-cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
-chkconfig slapd on
-service slapd start
+/postscripts/cv_install_slapd
 
-rm -rf /etc/openldap/slapd.d
-cp -LrT /trinity/openldap/rootimg/etc/openldap /etc/openldap
-
-systemctl restart slapd
-
-#--------------------------------------------------------------------------
-# Setup the initial database
-#--------------------------------------------------------------------------
-ldapadd -D cn=Manager,dc=local -w system << EOF
-dn: dc=local
-dc: local
-objectClass: domain
-
-dn: ou=People,dc=local
-ou: People
-objectClass: top
-objectClass: organizationalUnit
-
-dn: ou=Group,dc=local
-ou: Group
-objectClass: top
-objectClass: organizationalUnit
-
-dn: cn=uid,dc=local
-cn: uid
-objectClass: uidNext
-uidNumber: 1050
-
-dn: cn=gid,dc=local
-cn: gid
-objectClass: uidNext
-uidNumber: 150
-EOF
-
-#--------------------------------------------------------------------------
-# Setup PAM
-#--------------------------------------------------------------------------
-yum -y install nss-pam-ldapd authconfig
-
-# append our config to the ldap nameserver demon
-cat >> /etc/nslcd.conf << EOF 
-uri ldap://localhost
-ssl no
-tls_cacertdir /etc/openldap/cacerts
-base group ou=Group,dc=local
-base passwd ou=People,dc=local
-base shadow ou=People,dc=local
-EOF
-
-# configure the ldap server. Not sure this is needed.
-cat >> /etc/pam_ldap.conf << EOF
-uri ldap://localhost/
-base dc=local
-ssl no
-tls_cacertdir /etc/openldap/cacerts
-pam_password md5
-EOF
-
-# setup nssswitch
-sed -e 's/^group:.*$/group:\t\tfiles ldap/g' \
-    -e 's/^passwd:.*$/passwd:\t\tfiles ldap/g' \
-    -e 's/^shadow:.*$/shadow:\t\tfiles ldap/g' \
-    -i /etc/nsswitch.conf 
-
-authconfig-tui --kickstart --enableldapauth --ldapbasedn=dc=local --ldapserver=localhost
+##-- The following commented lines should be removed after successful testing
+##yum -y install openldap openldap-clients openldap-servers
+##cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
+##chkconfig slapd on
+##service slapd start
+##
+##rm -rf /etc/openldap/slapd.d
+##cp -LrT /trinity/openldap/rootimg/etc/openldap /etc/openldap
+##
+##systemctl restart slapd
+##
+###--------------------------------------------------------------------------
+### Setup the initial database
+###--------------------------------------------------------------------------
+##ldapadd -D cn=Manager,dc=local -w system << EOF
+##dn: dc=local
+##dc: local
+##objectClass: domain
+##
+##dn: ou=People,dc=local
+##ou: People
+##objectClass: top
+##objectClass: organizationalUnit
+##
+##dn: ou=Group,dc=local
+##ou: Group
+##objectClass: top
+##objectClass: organizationalUnit
+##
+##dn: cn=uid,dc=local
+##cn: uid
+##objectClass: uidNext
+##uidNumber: 1050
+##
+##dn: cn=gid,dc=local
+##cn: gid
+##objectClass: uidNext
+##uidNumber: 150
+##EOF
+##
+###--------------------------------------------------------------------------
+### Setup PAM
+###--------------------------------------------------------------------------
+##yum -y install nss-pam-ldapd authconfig
+##
+### append our config to the ldap nameserver demon
+##cat >> /etc/nslcd.conf << EOF 
+##uri ldap://localhost
+##ssl no
+##tls_cacertdir /etc/openldap/cacerts
+##base group ou=Group,dc=local
+##base passwd ou=People,dc=local
+##base shadow ou=People,dc=local
+##EOF
+##
+### configure the ldap server. Not sure this is needed.
+##cat >> /etc/pam_ldap.conf << EOF
+##uri ldap://localhost/
+##base dc=local
+##ssl no
+##tls_cacertdir /etc/openldap/cacerts
+##pam_password md5
+##EOF
+##
+### setup nssswitch
+##sed -e 's/^group:.*$/group:\t\tfiles ldap/g' \
+##    -e 's/^passwd:.*$/passwd:\t\tfiles ldap/g' \
+##    -e 's/^shadow:.*$/shadow:\t\tfiles ldap/g' \
+##    -i /etc/nsswitch.conf 
+##
+##authconfig-tui --kickstart --enableldapauth --ldapbasedn=dc=local --ldapserver=localhost
 
 
 #---------------------------------------------------------------------------
@@ -302,3 +315,9 @@ chkconfig slurm on
 ##ulimit -l unlimited
 ##ulimit -s unlimited
 ##EOF
+
+
+#---------------------------------------------------------------------------
+# Install dev tools
+#---------------------------------------------------------------------------
+yum -y group install "Development Tools"
