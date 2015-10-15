@@ -55,7 +55,12 @@ killall dhclient
 rm /etc/dhcp/dhclient.d/ntp.sh
 systemctl restart network
 
+mkdir /tmp/trinity
+mount ${SITEMASTER}:/trinity /tmp/trinity       
 mkdir -p /trinity
+if [ -f /tmp/trinity/site ]; then
+    cp /tmp/trinity/site /trinity/site
+fi
 
 # create runimages
 #--------------------------------------------------------------------------------------
@@ -204,10 +209,6 @@ systemctl start docker docker-registry
 docker build -t controller:5050/trinity /trinity/container
 docker push controller:5050/trinity
 
-#--------------------------------------------------------------------------------------
-# cleanup
-#--------------------------------------------------------------------------------------
-
 #--------------------------------------------
 # Install the xCAT web service
 #--------------------------------------------
@@ -225,5 +226,11 @@ tabch key=xcat,username=trinity passwd.password=trinity
 mkdef -t policy 6 name=trinity rule=allow
 sed  -e "/<Directory \/>/,/<\/Directory>/ s/Require/#Require/" -i /etc/httpd/conf/httpd.conf
 service httpd restart
+
+#--------------------------------------------------------------------------------------
+# cleanup
+#--------------------------------------------------------------------------------------
+umount /tmp/trinity
+rmdir /tmp/trinity
 
 echo "$0 finished" >> /var/log/postinstall.log

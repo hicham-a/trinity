@@ -63,32 +63,6 @@ EOF
 # Setup PAM
 #----------------------------------------------------------------------------
 yum -y install nss-pam-ldapd authconfig
-
-# append our config to the ldap nameserver demon
-cat >> /etc/nslcd.conf << EOF 
-uri ldap://localhost
-ssl no
-tls_cacertdir /etc/openldap/cacerts
-base   group  ou=Group,dc=cluster
-base   passwd ou=People,dc=cluster
-base   shadow ou=People,dc=cluster
-EOF
-
-# configure the ldap server. Not sure this is needed.
-cat >> /etc/pam_ldap.conf << EOF
-uri ldap://localhost/
-base dc=cluster
-ssl no
-tls_cacertdir /etc/openldap/cacerts
-pam_password md5
-EOF
-
-# setup nssswitch
-sed -e 's/^group:.*$/group:\t\tfiles ldap/g' \
-    -e 's/^passwd:.*$/passwd:\t\tfiles ldap/g' \
-    -e 's/^shadow:.*$/shadow:\t\tfiles ldap/g' \
-    -i /etc/nsswitch.conf 
-
 authconfig-tui --kickstart --enableldapauth --ldapbasedn=dc=local \
      --ldapserver=localhost 
 
