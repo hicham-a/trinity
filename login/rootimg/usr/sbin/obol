@@ -40,7 +40,7 @@ def user_add(username, cn, sn, givenName, password, shell, groups):
         cn = username
     if not sn:
         sn = cn
-    if not givenName
+    if not givenName:
         givenName = cn
 
     # first add the group 
