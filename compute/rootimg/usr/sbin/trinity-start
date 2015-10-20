@@ -21,7 +21,7 @@ while [ 1 ]; do
         continue;
     fi
 
-    IP=$(host ${NAME}.${VC} | awk -F' ' '{print $4}')
+    IP=$(host ${NAME}.${VC} | grep "has address" | awk -F' ' '{print $4}')
     GW=$(echo $IP | awk -F. '{ print $1"."$2".255.254" }')
  
     # Check a few directories and files
