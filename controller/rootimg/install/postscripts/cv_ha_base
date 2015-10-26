@@ -9,9 +9,7 @@ yum -y install drbdlinks
 yum -y install pacemaker
 yum -y install pcs fence-agents-all
 systemctl start pcsd
-systemctl start pacemaker 
 systemctl enable pcsd
-systemctl enable pacemaker
 
 echo system | passwd hacluster --stdin
 
@@ -77,8 +75,9 @@ if [ $N = 1 ]; then
 
    source /etc/profile.d/xcat.sh
    # For some reason we need to add these.
-   echo "GRANT ALL on xcatdb.* TO xcatadmin@'localhost' IDENTIFIED BY 'system';" | mysql -u root -psystem
-   echo "GRANT ALL on xcatdb.* TO xcatadmin@'%' IDENTIFIED BY 'system';" | mysql -u root -psystem
+   # HTH: disabled mysqld
+   # HTH echo "GRANT ALL on xcatdb.* TO xcatadmin@'localhost' IDENTIFIED BY 'system';" | mysql -u root -psystem
+   # HTH echo "GRANT ALL on xcatdb.* TO xcatadmin@'%' IDENTIFIED BY 'system';" | mysql -u root -psystem
 
    nodeadd controller-1 groups=xcat
    nodeadd controller-2 groups=xcat
@@ -130,6 +129,10 @@ if [ $N = 1 ]; then
        if ssh controller-2.cluster cat /tmp/cv_ha_ready; then break; fi
        sleep 5
    done
+   if ! ssh controller-2.cluster cat /tmp/cv_ha_ready; then 
+       echo BUGGERALL unable to reach controller-2, exiting.
+       exit -1
+   fi
    scp /etc/hosts controller-2.cluster:/etc/hosts
       
    #-------------------------------------------------------------------
@@ -246,10 +249,11 @@ EOF
    pcs resource create symlinks_xCAT ocf:tummy:drbdlinks configfile="/drbd/xcat.conf" op monitor interval="31s"
 
    pcs resource create httpd systemd:httpd op monitor interval="37s"
-   pcs resource create mysqld systemd:mysqld op monitor interval="37s"
+   # HTH: disabled mysql
+   #pcs resource create mysqld systemd:mysqld op monitor interval="37s"
    pcs resource create dhcpd systemd:dhcpd op monitor interval="37s"
    pcs resource create named systemd:named op monitor interval="37s"
-   pcs resource create nfs-server systemd:nfs-server op monitor interval="37s"
+   pcs resource create nfs nfsserver nfs_no_notify=true op start timeout=120s
    pcs resource create docker systemd:docker op monitor interval="37s"
    pcs resource create docker-registry systemd:docker-registry op monitor interval="37s"
    pcs resource create slapd systemd:slapd op monitor interval="37s"
@@ -258,7 +262,9 @@ EOF
    # For convenience we create to groups of resources.
    # This will help ordering according to the dependencies.
    pcs resource group add grp_drbd fs_drbd symlinks_xCAT
-   pcs resource group add grp_xCAT httpd dhcpd named mysqld docker docker-registry slapd xCAT nfs-server
+   # HTH: disable mysqld 
+   #pcs resource group add grp_xCAT httpd dhcpd named mysqld docker docker-registry slapd xCAT nfs
+   pcs resource group add grp_xCAT httpd dhcpd named docker docker-registry slapd xCAT nfs
 
    # We specify that all services and groups should be on
    # the same node as where drbd keeps its master copy of the data.
@@ -284,6 +290,8 @@ EOF
 
    # Just a hack. We noticed drbd came up with not configured errors. 
    pcs resource cleanup drbd 
+   pcs resource cleanup ip
+   pcs resource cleanup nfs
 else
    touch /tmp/cv_ha_ready
 
@@ -297,6 +305,9 @@ else
    systemctl stop nfs-server
    systemctl stop slapd
 fi
+
+systemctl enable pacemaker
+systemctl enable corosync
 
 echo "$0 finished"
 echo "$0 finished" >> /var/log.postinstall.log
