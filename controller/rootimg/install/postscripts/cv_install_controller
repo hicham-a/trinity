@@ -62,14 +62,6 @@ if [ -f /tmp/trinity/site ]; then
     cp /tmp/trinity/site /trinity/site
 fi
 
-# create runimages
-#--------------------------------------------------------------------------------------
-for file in $(ls /install/runimages); do
-    if [ -d /install/runimages/${file} ]; then 
-        tar czf /install/runimages/${file}.tgz -C /install/runimages/${file}/ .
-    fi
-done
-
 #--------------------------------------------------------------------------------------
 # copy default database configuration
 # and patch the installation
@@ -87,9 +79,6 @@ restorexCATdb -p /tmp/xcattables
 mknb x86_64
 
 cd /opt/xcat/share/xcat/netboot/centos
-
-ln -s ../rh/dracut_033 .
-ln -s ../rh/dracut .
 
 cd /
 cat /tmp/trinity/controller/xcat/patches/*.patch | patch -p0
