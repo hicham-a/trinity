@@ -35,8 +35,10 @@ else
     yum -y install $(grep -v ^# $REPODIR/controller/rootimg/install/custom/install/centos/controller.pkglist)
     yum -y install epel-release
     yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno-1.noarch.rpm
-    wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/2.9/xcat-core/xCAT-core.repo -O /etc/yum.repos.d/xCAT-core.repo
-    wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo -O /etc/yum.repos.d/xCAT-dep.repo
+    yum-config-manager --add-repo http://sourceforge.net/projects/xcat/files/yum/2.9/xcat-core/xCAT-core.repo
+    yum-config-manager --add-repo http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo
+    #wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/2.9/xcat-core/xCAT-core.repo -O /etc/yum.repos.d/xCAT-core.repo
+    #wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo -O /etc/yum.repos.d/xCAT-dep.repo
     yum -y install $(grep -v ^# $REPODIR/controller/rootimg/install/custom/install/centos/controller.otherpkgs)
     source /etc/profile.d/xcat.sh
     mkdir -p /tmp/trinity/iso
@@ -178,6 +180,12 @@ if [ -z $SITEMASTER ]; then
 else
     reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7/x86_64/
 fi
+
+# Remove stale repositories.
+yum-config-manager --disable xcat-otherpkgs* local-centos*
+yum-config-manager --enable base epel extras updates openstack-juno
+yum-config-manager --add-repo http://sourceforge.net/projects/xcat/files/yum/2.9/xcat-core/xCAT-core.repo
+yum-config-manager --add-repo http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo
 
 createrepo /install/post/otherpkgs/centos7/x86_64/
 genimage centos7-x86_64-netboot-trinity
