@@ -87,6 +87,7 @@ case $state in
            --net=none \
            ${IB_DEVICES} \
            -v /root:/root \
+           -v /trinity/clustervision:/trinity/clustervision \
            -v /home/${VC}:/home \
            -v /cluster/${VC}:/cluster \
            -v /cluster/${VC}/etc/slurm:/etc/slurm \
