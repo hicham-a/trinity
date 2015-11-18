@@ -59,11 +59,13 @@ mkdir -p /trinity
 
 # create runimages
 #--------------------------------------------------------------------------------------
-for file in $(ls /install/runimages); do
-    if [ -d /install/runimages/${file} ]; then 
-        tar czf /install/runimages/${file}.tgz -C /install/runimages/${file}/ .
-    fi
-done
+if [[ -d /install/runimages ]]; then
+    for file in $(ls /install/runimages); do
+        if [ -d /install/runimages/${file} ]; then 
+            tar czf /install/runimages/${file}.tgz -C /install/runimages/${file}/ .
+        fi
+    done
+fi
 
 #--------------------------------------------------------------------------------------
 # copy default database configuration
