@@ -10,3 +10,4 @@
 "xcatconfdir","/etc/xcat",,
 "timezone","Europe/Amsterdam",,
 "dhcpinterfaces","eno2",,
+"dnsinterfaces","eno2",,
