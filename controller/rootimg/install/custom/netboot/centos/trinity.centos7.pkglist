@@ -82,3 +82,6 @@ dmidecode
 
 #Fix for 210
 lvm2
+
+#Fix for #509
+yum-utils
