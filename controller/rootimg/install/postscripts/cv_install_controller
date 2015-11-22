@@ -129,6 +129,10 @@ cp -LrT /tmp/trinity/clustervision /trinity/clustervision &
 cp -LrT /tmp/trinity/controller/rootimg /
 cp /tmp/trinity/version /trinity/version
 
+if [[ -f /tmp/trinity/site ]]; then
+   cp /tmp/trinity/site /trinity/site
+fi
+
 #--------------------------------------------------------------------------------------
 # setup routing for the virtual clusters
 #--------------------------------------------------------------------------------------

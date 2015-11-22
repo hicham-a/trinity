@@ -309,5 +309,5 @@ fi
 systemctl enable pacemaker
 systemctl enable corosync
 
-echo "$0 finished"
 echo "$0 finished" >> /var/log.postinstall.log
+shutdown -r now
