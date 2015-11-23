@@ -123,7 +123,7 @@ EOF
 
 
 if [ $N = 1 ]; then 
-   # I am the passive node
+   # I am the active node
    # Wait until the passive controller is ready to continue
    for i in {1..100}; do
        if ssh controller-2.cluster cat /tmp/cv_ha_ready; then break; fi
@@ -310,4 +310,8 @@ systemctl enable pacemaker
 systemctl enable corosync
 
 echo "$0 finished" >> /var/log.postinstall.log
-shutdown -r now
+
+if [ $N = 2 ]; then
+    # I am the passive node: reboot
+    shutdown -r now
+fi
