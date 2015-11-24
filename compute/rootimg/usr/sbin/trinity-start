@@ -65,6 +65,11 @@ else
     IB_DEVICES=""
 fi
 
+# Check if we want to inject files into the container
+if [ -d "/trinity/site-local/container/files" ]; then
+    INJECT=$(find /trinity/site-local/container/files -type f -printf "-v %p:/%P ")
+fi
+
 # determine the ethernet device name
 # Fix for 229
 ETH1=$(ip route | grep default | awk '{print $5}' | head -1)
@@ -82,6 +87,7 @@ case $state in
            --net=none \
            ${IB_DEVICES} \
            -v /root:/root \
+           -v /trinity/clustervision:/trinity/clustervision \
            -v /home/${VC}:/home \
            -v /cluster/${VC}:/cluster \
            -v /cluster/${VC}/etc/slurm:/etc/slurm \

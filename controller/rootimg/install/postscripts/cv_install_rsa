@@ -6,6 +6,7 @@
 
 yum install -y epel-release 
 yum install -y wget telnet net-tools
+yum uninstall mariadb-server
 # This is a temporary measure 
 # The rpm should either be in the local repo 
 # or we should make sure that we download a consistent version of the rpm
