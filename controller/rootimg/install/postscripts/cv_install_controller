@@ -57,12 +57,7 @@ killall dhclient
 rm /etc/dhcp/dhclient.d/ntp.sh
 systemctl restart network
 
-mkdir /tmp/trinity
-mount ${SITEMASTER}:/trinity /tmp/trinity       
 mkdir -p /trinity
-if [ -f /tmp/trinity/site ]; then
-    cp /tmp/trinity/site /trinity/site
-fi
 
 # create runimages
 #--------------------------------------------------------------------------------------
