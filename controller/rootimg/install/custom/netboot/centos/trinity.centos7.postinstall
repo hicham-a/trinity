@@ -52,6 +52,7 @@ fi
 rm -rf $installroot/.var
 mkdir -p $installroot/.var/lib/
 mkdir -p $installroot/var/lib/rpm
+package-cleanup -y --oldkernels --count=1
 mv -f $installroot/var/lib/rpm $installroot/.var/lib/rpm
 
 # Fix for #509
