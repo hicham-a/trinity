@@ -21,7 +21,7 @@
 }
 
 @test "1.1.7 The timezone is set correctly" {
-  run bash -c "date | grep CEST"
+  run bash -c "date | grep 'CES\?T'"
   [ "$status" -eq 0 ]
 
 }
