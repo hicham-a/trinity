@@ -1,7 +1,4 @@
 #!/bin/bash
-echo "Starting Trinity"
-
-# disable the docker bridge
 ip link set docker0 down 2>/dev/null|| true
 brctl delbr docker0 2>/dev/null || true
 
@@ -16,7 +13,7 @@ while [ 1 ]; do
     done
 
     if [ -z "$found" ]; then
-        echo "Could not determine cluster membership for this node. Sleeping now."
+        #echo "Could not determine cluster membership for this node. Sleeping now."
         sleep 5
         continue;
     fi
@@ -26,13 +23,13 @@ while [ 1 ]; do
  
     # Check a few directories and files
     if [ ! -d /cluster/${VC} ]; then
-        echo "No cluster directory found for ${VC}."; 
+        #echo "No cluster directory found for ${VC}."; 
         sleep 5
         continue;
     fi
     
     if ! ping -c 5 -W 5 login.${VC}; then
-        echo "No login node found for ${VC}."; 
+        #echo "No login node found for ${VC}."; 
         sleep 5
         continue;
     fi
