@@ -7,13 +7,14 @@
 
 
 LOGFILE="/trinity/testing/bats.log"
-touch ${LOGFILE}
-exec >> ${LOGFILE} 
-exec 2>&1
+#touch ${LOGFILE}
+exec 2>&1 | tee ${LOGFILE} 
 
 echo "Now flying clusterbats, hold on to your seats"
 
-source /trinity/testing/clusterbats/cluster.cfg
+CONFIG_FILE=$(</trinity/site).cfg
+
+source /trinity/testing/clusterbats/${CONFIG_FILE}
 source /etc/profile.d/xcat.sh
 yum -y install sshpass
 
@@ -47,18 +48,28 @@ chtab node=switch hosts.ip=${switch_ip}  #10.141.253.1
 
 
 #change hosttable with openstack node attributes
-chtab node=openstack hosts.ip=${openstack_ip} #10.141.255.250
-chtab node=openstack hosts.hostnames=${openstack_hostname} #"openstack"
-chtab node=openstack hosts.otherinterfaces="openstack-bmc:${openstack_bmc_ip}"
+
+if [ ! ${dockerize} ]; then
+ chtab node=openstack hosts.ip=${openstack_ip} #10.141.255.250
+ chtab node=openstack hosts.hostnames=${openstack_hostname} #"openstack"
+ chtab node=openstack hosts.otherinterfaces="openstack-bmc:${openstack_bmc_ip}"
+fi
 
 tabdump hosts
 
 #change switch table
-chtab -d node=node001 switch
-chtab node=compute switch.port=${compute_switch_port} #"|\D+(\d+)|fa(\$1+0)|"
-chtab node=compute switch.switch="switch"
-chtab node=openstack switch.port=${openstack_switch_port} #"fa3"
-chtab node=openstack switch.switch="switch"
+if [ ${cisco} = yes ]; then
+  chtab -d node=node001 switch
+  chtab node=compute switch.port="${compute_switch_port}" #"|\D+(\d+)|fa(\$1+0)|"
+  chtab node=compute switch.switch="switch"
+  chtab node=openstack switch.port="${openstack_switch_port}" #"fa3"
+  chtab node=openstack switch.switch="switch"
+else
+  chtab node=node001 switch.port="${node001_switch_port}"
+  chtab node=node001 switch.switch="switch"
+  chtab node=node002 switch.port="${node002_switch_port}"
+  chtab node=node002 switch.switch="switch"
+fi
 
 tabdump switch
 
@@ -75,22 +86,23 @@ ping -c 1 switch &> /dev/null && { echo "can ping switch, proceed"; } || { echo 
 #--------------------------
 
 nodeadd node[001-002] groups=compute
-nodeadd openstack groups=compute
+#nodeadd openstack groups=compute
 makehosts compute
 makedns compute
 
-nodeadd c001-c002 groups=vc-a
-makehosts vc-a
-makedns vc-a 
+mkdef -t group -o hw-Generic
+nodeadd c001-c002 groups=hw-Generic,vc-a
 
-mkdef -t group -o hw-GenericNodes members=c001,c002
+#makehosts vc-a
+#makedns vc-a 
+
 
 
 #------------------------------------
 #reboot nodes so they go into genesis
 #------------------------------------
 
-rpower openstack reset
+#rpower openstack reset
 rpower node001-node002 reset
 
 sleep 10 
@@ -99,21 +111,21 @@ sleep 10
 #while ! ssh node001; do sleep 1; done -- this will ssh into node, do not want this. 
 
 
-while [ ! -e "/tftpboot/xcat/xnba/nodes/openstack" ]; do sleep 1; done
+#while [ ! -e "/tftpboot/xcat/xnba/nodes/openstack" ]; do sleep 1; done
 
- until nodestat openstack | grep "sshd"; 
-    do 
-	echo "openstack still booting, hang in there" 
-	sleep 20 
-    done
+# until nodestat openstack | grep "sshd"; 
+#    do 
+#	echo "openstack still booting, hang in there" 
+#	sleep 20 
+#    done
 
-echo "Openstack Node is in Genesis, deploy openstack:" 
+#echo "Openstack Node is in Genesis, deploy openstack:" 
 
 #nodeset nodes to appropriate image
 
-nodeset openstack osimage=centos7-x86_64-install-openstack
-sleep 5
-rpower openstack reset
+#nodeset openstack osimage=centos7-x86_64-install-openstack
+#sleep 5
+#rpower openstack reset
 
 #now compute nodes
 
@@ -140,11 +152,11 @@ sleep 5
 # Need to test whether openstack deployed without errors here
 #tail/grep xcat.log for errors
 
-until nodestat openstack | grep "sshd";
-   do
-   echo "node deploying openstack image"
-   sleep 50
-   done
+#until nodestat openstack | grep "sshd";
+#   do
+#   echo "node deploying openstack image"
+#   sleep 50
+#   done
 
 #sshpass -p system ssh -T  node003 <<WTF 
 #  [ tail -f /var/log/xcat/xcat.log | grep -v "lspci\|setpci" | grep "ERROR" ] exit
@@ -164,6 +176,8 @@ done
 echo "login-a is up, wait till slurm installs"
 
 sleep 400
+
+service trinity_api restart
 
 echo "running t1.2.bats"
 bats /trinity/testing/clusterbats/t1.2.bats
