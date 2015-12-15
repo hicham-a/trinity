@@ -1,6 +1,6 @@
 #node,ip,hostnames,otherinterfaces,comments,disable
 "compute","|\D+(\d+)$|10.141.((($1-1)/255)).(($1-1)%255+1)|","|\D+(\d+)$|node($1)|","|\D+(\d+)$|node($1)-bmc:10.148.((($1-1)/255)).(($1-1)%255+1),node($1)-ib:10.149.((($1-1)/255)).(($1-1)%255+1)|",,
 "switch","192.168.192.168","switch",,,
-"controller","10.141.255.254","controller",,,
+"controller","10.141.255.254","controller,controller.cluster",,,
 "vc-a","|\D+(\d+)$|172.16.((($1-1)/255)).(($1-1)%255+1)|","|\D+(\d+)$|c($1)|",,,
 "login-a","172.16.255.254","login.vc-a",,,

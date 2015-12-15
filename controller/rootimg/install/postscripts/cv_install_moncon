@@ -27,22 +27,27 @@ class MonCon(object):
 
   def get_hosts_from_xcat(self):
     node_list=requests.get("https://"+self.xcat_host+"/xcatws"+"/nodes", verify=False, params=self.xcat_query).json()
-    #TODO This should be done in bunches for a very large cluster, otherwise might hit the max char limit for URLs
-    node_string=",".join(node_list)
-    node_info=requests.get("https://"+self.xcat_host+"/xcatws"+"/nodes/"+node_string, verify=False, params=self.xcat_query).json()
+    def chunks(l, n):
+        """Yield successive n-sized chunks from l."""
+        for i in xrange(0, len(l), n):
+            yield l[i:i+n]
+
     hosts_dict={}
-    for node,node_dict in node_info.iteritems():
-      try:
-        host_ip=node_dict['ip']
-        # Try hostname first, if not use node name
-        try:
-          hostnames=node_dict['hostnames'].strip().split(',')
-          host_name=hostnames[0]
-        except:
-          host_name=node
-        hosts_dict.update({host_name : host_ip})
-      except:
-        print 'No IP address for node: '+node  
+    for chunk in chunks(node_list, 50):
+        node_string=",".join(chunk)
+        node_info=requests.get("https://"+self.xcat_host+"/xcatws"+"/nodes/"+node_string, verify=False, params=self.xcat_query).json()
+        for node,node_dict in node_info.iteritems():
+            try:
+                host_ip=node_dict['ip']
+                # Try hostname first, if not use node name
+                try:
+                    hostnames=node_dict['hostnames'].strip().split(',')
+                    host_name=hostnames[0]
+                except:
+                    host_name=node
+                    hosts_dict.update({host_name : host_ip})
+            except:
+                print 'No IP address for node: '+node  
     return hosts_dict  
 
   def add_hosts(self,hosts_dict):

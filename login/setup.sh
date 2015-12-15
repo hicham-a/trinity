@@ -130,7 +130,7 @@ sed -i 's/0022/0077/g' /etc/oddjobd.conf.d/oddjobd-mkhomedir.conf
 systemctl enable oddjobd
 systemctl start oddjobd
 setenforce 0
-sed -i s/enforcing/permissive/ /etc/sysconfig/selinux 
+sed -i s/SELINUX=enforcing/SELINUX=permissive/ /etc/selinux/config 
 authconfig --enablemkhomedir --update
 
 #--------------------------------------------------------------------------
