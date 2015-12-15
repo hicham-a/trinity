@@ -58,11 +58,16 @@ killall dhclient
 rm /etc/dhcp/dhclient.d/ntp.sh
 systemctl restart network
 
-mkdir /tmp/trinity
-mount ${SITEMASTER}:/trinity /tmp/trinity       
 mkdir -p /trinity
-if [ -f /tmp/trinity/site ]; then
-    cp /tmp/trinity/site /trinity/site
+
+# create runimages
+#--------------------------------------------------------------------------------------
+if [[ -d /install/runimages ]]; then
+    for file in $(ls /install/runimages); do
+        if [ -d /install/runimages/${file} ]; then 
+            tar czf /install/runimages/${file}.tgz -C /install/runimages/${file}/ .
+        fi
+    done
 fi
 
 #--------------------------------------------------------------------------------------
@@ -90,7 +95,7 @@ setenforce 0
 sestatus
 
 #
-hostname controller
+hostname controller.cluster
 makedhcp -n
 makehosts -n
 makedns -n
@@ -123,6 +128,10 @@ service iptables save
 cp -LrT /tmp/trinity/clustervision /trinity/clustervision &
 cp -LrT /tmp/trinity/controller/rootimg /
 cp /tmp/trinity/version /trinity/version
+
+if [[ -f /tmp/trinity/site ]]; then
+   cp /tmp/trinity/site /trinity/site
+fi
 
 #--------------------------------------------------------------------------------------
 # setup routing for the virtual clusters
@@ -230,7 +239,7 @@ service httpd restart
 #--------------------------------------------------------------------------------------
 # cleanup
 #--------------------------------------------------------------------------------------
-umount /tmp/trinity
-rmdir /tmp/trinity
+#umount /tmp/trinity
+#rmdir /tmp/trinity
 
 echo "$0 finished" >> /var/log/postinstall.log
