@@ -1,6 +1,7 @@
 FROM centos:centos7
 MAINTAINER abhishek.mukherjee@clustervision.com
 
+RUN yum -y swap -- remove systemd-container* -- install systemd systemd-libs
 RUN yum -y install --setopt=tsflags=nodocs epel-release && \ 
     yum -y install --setopt=tsflags=nodocs mariadb-server bind-utils pwgen psmisc hostname && \ 
     yum -y install --setopt=tsflags=nodocs python-pip && \

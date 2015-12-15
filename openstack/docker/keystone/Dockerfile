@@ -1,5 +1,6 @@
 FROM centos:latest
 MAINTAINER hans.then@clustervision.com
+RUN yum -y swap -- remove systemd-container* -- install systemd systemd-libs
 RUN rpm -ivh http://dl.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
 RUN yum -y install openssh-server openssh-clients python-pip vim-minimal rsyslog mysql
 RUN yum install -y http://repos.fedorapeople.org/repos/openstack/openstack-icehouse/rdo-release-icehouse-4.noarch.rpm
