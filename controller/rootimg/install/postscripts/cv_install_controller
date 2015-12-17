@@ -100,19 +100,10 @@ makedhcp -n
 makehosts -n
 makedns -n
 
-#--------------------------------------------------------------------------------------
-# correct any network settings
-#--------------------------------------------------------------------------------------
-systemctl stop NetworkManager
-systemctl disable NetworkManager
-killall dhclient
-systemctl start network
-
 # Fix for #356
 systemctl disable firewalld
 
 # setup NAT, so nodes can access the internet (see manual step 1.f)
-# FIXME: maybe move iptables save output to the rootimg profile.
 chkconfig iptables on
 service iptables start
 modprobe iptable_nat
@@ -207,7 +198,13 @@ sed -i 's/OPTIONS=\(.*\)/OPTIONS=--insecure-registry controller:5050 --bip=10.14
 
 systemctl enable docker docker-registry
 systemctl start docker docker-registry
-docker build -t controller:5050/trinity /trinity/container
+
+if [ -z ${SITEMASTER} ]; then
+    docker build -t controller:5050/trinity /trinity/container
+else
+    docker pull ${SITEMASTER}:5050/trinity
+    docker tag ${SITEMASTER}:5050/trinity controller:5050/trinity
+fi
 docker push controller:5050/trinity
 
 #--------------------------------------------------------------------------------------
