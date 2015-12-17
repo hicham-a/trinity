@@ -5,7 +5,7 @@ After=docker.service
 Before=xcatd.service
 
 [Service]
-Restart=always
+RemainAfterExit=yes
 ExecStart=/usr/bin/docker start  mariadb
 ExecStop=/usr/bin/docker stop -t 2 mariadb
 

@@ -4,7 +4,7 @@ Requires=docker.service
 After=docker.service
 
 [Service]
-Restart=always
+RemainAfterExit=yes
 ExecStart=/usr/bin/docker start  rabbitmq
 ExecStop=/usr/bin/docker stop -t 2 rabbitmq
 

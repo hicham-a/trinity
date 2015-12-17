@@ -4,7 +4,7 @@ Requires=keystone.service
 After=keystone.service
 
 [Service]
-Restart=always
+RemainAfterExit=yes
 ExecStart=/usr/bin/docker start  glance
 ExecStop=/usr/bin/docker stop -t 2 glance
 
