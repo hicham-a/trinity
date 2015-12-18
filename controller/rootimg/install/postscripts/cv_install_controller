@@ -193,6 +193,7 @@ fi
 
 # Remove stale repositories.
 yum -y install yum-plugin-priorities
+yum -y install epel-release
 yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno.rpm
 yum-config-manager --disable xcat-otherpkgs* local-centos*
 yum-config-manager --enable base epel extras updates openstack-juno
