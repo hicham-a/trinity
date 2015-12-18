@@ -83,6 +83,7 @@ done
 #------------------------------------------------------------------------------
 
 # generic required packages
+yum -y install epel-release
 yum -y install openstack-selinux openstack-utils
 # required for nova compute
 yum -y install openstack-nova-compute openstack-nova-network openstack-nova-api
