@@ -1,0 +1,10 @@
+#! /usr/bin/bash
+##title          : cv_update_nameserver
+##description    : This script updates the forwarders attribute to point to the nameservers of the
+                   controller.
+##author         : Hans Then 
+##email          : hans.then@clustervision
+
+nameservers=$(cat /etc/resolv.conf | grep ^nameserver | awk '{printf "%s%s", sep,$2; sep=","}')
+chtab key=forwarders site.value=${nameservers}
+makedns -n
