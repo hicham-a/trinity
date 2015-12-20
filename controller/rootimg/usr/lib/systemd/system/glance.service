@@ -4,9 +4,9 @@ Requires=keystone.service
 After=keystone.service
 
 [Service]
-RemainAfterExit=yes
-ExecStart=/usr/bin/docker start  glance
+Restart=always
+ExecStart=/usr/bin/docker start -a glance
 ExecStop=/usr/bin/docker stop -t 2 glance
 
 [Install]
-WantedBy=local.target
+WantedBy=multi-user.target

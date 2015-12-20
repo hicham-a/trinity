@@ -4,9 +4,9 @@ Requires=keystone.service glance.service
 After=keystone.service glance.service
 
 [Service]
-RemainAfterExit=yes
-ExecStart=/usr/bin/docker start  nova_controller
+Restart=always
+ExecStart=/usr/bin/docker start -a nova_controller
 ExecStop=/usr/bin/docker stop -t 2 nova_controller
 
 [Install]
-WantedBy=local.target
+WantedBy=multi-user.target

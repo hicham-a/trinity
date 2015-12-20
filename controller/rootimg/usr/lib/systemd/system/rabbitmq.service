@@ -4,9 +4,9 @@ Requires=docker.service
 After=docker.service
 
 [Service]
-RemainAfterExit=yes
-ExecStart=/usr/bin/docker start  rabbitmq
+Restart=always
+ExecStart=/usr/bin/docker start -a rabbitmq
 ExecStop=/usr/bin/docker stop -t 2 rabbitmq
 
 [Install]
-WantedBy=local.target
+WantedBy=multi-user.target

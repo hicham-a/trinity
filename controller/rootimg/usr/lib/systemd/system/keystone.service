@@ -4,9 +4,9 @@ Requires=mariadb.service rabbitmq.service
 After=mariadb.service rabbitmq.service
 
 [Service]
-RemainAfterExit=yes
-ExecStart=/usr/bin/docker start  keystone
+Restart=always
+ExecStart=/usr/bin/docker start -a keystone
 ExecStop=/usr/bin/docker stop -t 2 keystone
 
 [Install]
-WantedBy=local.target
+WantedBy=multi-user.target
