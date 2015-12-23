@@ -1,14 +1,15 @@
---- /opt/xcat/share/xcat/netboot/genesis/x86_64/fs/bin/bmcsetup	2013-11-13 05:04:52.000000000 +0100
-@@ -93,6 +93,12 @@
++++ /opt/xcat/share/xcat/netboot/genesis/x86_64/fs/bin/bmcsetup	2015-12-23 15:03:42.560091048 +0100
+@@ -99,6 +99,12 @@
  elif [ "$IPMIMFG" == "47488" ]; then
          LOCKEDUSERS=1
  fi
-+
-+#Supermicro IPMI: Bruno Pereira <bruno.pereira@clustervision.com>, 26-05-2014
-+if [ "$IPMIMFG" == "10876" ]; then
-+        LOCKEDUSERS=1
-+fi
-+
++#
++# hans.then@clustervision.com
++# 
++# We always assume LOCKEDUSERS=1 as that will work on both types of HW.
++# 
++LOCKEDUSERS=1
++ 
  echo -n "Auto detecting LAN channel..."
  
  while [ -z "$LANCHAN" ]; do 
