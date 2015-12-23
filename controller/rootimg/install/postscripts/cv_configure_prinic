@@ -3,7 +3,6 @@ cat > /etc/sysconfig/network-scripts/ifcfg-$ETH1 << EOF
 ONBOOT=yes
 BOOTPROTO=dhcp
 DEVICE=$ETH1
-MTU=9000
 EOF
 
 systemctl restart network

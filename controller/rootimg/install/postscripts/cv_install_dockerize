@@ -56,13 +56,13 @@ for profile in "${profiles[@]}"; do
     cmd_string="${cmd_string} -p ${port}:${port}"
   done
   cmd_string="${cmd_string} --name=${profile} -d ${REGISTRY}/${profile}"
-  docker run --net=host --privileged=true ${cmd_string}
+  docker run --net=host --privileged=true ${cmd_string} || docker start ${profile}
   case ${profile} in 
     keystone)
       up=1;
-      while [ ${up} -ne "0" ]; do 
+      for i in {1..20}; do
         echo "Waiting for keystone to come up!"
-        curl -s ${keystone_endpoint} 
+        if curl -s ${keystone_endpoint}; then break; fi
         up=$?  
         sleep 10
       done

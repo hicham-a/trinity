@@ -8,7 +8,8 @@
 
 LOGFILE="/trinity/testing/bats.log"
 #touch ${LOGFILE}
-exec 2>&1 | tee ${LOGFILE} 
+#exec 2>&1 | tee ${LOGFILE} 
+exec > >(tee -i ${LOGFILE})
 
 echo "Now flying clusterbats, hold on to your seats"
 
@@ -91,7 +92,7 @@ makehosts compute
 makedns compute
 
 mkdef -t group -o hw-Generic
-nodeadd c001-c002 groups=hw-Generic,vc-a
+nodeadd c001-c002 groups=hw-Generic
 
 #makehosts vc-a
 #makedns vc-a 

@@ -5,8 +5,8 @@ After=mariadb.service rabbitmq.service
 
 [Service]
 Restart=always
-ExecStart=/usr/bin/docker start  keystone
+ExecStart=/usr/bin/docker start -a keystone
 ExecStop=/usr/bin/docker stop -t 2 keystone
 
 [Install]
-WantedBy=local.target
+WantedBy=multi-user.target

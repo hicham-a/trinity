@@ -34,9 +34,12 @@ else
     # setup repositories
     yum -y install $(grep -v ^# $REPODIR/controller/rootimg/install/custom/install/centos/controller.pkglist)
     yum -y install epel-release
-    yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno-1.noarch.rpm
-    wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/2.9/xcat-core/xCAT-core.repo -O /etc/yum.repos.d/xCAT-core.repo
-    wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo -O /etc/yum.repos.d/xCAT-dep.repo
+    yum -y install yum-plugin-priorities
+    yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno.rpm
+    yum-config-manager --add-repo http://sourceforge.net/projects/xcat/files/yum/2.9/xcat-core/xCAT-core.repo
+    yum-config-manager --add-repo http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo
+    #wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/2.9/xcat-core/xCAT-core.repo -O /etc/yum.repos.d/xCAT-core.repo
+    #wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo -O /etc/yum.repos.d/xCAT-dep.repo
     yum -y install $(grep -v ^# $REPODIR/controller/rootimg/install/custom/install/centos/controller.otherpkgs)
     source /etc/profile.d/xcat.sh
     mkdir -p /tmp/trinity/iso
@@ -84,9 +87,6 @@ restorexCATdb -p /tmp/xcattables
 mknb x86_64
 
 cd /opt/xcat/share/xcat/netboot/centos
-
-ln -s ../rh/dracut_033 .
-ln -s ../rh/dracut .
 
 cd /
 cat /tmp/trinity/controller/xcat/patches/*.patch | patch -p0
@@ -191,6 +191,15 @@ else
     reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7/x86_64/
 fi
 
+# Remove stale repositories.
+yum -y install yum-plugin-priorities
+yum -y install epel-release
+yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno.rpm
+yum-config-manager --disable xcat-otherpkgs* local-centos*
+yum-config-manager --enable base epel extras updates openstack-juno
+yum-config-manager --add-repo http://sourceforge.net/projects/xcat/files/yum/2.9/xcat-core/xCAT-core.repo
+yum-config-manager --add-repo http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo
+
 createrepo /install/post/otherpkgs/centos7/x86_64/
 genimage centos7-x86_64-netboot-trinity
 packimage centos7-x86_64-netboot-trinity
@@ -210,10 +219,6 @@ systemctl start docker docker-registry
 docker build -t controller:5050/trinity /trinity/container
 docker push controller:5050/trinity
 
-#--------------------------------------------------------------------------------------
-# cleanup
-#--------------------------------------------------------------------------------------
-
 #--------------------------------------------
 # Install the xCAT web service
 #--------------------------------------------
@@ -231,5 +236,11 @@ tabch key=xcat,username=trinity passwd.password=trinity
 mkdef -t policy 6 name=trinity rule=allow
 sed  -e "/<Directory \/>/,/<\/Directory>/ s/Require/#Require/" -i /etc/httpd/conf/httpd.conf
 service httpd restart
+
+#--------------------------------------------------------------------------------------
+# cleanup
+#--------------------------------------------------------------------------------------
+#umount /tmp/trinity
+#rmdir /tmp/trinity
 
 echo "$0 finished" >> /var/log/postinstall.log
