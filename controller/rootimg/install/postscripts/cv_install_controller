@@ -139,16 +139,21 @@ for file in /etc/sysconfig/network-scripts/ifcfg-{$ETH2,$ETH3}; do
 done
 
 
-# disable peerdns
-sed -i /etc/sysconfig/network-scripts/ifcfg-$ETH1 -e "s/DEFROUTE=\(.*\)/DEFROUTE=yes/" -e "s/PEERDNS=\(.*\)/PEERDNS=no/"
+# disable default route
+sed -i /etc/sysconfig/network-scripts/ifcfg-$ETH1 -e "s/DEFROUTE=\(.*\)/DEFROUTE=yes/" 
+# HTH: we no longer disable peerdns in R7
+# -e "s/PEERDNS=\(.*\)/PEERDNS=no/"
 
 # Fix for #85
+if [[ ! -z "$ETH2" ]]; then
 cat >> /etc/sysconfig/network-scripts/ifcfg-$ETH2 << EOF
 IPADDR1=10.148.255.254
 PREFIX1=16
 GATEWAY1=10.148.255.254
 EOF
 ip a a 10.148.255.254/16 dev $ETH2
+fi
+
 
 systemctl restart network
 systemctl enable ntpd

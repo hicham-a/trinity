@@ -1,0 +1,17 @@
+--- /opt/xcat/share/xcat/netboot/rh/genimage	2015-12-17 04:13:19.750981765 +0100
+@@ -500,12 +500,12 @@
+ # if all else fails, resort to uname -r like this script did before
+ 
+ # Kernel name for s390x should be the same: vmlinuz-2.6.18-164.el5
+-my @KVERS= <$rootimg_dir/boot/vmlinuz-*>;
++my @KVERS= sort { -M $b <=> -M $a } <$rootimg_dir/boot/vmlinuz-*>;
+ foreach (@KVERS) {
+     s/vmlinuz-//;
+ }
+ 
+-@KVERS = <$rootimg_dir/lib/modules/*> unless (scalar(@KVERS));
++@KVERS = sort { -M $b <=> -M $a } <$rootimg_dir/lib/modules/*> unless (scalar(@KVERS));
+ 
+ $basekernelver = basename(pop @KVERS) if (scalar(@KVERS));
+ 
+ 
