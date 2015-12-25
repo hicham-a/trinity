@@ -4,36 +4,15 @@
 #author		: Abhishek Mukherjee
 #email		: abhishek.mukherjee@clustervision.com
 
-yum install -y epel-release 
-yum install -y wget telnet net-tools
-yum remove -y mariadb-server mariadb-galera-server
-# This is a temporary measure 
-# The rpm should either be in the local repo 
-# or we should make sure that we download a consistent version of the rpm
-wget http://files.omdistro.org/releases/centos_rhel/omd-1.20.rhel7.x86_64.rpm
-yum install -y --nogpgcheck omd-1.20.rhel7.x86_64.rpm
-omd create monitoring
-omd config monitoring set DEFAULT_GUI check_mk
-omd config monitoring set APACHE_TCP_PORT 5003
-omd config monitoring set APACHE_TCP_ADDR $(hostname -I | awk '{print $1}')
-su - monitoring -c "htpasswd -b ~/etc/htpasswd admin system"
-su - monitoring -c "htpasswd -D ~/etc/htpasswd omdadmin"
-site="monitoring"
-sites="/omd/sites"
-check_mk="${sites}/${site}/etc/check_mk"
-mul_wato="${check_mk}/multisite.d/wato"
-users="${mul_wato}/users.mk"
-cat >> ${users} << EOF
+if [ -z ${SITEMASTER} ]; then
+    docker build --rm=true -t controller:5050/omd /tmp/trinity/omd-docker
+else
+    docker pull ${SITEMASTER}:5050/omd
+    docker tag ${SITEMASTER}:5050/omd controller:5050/omd
+fi
 
-# Create the admin user
-multisite_users.update(
-{'admin': {'alias': u'admin',
-              'locked': False,
-              'roles': ['admin']}}
-)
+cp -LrT /tmp/trinity/omd-docker/rootimg /
+systemctl enable omd.service
 
-EOF
-chown monitoring:monitoring ${users}
-omd start monitoring
 echo "$0 finished" >> /var/log/postinstall.log
 
