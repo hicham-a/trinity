@@ -11,8 +11,9 @@ else
     docker tag ${SITEMASTER}:5050/omd controller:5050/omd
 fi
 
-cp -LrT /tmp/trinity/omd-docker/rootimg /
+docker create --name omd -p 5003:5003 -d controller:5050/omd 
 systemctl enable omd.service
+systemctl start omd.service
 
 echo "$0 finished" >> /var/log/postinstall.log
 

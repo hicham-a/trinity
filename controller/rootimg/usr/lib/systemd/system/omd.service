@@ -1,0 +1,12 @@
+[Unit]
+Description=Dockerized Omd
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+ExecStart=/usr/bin/docker start -a glance
+ExecStop=/usr/bin/docker stop -t 2 glance
+
+[Install]
+WantedBy=multi-user.target

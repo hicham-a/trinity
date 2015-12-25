@@ -20,3 +20,4 @@ RUN chown monitoring:monitoring "/omd/sites/monitoring/etc/check_mk/multisite.d/
 ADD docker-entrypoint.sh /
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["/bin/bash"]
+VOLUME /opt/omd
