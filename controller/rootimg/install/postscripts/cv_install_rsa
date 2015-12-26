@@ -5,7 +5,7 @@
 #email		: abhishek.mukherjee@clustervision.com
 
 if [ -z ${SITEMASTER} ]; then
-    docker build --rm=true -t controller:5050/omd /tmp/trinity/omd-docker
+    docker build --rm=true -t controller:5050/omd /trinity/omd
 else
     docker pull ${SITEMASTER}:5050/omd
     docker tag ${SITEMASTER}:5050/omd controller:5050/omd
