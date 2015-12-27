@@ -1,0 +1,184 @@
+#!/usr/bin/env bash
+##title          : cv_install_openstack_on_controller
+##description    : Setup the openstack dashboard + trinity_api services baremetal on controller
+##                   Dashboard (Openstack Horizon)
+##                   Trinity API
+##                   Trinity client
+##                   Trinity dashboard additions
+##                 Also the first tenant is created and the first virtual cluster is setup 
+##author         : Abhishek Mukherjee, Hans Then
+##email          : abhishek.mukherjee@clustervision.com, hans.then@clustervision.com
+
+#------------------------------------------------------------------------------
+# Install and configure Horizon 
+#------------------------------------------------------------------------------
+yum -y install --setopt=tsflags=nodocs python-keystoneclient python-glanceclient python-novaclient python-cinderclient
+yum -y install --setopt=tsflags=nodocs openstack-dashboard httpd mod_wsgi memcached python-memcached
+#yum -y install --setopt=tsflags=nodocs epel-release
+#yum -y install --setopt=tsflags=nodocs http://rdo.fedorapeople.org/openstack-juno/rdo-release-juno.rpm
+
+cp -LrT /trinity/horizon/rootimg/ /
+chown -R apache:apache /usr/share/openstack-dashboard/static
+echo 'Include "/etc/httpd/conf.modules.d/*.conf"' >> /etc/httpd/conf/httpd.conf
+systemctl enable httpd.service memcached.service
+systemctl start memcached.service
+systemctl restart httpd.service
+
+#-----------------------------------------------------------------
+# Install the API server, client and dashboard additions
+#-----------------------------------------------------------------
+
+cp -LrT /trinity/openstack/rootimg/ /
+# Assumes that /cluster and  /home are already mounted
+
+# The Trinity API server init script requires the Linux Standard Base
+yum -y install redhat-lsb
+
+#-- The Trinity API server needs python Bottle
+yum -y install epel-release
+yum -y install python-pip
+pip install bottle
+pip install cherrypy
+
+#-- Trinity API setup
+cd /opt/trinity/trinity_api
+python setup.py install
+cd -
+# sed "s/127.0.0.1/$(hostname -i)/g" /etc/trinity/trinity_api.conf > /tmp/trinity_api.conf
+# mv -f /tmp/trinity_api.conf /etc/trinity/trinity_api.conf
+source /etc/profile.d/xcat.sh
+DHCP_NIC=$(tabdump -w key==dhcpinterfaces site | grep dhcpinterfaces | awk -F "," '{print $2}' | tr -d '\"')
+sed -e "s/127.0.0.1/$(hostname -i)/g" \
+    -e "s/eno2/${DHCP_NIC}/g" \
+    -i /etc/trinity/trinity_api.conf
+
+mkdir -p /var/log/trinity
+
+# Start the API
+service trinity_api start
+chkconfig trinity_api on
+
+#-- Install the python client
+cd /opt/trinity/trinity_client
+python setup.py install
+cd -
+# sed "s/127.0.0.1/$(hostname -i)/g" /etc/trinity/trinity_client.conf > /tmp/trinity_client.conf
+# mv -f /tmp/trinity_client.conf /etc/trinity/trinity_client.conf
+sed -e "s/127.0.0.1/$(hostname -i)/g" \
+    -i /etc/trinity/trinity_client.conf
+
+#-- Install the dashboard additions
+cd /opt/trinity/trinity_dashboard
+sh setup.sh
+cd -
+
+service httpd restart
+
+
+#-----------------------------------------------------------------
+# Install the first cluster
+#-----------------------------------------------------------------
+
+sed -e "s/<TENANT>/admin/g" \
+    -e "s/<USER>/admin/g" \
+    -e "s/<PASSWORD>/system/g" \
+    -e "s/<OPENSTACK>/$(hostname -i)/g" \
+    /trinity/openstack/keystonerc > /root/keystonerc_admin
+source /root/keystonerc_admin
+
+
+#-- Download the base login node image (CentOS cloud image) and upload it to glance
+CLOUD_IMAGE_URL="http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2"
+CLOUD_IMAGE="/tmp/CentOS-7-x86_64-GenericCloud.qcow2"
+CLOUD_IMAGE_FORMAT="qcow2"
+CLOUD_CONTAINER_FORMAT="bare"
+LOGIN_IMAGE="login"
+curl -s ${CLOUD_IMAGE_URL} -o ${CLOUD_IMAGE}
+glance image-create \
+         --name "${LOGIN_IMAGE}" \
+         --disk-format "${CLOUD_IMAGE_FORMAT}" \
+         --container-format "${CLOUD_CONTAINER_FORMAT}" \
+         --is-public True \
+         --file "${CLOUD_IMAGE}"
+
+#-- Create the Flat Network
+read ETH0 ETH1 ETH2 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
+if [ -z "${ETH2}" ]; then
+    PRI_NIC=${ETH1} 
+else
+    PRI_NIC=${ETH2}
+fi
+BRIDGE="br100"
+NETWORK_LABEL="novanetwork"
+nova network-create \
+       --fixed-range-v4 192.168.32.0/24 \
+       --fixed-cidr 192.168.32.0/24 \
+       --bridge-interface ${PRI_NIC} \
+       --bridge ${BRIDGE} \
+       ${NETWORK_LABEL}
+       
+
+#-- Create the default cluster
+FIRST_TENANT="a"
+FIRST_USER="a"
+FIRST_PASS="system"
+FIRST_CLUSTER="vc-a"
+FIRST_POOL="login_a"
+FIRST_FLOATING="172.16.255.254"
+LOGIN_SETUP="/trinity/login/setup.sh"
+LOGIN_DATA="/root/.login_data"
+LOGIN_NODE="login-a"
+SKEL=".skel"
+
+keystone tenant-create --name ${FIRST_TENANT}
+keystone user-create --name ${FIRST_USER} --tenant ${FIRST_TENANT} --pass ${FIRST_PASS}
+nova floating-ip-bulk-create --pool ${FIRST_POOL} ${FIRST_FLOATING}
+mkdir -p /cluster/${FIRST_CLUSTER}
+cp -Tr /cluster/${SKEL}/ /cluster/${FIRST_CLUSTER}/
+mkdir -p /home/${FIRST_CLUSTER}
+
+useradd -u 1002 -U munge --no-create-home
+mkdir -p /cluster/${FIRST_CLUSTER}/etc/munge
+[ -e  /cluster/${FIRST_CLUSTER}/etc/munge/munge.key ] && rm /cluster/${FIRST_CLUSTER}/etc/munge/munge.key
+dd if=/dev/urandom bs=1 count=1024 > /cluster/${FIRST_CLUSTER}/etc/munge/munge.key
+chown -R munge:munge /cluster/${FIRST_CLUSTER}/etc/munge
+chmod u=rwx,go= /cluster/${FIRST_CLUSTER}/etc/munge
+chmod u=r,go=   /cluster/${FIRST_CLUSTER}/etc/munge/munge.key
+
+# nodes=$(curl -k 'https://controller/xcatws/groups/vc-a/attrs/members?userName=trinity&password=trinity&pretty=1' | awk -F: '{if (NR==3) {print $2}}' | sed 's/"//g')
+# sed -e "s/<NODES>/${nodes}/g" -i /cluster/${FIRST_CLUSTER}/etc/slurm/slurm-nodes.conf
+#-- Empty out the slurm-nodes file
+> /cluster/${FIRST_CLUSTER}/etc/slurm/slurm-nodes.conf
+chmod u=rwx,go=rx /cluster/${FIRST_CLUSTER}/etc/slurm
+chmod u=rw,go=rx  /cluster/${FIRST_CLUSTER}/etc/slurm/slurm.conf
+chmod u=rw,go=r   /cluster/${FIRST_CLUSTER}/etc/slurm/slurm-nodes.conf
+chmod ug=rw,o=r   /cluster/${FIRST_CLUSTER}/etc/slurm/slurm-user.conf
+
+cp ${LOGIN_SETUP} ${LOGIN_DATA}
+
+sed -e "s/FLOATING_IP=127.0.0.1/FLOATING_IP=${FIRST_FLOATING}/g" \
+    -e "s/vc-a/${FIRST_CLUSTER}/g" \
+    -i "${LOGIN_DATA}"
+
+sed -e "s/<TENANT>/${FIRST_TENANT}/g" \
+    -e "s/<USER>/${FIRST_USER}/g" \
+    -e "s/<PASSWORD>/${FIRST_PASS}/g" \
+    -e "s/<OPENSTACK>/$(hostname -i)/g" \
+    /trinity/openstack/keystonerc > /root/keystonerc_${FIRST_TENANT}
+source /root/keystonerc_${FIRST_TENANT}
+
+nova floating-ip-create ${FIRST_POOL}
+nova secgroup-add-rule default tcp 1 65535 0.0.0.0/0
+nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
+nova boot --flavor 2 --image ${LOGIN_IMAGE} --security-groups default --user-data ${LOGIN_DATA} ${LOGIN_NODE}
+sleep 5
+nova floating-ip-associate ${LOGIN_NODE} ${FIRST_FLOATING}
+
+#--------------------------------------------------------------------------------------
+# setup routing for the virtual clusters
+#--------------------------------------------------------------------------------------
+ip route add 172.16.0.0/12 dev ${BRIDGE}
+
+echo $0 finished >> /var/log/postinstall.log
+
+
