@@ -13,11 +13,11 @@ fi
 
 mkdir /cluster/omd
 touch /cluster/omd/hosts.mk
-touch cluster/omd/multisite.mk
+touch /cluster/omd/aggregations.mk
 
 docker run -d -t --name omd -p 5003:5003 \
     -v /cluster/omd/hosts.mk:/opt/omd/sites/monitoring/etc/check_mk/conf.d/wato/hosts.mk \
-    -v /cluster/omd/multisite.mk:/opt/omd/sites/monitoring/etc/check_mk/multisite.mk \
+    -v /cluster/omd/aggregations.mk:/opt/omd/sites/monitoring/etc/check_mk/multisite.d/wato/aggregations.mk \
     controller:5050/omd 
 
 systemctl enable omd.service
