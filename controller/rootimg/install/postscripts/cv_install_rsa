@@ -5,13 +5,21 @@
 #email		: abhishek.mukherjee@clustervision.com
 
 if [ -z ${SITEMASTER} ]; then
-    docker build --rm=true -t controller:5050/omd /trinity/omd
+    docker build --rm=true -t controller:5050/omd /tmp/trinity/omd-docker
 else
     docker pull ${SITEMASTER}:5050/omd
     docker tag ${SITEMASTER}:5050/omd controller:5050/omd
 fi
 
-docker create --name omd -p 5003:5003 -d controller:5050/omd 
+mkdir /cluster/omd
+touch /cluster/omd/hosts.mk
+touch cluster/omd/multisite.mk
+
+docker run -d -t --name omd -p 5003:5003 \
+    -v /cluster/omd/hosts.mk:/opt/omd/sites/monitoring/etc/check_mk/conf.d/wato/hosts.mk \
+    -v /cluster/omd/multisite.mk:/opt/omd/sites/monitoring/etc/check_mk/multisite.mk \
+    controller:5050/omd 
+
 systemctl enable omd.service
 systemctl start omd.service
 
