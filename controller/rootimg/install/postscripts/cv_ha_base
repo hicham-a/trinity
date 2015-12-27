@@ -3,7 +3,6 @@
 # FIXME: this should be part of the package lists. Also we need to add the elrepo repo to the 
 #        master repositories.
 #-----------------------------------------------------------------------------------------------
-set -x
 yum -y install epel-release
 yum -y install drbdlinks
 yum -y install pacemaker
@@ -122,7 +121,7 @@ resource ha_disk {
 EOF
 
 
-if [ $N = 1 ]; then 
+if [[ "$N" = 1 ]]; then 
    # I am the active node
    # Wait until the passive controller is ready to continue
    for i in {1..100}; do
@@ -235,6 +234,7 @@ EOF
 
    drbdlinks -c /drbd/xcat.conf initialize_shared_storage
    drbdlinks -c /drbd/xcat.conf start
+   systemctl restart xcatd
 
    #-------------------------------------------------------------------
    # Now setup the common resources
@@ -253,22 +253,38 @@ EOF
    #pcs resource create mysqld systemd:mysqld op monitor interval="37s"
    pcs resource create dhcpd systemd:dhcpd op monitor interval="37s"
    pcs resource create named systemd:named op monitor interval="37s"
-   pcs resource create nfs nfsserver nfs_no_notify=true op start timeout=120s
+   pcs resource create nfs nfsserver nfs_no_notify=true op start timeout=240s
    pcs resource create docker systemd:docker op monitor interval="37s"
    pcs resource create docker-registry systemd:docker-registry op monitor interval="37s"
    pcs resource create slapd systemd:slapd op monitor interval="37s"
    pcs resource create xCAT lsb:xcatd op monitor interval="42s"
 
+   pcs resource create mariadb systemd:mariadb op monitor interval="34s"
+   pcs resource create rabbitmq systemd:rabbitmq op monitor interval="34s"
+
+   pcs resource create keystone systemd:keystone op monitor interval="34s"
+   pcs resource create glance systemd:glance op monitor interval="34s"
+   pcs resource create nova_controller systemd:nova_controller op monitor interval="34s"
+   pcs resource create omd systemd:omd op monitor interval="34s"
+
+
    # For convenience we create to groups of resources.
    # This will help ordering according to the dependencies.
    pcs resource group add grp_drbd fs_drbd symlinks_xCAT
    # HTH: disable mysqld 
-   #pcs resource group add grp_xCAT httpd dhcpd named mysqld docker docker-registry slapd xCAT nfs
-   pcs resource group add grp_xCAT httpd dhcpd named docker docker-registry slapd xCAT nfs
+   #pcs resource group add grp_xCAT httpd dhcpd named mysqld slapd xCAT nfs
+
+   pcs resource group add grp_docker docker docker-registry
+   pcs resource group add grp_base_containers mariadb rabbitmq
+   pcs resource group add grp_xCAT httpd dhcpd named docker slapd xCAT nfs
+   pcs resource group add grp_dependent_containers keystone glance nova_controller omd
 
    # We specify that all services and groups should be on
    # the same node as where drbd keeps its master copy of the data.
    pcs constraint colocation add grp_xCAT grp_drbd
+   pcs constraint colocation add grp_xCAT grp_docker
+   pcs constraint colocation add grp_xCAT grp_base_containers
+   pcs constraint colocation add grp_xCAT grp_dependent_containers
    pcs constraint colocation add grp_drbd ms_drbd INFINITY with-rsc-role=Master
    pcs constraint colocation add ip ms_drbd INFINITY with-rsc-role=Master
    pcs constraint colocation add ip_bmc ms_drbd INFINITY with-rsc-role=Master
@@ -279,7 +295,10 @@ EOF
    pcs constraint order ip then start grp_drbd
    pcs constraint order ip then start ip_bmc
    pcs constraint order promote ms_drbd then start grp_drbd
-   pcs constraint order start grp_drbd then start grp_xCAT
+   pcs constraint order start grp_drbd then start grp_docker
+   pcs constraint order start grp_docker then start grp_base_containers
+   pcs constraint order start grp_base_containers then start grp_dependent_containers
+   pcs constraint order start grp_base_containers then start grp_xCAT
    pcs constraint order start grp_xCAT then start xCAT
 
    # Finally some defaults
@@ -296,10 +315,16 @@ else
    touch /tmp/cv_ha_ready
 
    systemctl stop dhcpd
-   systemctl stop mysqld
    systemctl stop httpd
    systemctl stop named
    systemctl stop xcatd
+   systemctl stop omd
+   systemctl stop glance
+   systemctl stop keystone
+   systemctl stop nova_controller
+   systemctl stop rabbitmq
+   systemctl stop mariadb
+
    systemctl stop docker
    systemctl stop docker-registry
    systemctl stop nfs-server
@@ -311,7 +336,7 @@ systemctl enable corosync
 
 echo "$0 finished" >> /var/log.postinstall.log
 
-if [ $N = 2 ]; then
+if [[ "$N" = 2 ]]; then
     # I am the passive node: reboot
     shutdown -r now
 fi
