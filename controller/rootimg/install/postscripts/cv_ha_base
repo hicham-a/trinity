@@ -267,6 +267,7 @@ EOF
    pcs resource create nova_controller systemd:nova_controller op monitor interval="34s"
    pcs resource create omd systemd:omd op monitor interval="34s"
 
+   pcs resource clone named clone-max=2 clone-node-max=1 notify=false
 
    # For convenience we create to groups of resources.
    # This will help ordering according to the dependencies.
@@ -276,7 +277,7 @@ EOF
 
    pcs resource group add grp_docker docker docker-registry
    pcs resource group add grp_base_containers mariadb rabbitmq
-   pcs resource group add grp_xCAT httpd dhcpd named docker slapd xCAT nfs
+   pcs resource group add grp_xCAT httpd dhcpd docker slapd xCAT nfs
    pcs resource group add grp_dependent_containers keystone glance nova_controller omd
 
    # We specify that all services and groups should be on
@@ -295,11 +296,11 @@ EOF
    pcs constraint order ip then start grp_drbd
    pcs constraint order ip then start ip_bmc
    pcs constraint order promote ms_drbd then start grp_drbd
-   pcs constraint order start grp_drbd then start grp_docker
-   pcs constraint order start grp_docker then start grp_base_containers
-   pcs constraint order start grp_base_containers then start grp_dependent_containers
-   pcs constraint order start grp_base_containers then start grp_xCAT
-   pcs constraint order start grp_xCAT then start xCAT
+   pcs constraint order grp_drbd then start grp_docker
+   pcs constraint order grp_docker then start grp_base_containers
+   pcs constraint order grp_base_containers then start grp_dependent_containers
+   pcs constraint order grp_base_containers then start grp_xCAT
+   pcs constraint order grp_xCAT then start xCAT
 
    # Finally some defaults
    pcs property set no-quorum-policy=ignore
