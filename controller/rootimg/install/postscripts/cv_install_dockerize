@@ -58,13 +58,16 @@ for profile in "${profiles[@]}"; do
   docker run --net=host --privileged=true ${cmd_string}
   case ${profile} in 
     keystone)
-      up=1;
-      while [ ${up} -ne "0" ]; do 
+      up=0;
+      for i in {1..10}; do
         echo "Waiting for keystone to come up!"
-        curl -s ${keystone_endpoint} 
-        up=$?  
-        sleep 10
+        if curl -s ${keystone_endpoint}; then up=1; break; fi
+        up=$?
+        sleep 5
       done
+      if [[ up = 0 ]]; then
+          exit 1
+      fi
       for service in "${services[@]}"; do
         setup_service="${TOPDIR}/${profile}/${service}-setup.sh"
         echo ${setup_service}
@@ -76,5 +79,3 @@ for profile in "${profiles[@]}"; do
   systemctl enable ${service}.service
 done
 echo $0 finished >> /var/log/postinstall.log
-
-
