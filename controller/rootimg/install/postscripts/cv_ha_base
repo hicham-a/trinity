@@ -267,7 +267,8 @@ EOF
    pcs resource create nova_controller systemd:nova_controller op monitor interval="34s"
    pcs resource create omd systemd:omd op monitor interval="34s"
 
-   pcs resource clone named clone-max=2 clone-node-max=1 notify=false
+   # For named cloning to work we need to change /etc/resolv.conf as well.
+   #pcs resource clone named clone-max=2 clone-node-max=1 notify=false
 
    # For convenience we create to groups of resources.
    # This will help ordering according to the dependencies.
@@ -277,7 +278,7 @@ EOF
 
    pcs resource group add grp_docker docker docker-registry
    pcs resource group add grp_base_containers mariadb rabbitmq
-   pcs resource group add grp_xCAT httpd dhcpd docker slapd xCAT nfs
+   pcs resource group add grp_xCAT httpd dhcpd docker named slapd xCAT nfs
    pcs resource group add grp_dependent_containers keystone glance nova_controller omd
 
    # We specify that all services and groups should be on
