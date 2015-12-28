@@ -644,12 +644,13 @@ def modify_cluster(cluster,version=1):
                        vc_cluster,
                        req.slurm_node_file)
     fop=open(slurm,'w')
-    for cont in ret['nodeList']:
+    nodes = sorted(ret['nodeList'])
+    for cont in nodes: 
       node_name=cont
       cpu_count=all_nodes_info[cont]['cpucount']
       slurm_string='NodeName='+node_name+' CPUS='+cpu_count+' State=UNKNOWN'
       fop.write(slurm_string+'\n')
-    cont_string=','.join(ret['nodeList'])
+    cont_string=','.join(nodes)
     part_string='PartitionName='+req.cont_part+' Nodes='+cont_string+' Default=Yes MaxTime=INFINITE State=UP'
     fop.write(part_string+'\n')
     fop.close()   

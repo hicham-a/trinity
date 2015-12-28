@@ -17,7 +17,7 @@ default_monitoring='monitoring'
 # HTH default_aggr_file="/opt/omd/sites/"+default_monitoring+"/etc/check_mk/multisite.mk"
 
 default_hosts_file="/cluster/omd/hosts.mk"
-default_aggr_file="/cluster/omd/aggregations.mk"
+default_aggr_file="/cluster/omd/multisite.mk"
 
 class MonCon(object):
   def __init__(self,xcat_host,xcat_query,monitoring,hosts_file,aggr_file): 
