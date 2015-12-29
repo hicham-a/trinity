@@ -5,8 +5,8 @@ After=keystone.service
 
 [Service]
 Restart=always
-ExecStart=/usr/bin/docker start  glance
+ExecStart=/usr/bin/docker start -a glance
 ExecStop=/usr/bin/docker stop -t 2 glance
 
 [Install]
-WantedBy=local.target
+WantedBy=multi-user.target
