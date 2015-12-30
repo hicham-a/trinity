@@ -22,7 +22,6 @@ yum -y install libvirt-daemon-config-nwfilter libvirt-daemon-driver-nwfilter
 source /trinity/nova/config.sh
 
 # Parameters and constants
-#  NODE_IP=$(hostname -I| awk '{print $1}')
 NODE_IP=$(hostname -i)
 
 # Set SeLinux to permissive mode

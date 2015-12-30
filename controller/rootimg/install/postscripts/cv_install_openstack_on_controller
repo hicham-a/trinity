@@ -44,11 +44,9 @@ pip install cherrypy
 cd /opt/trinity/trinity_api
 python setup.py install
 cd -
-# sed "s/127.0.0.1/$(hostname -i)/g" /etc/trinity/trinity_api.conf > /tmp/trinity_api.conf
-# mv -f /tmp/trinity_api.conf /etc/trinity/trinity_api.conf
 source /etc/profile.d/xcat.sh
 DHCP_NIC=$(tabdump -w key==dhcpinterfaces site | grep dhcpinterfaces | awk -F "," '{print $2}' | tr -d '\"')
-sed -e "s/127.0.0.1/$(hostname -i)/g" \
+sed -e "s/127.0.0.1/10.141.255.254/g" \
     -e "s/eno2/${DHCP_NIC}/g" \
     -i /etc/trinity/trinity_api.conf
 
@@ -62,9 +60,7 @@ chkconfig trinity_api on
 cd /opt/trinity/trinity_client
 python setup.py install
 cd -
-# sed "s/127.0.0.1/$(hostname -i)/g" /etc/trinity/trinity_client.conf > /tmp/trinity_client.conf
-# mv -f /tmp/trinity_client.conf /etc/trinity/trinity_client.conf
-sed -e "s/127.0.0.1/$(hostname -i)/g" \
+sed -e "s/127.0.0.1/10.141.255.254/g" \
     -i /etc/trinity/trinity_client.conf
 
 #-- Install the dashboard additions
@@ -82,7 +78,7 @@ service httpd restart
 sed -e "s/<TENANT>/admin/g" \
     -e "s/<USER>/admin/g" \
     -e "s/<PASSWORD>/system/g" \
-    -e "s/<OPENSTACK>/$(hostname -i)/g" \
+    -e "s/<OPENSTACK>/10.141.255.254/g" \
     /trinity/openstack/keystonerc > /root/keystonerc_admin
 source /root/keystonerc_admin
 
