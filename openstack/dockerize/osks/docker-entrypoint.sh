@@ -13,7 +13,7 @@ set -e
 #  /usr/bin/openstack-config --set /etc/keystone/keystone.conf revoke driver  keystone.contrib.revoke.backends.sql.Revoke
 #  /usr/bin/openstack-config --set /etc/keystone/keystone.conf DEFAULT verbose True
 
-sed -e "s/<HOST_IP>/$(hostname -i)/g" -i /etc/keystone/keystone.conf
+sed -e "s/<HOST_IP>/10.141.255.254/g" -i /etc/keystone/keystone.conf
 
 keystone-manage pki_setup --keystone-user keystone --keystone-group keystone
 chown -R keystone:keystone /var/log/keystone
