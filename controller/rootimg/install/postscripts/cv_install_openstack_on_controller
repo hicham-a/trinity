@@ -50,9 +50,6 @@ sed -e "s/127.0.0.1/10.141.255.254/g" \
     -e "s/eno2/${DHCP_NIC}/g" \
     -i /etc/trinity/trinity_api.conf
 
-# Provide DNS on the bridge interface not the physical interface.
-chtab key=dnsinterfaces site.value=br100
-makedns -n
 
 mkdir -p /var/log/trinity
 
@@ -175,6 +172,11 @@ nova floating-ip-associate ${LOGIN_NODE} ${FIRST_FLOATING}
 # setup routing for the virtual clusters
 #--------------------------------------------------------------------------------------
 ip route add 172.16.0.0/12 dev ${BRIDGE}
+
+# Provide DNS on the bridge interface not the physical interface.
+while ! (ip a show dev br100 | grep 10.141.255.254); do sleep 10; done
+chtab key=dnsinterfaces site.value=br100
+makedns -n
 
 echo $0 finished >> /var/log/postinstall.log
 
