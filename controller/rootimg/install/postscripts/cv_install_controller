@@ -96,6 +96,7 @@ sestatus
 
 #
 hostname controller.cluster
+hostnamectl set-hostname controller.cluster
 makedhcp -n
 makehosts -n
 makedns -n
