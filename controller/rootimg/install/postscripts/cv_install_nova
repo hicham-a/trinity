@@ -12,14 +12,14 @@ main(){
   # Parameters and constants
   NODE_IP=$(hostname -I| awk '{print $1}')
 
-# Set SeLinux to permissive mode
+  # Set SeLinux to permissive mode
   setenforce 0
 
-# Stop NetworkManager  
+  # Stop NetworkManager  
   systemctl stop NetworkManager
   systemctl disable NetworkManager
   killall dhclient
-  systemctl start network
+  systemctl restart network
 
   systemctl stop openstack-nova-compute.service openstack-nova-network.service openstack-nova-metadata-api.service
 
