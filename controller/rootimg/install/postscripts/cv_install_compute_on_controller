@@ -65,6 +65,10 @@ openstack-config --set /etc/nova/nova.conf glance host ${OPENSTACK_CONTROLLER}
 
 # enable verbose logging
 openstack-config --set /etc/nova/nova.conf DEFAULT verbose True
+
+# Fixes #556, start login nodes after reboot
+openstack-config --set /etc/nova/nova.conf DEFAULT resume_guests_state_on_host_boot true
+
 echo "-----------------------------------"
 
 
