@@ -1,6 +1,7 @@
 FROM centos:centos7
 MAINTAINER abhishek.mukherjee@clustervision.com
 
+RUN yum -y swap -- remove systemd-container* -- install systemd systemd-libs
 RUN yum -y install --setopt=tsflags=nodocs epel-release && \ 
     yum -y install --setopt=tsflags=nodocs http://rdo.fedorapeople.org/openstack-juno/rdo-release-juno.rpm && \
     yum -y install --setopt=tsflags=nodocs openstack-selinux openstack-utils openstack-glance python-glanceclient && \ 

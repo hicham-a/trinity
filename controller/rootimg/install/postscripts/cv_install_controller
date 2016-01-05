@@ -52,7 +52,7 @@ systemctl stop NetworkManager
 systemctl disable NetworkManager
 killall dhclient
 # disable the dhcp based ntp
-rm /etc/dhcp/dhclient.d/ntp.sh
+# rm /etc/dhcp/dhclient.d/ntp.sh
 systemctl restart network
 
 mkdir -p /trinity

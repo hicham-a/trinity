@@ -120,7 +120,6 @@ resource ha_disk {
      }
 EOF
 
-
 if [[ "$N" = 1 ]]; then 
    # I am the active node
    # Wait until the passive controller is ready to continue
@@ -139,7 +138,6 @@ if [[ "$N" = 1 ]]; then
    #-------------------------------------------------------------------
    pcs cluster auth controller-1.cluster controller-2.cluster -u hacluster -p system
    pcs cluster setup --name ha_cluster controller-1.cluster controller-2.cluster --force
-
    pcs cluster start --all
 
    #-------------------------------------------------------------------
@@ -157,7 +155,12 @@ if [[ "$N" = 1 ]]; then
    ssh controller-2.cluster modprobe drbd
    ssh controller-2.cluster drbdadm up ha_disk
    sleep 1
-   ssh controller-2.cluster drbdadm invalidate ha_disk
+   # I am not sure waiting for sync is actually required.
+   #for i in {1..200}; do
+   #    cat /proc/drbd
+   #    if (cat /proc/drbd | grep ds:UpToDate/UpToDate) ; then break; fi
+   #    sleep 300
+   #done
 
    rm /etc/httpd/logs ; ln -s /var/log/httpd /etc/httpd/logs
    rm /etc/httpd/modules ; ln -s /usr/lib64/httpd/modules /etc/httpd/modules
@@ -232,9 +235,17 @@ link('/home')
 #
 EOF
 
+   systemctl stop xcatd
+   systemctl stop docker
+   systemctl stop docker-registry
+   systemctl stop nfs-server
+
    drbdlinks -c /drbd/xcat.conf initialize_shared_storage
    drbdlinks -c /drbd/xcat.conf start
-   systemctl restart xcatd
+   systemctl start xcatd
+   systemctl start docker
+   systemctl start docker-registry
+   systemctl start nfs-server
 
    #-------------------------------------------------------------------
    # Now setup the common resources
@@ -259,13 +270,13 @@ EOF
    pcs resource create slapd systemd:slapd op monitor interval="37s"
    pcs resource create xCAT lsb:xcatd op monitor interval="42s"
 
-   pcs resource create mariadb systemd:mariadb op monitor interval="34s"
-   pcs resource create rabbitmq systemd:rabbitmq op monitor interval="34s"
+   #pcs resource create mariadb systemd:mariadb op monitor interval="34s"
+   #pcs resource create rabbitmq systemd:rabbitmq op monitor interval="34s"
 
-   pcs resource create keystone systemd:keystone op monitor interval="34s"
-   pcs resource create glance systemd:glance op monitor interval="34s"
-   pcs resource create nova_controller systemd:nova_controller op monitor interval="34s"
-   pcs resource create omd systemd:omd op monitor interval="34s"
+   #pcs resource create keystone systemd:keystone op monitor interval="34s"
+   #pcs resource create glance systemd:glance op monitor interval="34s"
+   #pcs resource create nova_controller systemd:nova_controller op monitor interval="34s"
+   #pcs resource create omd systemd:omd op monitor interval="34s"
 
    # For named cloning to work we need to change /etc/resolv.conf as well.
    #pcs resource clone named clone-max=2 clone-node-max=1 notify=false
@@ -276,17 +287,17 @@ EOF
    # HTH: disable mysqld 
    #pcs resource group add grp_xCAT httpd dhcpd named mysqld slapd xCAT nfs
 
-   pcs resource group add grp_docker docker docker-registry
-   pcs resource group add grp_base_containers mariadb rabbitmq
-   pcs resource group add grp_xCAT httpd dhcpd docker named slapd xCAT nfs
-   pcs resource group add grp_dependent_containers keystone glance nova_controller omd
+   #pcs resource group add grp_docker docker docker-registry
+   #pcs resource group add grp_base_containers mariadb rabbitmq
+   pcs resource group add grp_xCAT httpd dhcpd named docker docker-registry slapd xCAT nfs
+   #pcs resource group add grp_dependent_containers keystone glance nova_controller omd
 
    # We specify that all services and groups should be on
    # the same node as where drbd keeps its master copy of the data.
    pcs constraint colocation add grp_xCAT grp_drbd
-   pcs constraint colocation add grp_xCAT grp_docker
-   pcs constraint colocation add grp_xCAT grp_base_containers
-   pcs constraint colocation add grp_xCAT grp_dependent_containers
+   #pcs constraint colocation add grp_xCAT grp_docker
+   #pcs constraint colocation add grp_xCAT grp_base_containers
+   #pcs constraint colocation add grp_xCAT grp_dependent_containers
    pcs constraint colocation add grp_drbd ms_drbd INFINITY with-rsc-role=Master
    pcs constraint colocation add ip ms_drbd INFINITY with-rsc-role=Master
    pcs constraint colocation add ip_bmc ms_drbd INFINITY with-rsc-role=Master
@@ -297,11 +308,12 @@ EOF
    pcs constraint order ip then start grp_drbd
    pcs constraint order ip then start ip_bmc
    pcs constraint order promote ms_drbd then start grp_drbd
-   pcs constraint order grp_drbd then start grp_docker
-   pcs constraint order grp_docker then start grp_base_containers
-   pcs constraint order grp_base_containers then start grp_dependent_containers
-   pcs constraint order grp_base_containers then start grp_xCAT
-   pcs constraint order grp_xCAT then start xCAT
+   #pcs constraint order start grp_drbd then start grp_docker
+   #pcs constraint order start grp_docker then start grp_base_containers
+   #pcs constraint order start grp_base_containers then start grp_dependent_containers
+   #pcs constraint order start grp_base_containers then start grp_xCAT
+   #pcs constraint order start grp_drbd then start grp_xCAT
+   pcs constraint order start grp_xCAT then start xCAT
 
    # Finally some defaults
    pcs property set no-quorum-policy=ignore
@@ -313,6 +325,8 @@ EOF
    pcs resource cleanup drbd 
    pcs resource cleanup ip
    pcs resource cleanup nfs
+
+   ssh controller-2 shutdown -r now
 else
    touch /tmp/cv_ha_ready
 
@@ -337,8 +351,3 @@ systemctl enable pacemaker
 systemctl enable corosync
 
 echo "$0 finished" >> /var/log.postinstall.log
-
-if [[ "$N" = 2 ]]; then
-    # I am the passive node: reboot
-    shutdown -r now
-fi

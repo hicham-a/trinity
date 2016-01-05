@@ -1,5 +1,6 @@
 # We can only install xCAT on centos6. On Centos 7 I ran into a lot of trouble due to the "logical naming" of device networks.
 FROM centos:centos6
+RUN yum -y swap -- remove systemd-container* -- install systemd systemd-libs
 RUN yum -y install wget
 # ADD does not work, it retrieves some html file.
 RUN wget http://sourceforge.net/projects/xcat/files/yum/2.8/xcat-core/xCAT-core.repo -O /etc/yum.repos.d/xCAT-core.repo

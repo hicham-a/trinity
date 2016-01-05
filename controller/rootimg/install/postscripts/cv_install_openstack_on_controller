@@ -44,13 +44,12 @@ pip install cherrypy
 cd /opt/trinity/trinity_api
 python setup.py install
 cd -
-# sed "s/127.0.0.1/$(hostname -i)/g" /etc/trinity/trinity_api.conf > /tmp/trinity_api.conf
-# mv -f /tmp/trinity_api.conf /etc/trinity/trinity_api.conf
 source /etc/profile.d/xcat.sh
 DHCP_NIC=$(tabdump -w key==dhcpinterfaces site | grep dhcpinterfaces | awk -F "," '{print $2}' | tr -d '\"')
-sed -e "s/127.0.0.1/$(hostname -i)/g" \
+sed -e "s/127.0.0.1/10.141.255.254/g" \
     -e "s/eno2/${DHCP_NIC}/g" \
     -i /etc/trinity/trinity_api.conf
+
 
 mkdir -p /var/log/trinity
 
@@ -62,9 +61,7 @@ chkconfig trinity_api on
 cd /opt/trinity/trinity_client
 python setup.py install
 cd -
-# sed "s/127.0.0.1/$(hostname -i)/g" /etc/trinity/trinity_client.conf > /tmp/trinity_client.conf
-# mv -f /tmp/trinity_client.conf /etc/trinity/trinity_client.conf
-sed -e "s/127.0.0.1/$(hostname -i)/g" \
+sed -e "s/127.0.0.1/10.141.255.254/g" \
     -i /etc/trinity/trinity_client.conf
 
 #-- Install the dashboard additions
@@ -82,7 +79,7 @@ service httpd restart
 sed -e "s/<TENANT>/admin/g" \
     -e "s/<USER>/admin/g" \
     -e "s/<PASSWORD>/system/g" \
-    -e "s/<OPENSTACK>/$(hostname -i)/g" \
+    -e "s/<OPENSTACK>/10.141.255.254/g" \
     /trinity/openstack/keystonerc > /root/keystonerc_admin
 source /root/keystonerc_admin
 
@@ -103,11 +100,8 @@ glance image-create \
 
 #-- Create the Flat Network
 read ETH0 ETH1 ETH2 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
-if [ -z "${ETH2}" ]; then
-    PRI_NIC=${ETH1} 
-else
-    PRI_NIC=${ETH2}
-fi
+PRI_NIC=${ETH1} 
+
 BRIDGE="br100"
 NETWORK_LABEL="novanetwork"
 nova network-create \
@@ -132,7 +126,7 @@ SKEL=".skel"
 
 keystone tenant-create --name ${FIRST_TENANT}
 keystone user-create --name ${FIRST_USER} --tenant ${FIRST_TENANT} --pass ${FIRST_PASS}
-nova floating-ip-bulk-create --pool ${FIRST_POOL} ${FIRST_FLOATING}
+nova floating-ip-bulk-create --pool ${FIRST_POOL} --interface ${BRIDGE} ${FIRST_FLOATING}
 mkdir -p /cluster/${FIRST_CLUSTER}
 cp -Tr /cluster/${SKEL}/ /cluster/${FIRST_CLUSTER}/
 mkdir -p /home/${FIRST_CLUSTER}
@@ -178,6 +172,11 @@ nova floating-ip-associate ${LOGIN_NODE} ${FIRST_FLOATING}
 # setup routing for the virtual clusters
 #--------------------------------------------------------------------------------------
 ip route add 172.16.0.0/12 dev ${BRIDGE}
+
+# Provide DNS on the bridge interface not the physical interface.
+while ! (ip a show dev br100 | grep 10.141.255.254); do sleep 10; done
+chtab key=dnsinterfaces site.value=br100
+makedns -n
 
 echo $0 finished >> /var/log/postinstall.log
 

@@ -85,7 +85,13 @@ controller:/trinity /trinity nfs rsize=8192,wsize=8192,timeo=14,intr
 controller:/home/vc-a /home nfs rsize=8192,wsize=8192,timeo=14,intr
 EOF
 
-mount -a
+for in in {1..5}; do
+   if mount -a; then break; fi
+   sleep 10
+done
+if ! mount -a; then
+   echo "ERROR: failure to mount file systems."
+fi
 
 #--------------------------------------------------------------------------
 # Setup munge and SLURM 

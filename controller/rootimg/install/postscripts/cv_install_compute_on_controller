@@ -22,7 +22,6 @@ yum -y install libvirt-daemon-config-nwfilter libvirt-daemon-driver-nwfilter
 source /trinity/nova/config.sh
 
 # Parameters and constants
-#  NODE_IP=$(hostname -I| awk '{print $1}')
 NODE_IP=$(hostname -i)
 
 # Set SeLinux to permissive mode
@@ -66,6 +65,10 @@ openstack-config --set /etc/nova/nova.conf glance host ${OPENSTACK_CONTROLLER}
 
 # enable verbose logging
 openstack-config --set /etc/nova/nova.conf DEFAULT verbose True
+
+# Fixes #556, start login nodes after reboot
+openstack-config --set /etc/nova/nova.conf DEFAULT resume_guests_state_on_host_boot true
+
 echo "-----------------------------------"
 
 
@@ -74,12 +77,9 @@ echo "-----------------------------------"
 echo "----Configuring openstack-nova-network: editing /etc/nova/nova.conf----"
 # Parameters and constants
 read ETH0 ETH1 ETH2 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
-PUB_NIC=${ETH1}
-if [ -z "${ETH2}" ]; then
-    PRI_NIC=${ETH1} 
-else
-    PRI_NIC=${ETH2}
-fi
+PUB_NIC=br100
+PRI_NIC=${ETH1} 
+
 openstack-config --set /etc/nova/nova.conf DEFAULT network_api_class  nova.network.api.API
 openstack-config --set /etc/nova/nova.conf DEFAULT security_group_api  nova
 openstack-config --set /etc/nova/nova.conf DEFAULT firewall_driver  nova.virt.libvirt.firewall.IptablesFirewallDriver

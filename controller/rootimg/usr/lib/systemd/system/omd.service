@@ -5,8 +5,8 @@ After=docker.service
 
 [Service]
 Restart=always
-ExecStart=/usr/bin/docker start -a glance
-ExecStop=/usr/bin/docker stop -t 2 glance
+ExecStart=/usr/bin/docker start -a omd
+ExecStop=/usr/bin/docker stop -t 2 omd
 
 [Install]
 WantedBy=multi-user.target
