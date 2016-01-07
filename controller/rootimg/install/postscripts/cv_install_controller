@@ -41,8 +41,8 @@ else
     source /etc/profile.d/xcat.sh
     mkdir -p /tmp/trinity/iso
     echo Downloading cd, this may take a while
-    wget http://ftp.nluug.nl/ftp/pub/os/Linux/distr/CentOS/7/isos/x86_64/CentOS-7-x86_64-Everything-1503-01.iso \
-         -O /tmp/trinity/iso/CentOS-7-x86_64-DVD-1503-01.iso
+    wget -c http://mirror.denit.net/centos/7/isos/x86_64/CentOS-7-x86_64-Everything-1511.iso \
+         -P /tmp/trinity/iso/
 
     echo "Creating installation tree"
     copycds -n centos7 -o $(ls -cr /tmp/trinity/iso/*.iso | head -1)
