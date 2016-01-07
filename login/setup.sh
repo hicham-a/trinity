@@ -23,7 +23,7 @@ done
 #--------------------------------------------------------------------------
 # Setup timezone and ntp
 #--------------------------------------------------------------------------
-ln -sf /usr/share/zoneinfo/CET /etc/localtime
+ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 yum -y install ntp
 sed -e "s/^server/#server/g" -i /etc/ntp.conf
 echo "server 10.141.255.254  prefer" >> /etc/ntp.conf
