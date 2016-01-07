@@ -85,3 +85,6 @@ lvm2
 
 #Fix for #509
 yum-utils
+
+# Required for #577
+psmisc
