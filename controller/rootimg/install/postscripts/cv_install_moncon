@@ -28,7 +28,10 @@ class MonCon(object):
     self.aggr_file=aggr_file
 
   def get_hosts_from_xcat(self):
-    node_list=requests.get("https://"+self.xcat_host+"/xcatws"+"/nodes", verify=False, params=self.xcat_query).json()
+    #node_list=requests.get("https://"+self.xcat_host+"/xcatws"+"/nodes", verify=False, params=self.xcat_query).json()
+    compute=requests.get("https://"+self.xcat_host+"/xcatws"+"/groups/compute", verify=False, params=self.xcat_query).json()
+    node_list = compute['compute']['members'].split(',')
+
     print node_list
     def chunks(l, n):
         """Yield successive n-sized chunks from l."""
@@ -72,6 +75,8 @@ class MonCon(object):
     group_info=requests.get("https://"+self.xcat_host+"/xcatws"+"/groups/"+group_string, verify=False, params=self.xcat_query).json()
     groups_dict={}
     for group,group_dict in group_info.iteritems():
+      if group.startswith('vc') or group.startswith('hw'):
+        continue
       members_string=group_dict['members'].strip()
       if members_string:
         members_list=members_string.split(",")
