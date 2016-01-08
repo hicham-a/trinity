@@ -11,17 +11,16 @@ else
     docker tag ${SITEMASTER}:5050/omd controller:5050/omd
 fi
 
-mkdir /cluster/omd
-touch /cluster/omd/hosts.mk
-cp /cluster/omd/multisite.mk.orig /cluster/omd/multisite.mk
+mkdir -p /cluster/omd/multisite.d
+mkdir -p /cluster/omd/conf.d
 chown 997:1000 /cluster/omd/*
-chmod g+w /cluster/omd/*
+chmod g+ws /cluster/omd/*
 
 docker run -d -t --name=omd \
     -p 5003:5003 \
     --dns=10.141.255.254 \
-    -v /cluster/omd/hosts.mk:/opt/omd/sites/monitoring/etc/check_mk/conf.d/wato/hosts.mk \
-    -v /cluster/omd/multisite.mk:/opt/omd/sites/monitoring/etc/check_mk/multisite.mk \
+    -v /cluster/omd/conf.d:/opt/omd/sites/monitoring/etc/check_mk/conf.d/wato/hosts.mk \
+    -v /cluster/omd/multisite.d:/opt/omd/sites/monitoring/etc/check_mk/multisite.mk \
     controller:5050/omd 
 
 systemctl enable omd.service

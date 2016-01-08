@@ -16,8 +16,8 @@ default_monitoring='monitoring'
 # HTH default_hosts_file="/opt/omd/sites/"+default_monitoring+"/etc/check_mk/conf.d/wato/hosts.mk"
 # HTH default_aggr_file="/opt/omd/sites/"+default_monitoring+"/etc/check_mk/multisite.mk"
 
-default_hosts_file="/cluster/omd/hosts.mk"
-default_aggr_file="/cluster/omd/multisite.mk"
+default_hosts_file="/cluster/omd/conf.d/hosts.mk"
+default_aggr_file="/cluster/omd/multisite.d/multisite.mk"
 
 class MonCon(object):
   def __init__(self,xcat_host,xcat_query,monitoring,hosts_file,aggr_file): 
@@ -58,17 +58,13 @@ class MonCon(object):
     return hosts_dict  
 
   def add_hosts(self,hosts_dict):
-    for host_name,host_ip in hosts_dict.iteritems():
-      self.add_host(host_name,host_ip)
+    with open(self.hosts_file,'w') as fop:
+      for host_name,host_ip in hosts_dict.iteritems():
+        self.add_host(host_name,host_ip)
+        host='all_hosts += [ \"'+host_name+'|cmk-agent|prod|lan|tcp|wato|/\" + FOLDER_PATH + \"/\", ]'
+        fop.write('\n'+host+'\n')
+    print "ALL HOSTS: Added host "+host_name
 
-  def add_rule(self,rule="ping",desc="PING",func="worst",check="PING"):
-    aggr_rule='aggregation_rules[\"'+rule+'\"] = (\"'+desc+'\", [ "HOST" ], \"'+func+'\", [( \"$HOST$\", \"'+check+'\" ),])'
-    fop=open(self.aggr_file,'a')
-    fop.write("\n"+aggr_rule+"\n")
-    fop.close()
-    print aggr_rule
-    print "AGGR_RULES: Added aggr_rule "+rule+" to check "+check+" and aggregate "+func
- 
   def get_groups_from_xcat(self):
     group_list=requests.get("https://"+self.xcat_host+"/xcatws"+"/groups", verify=False, params=self.xcat_query).json()
     group_string=",".join(group_list)
@@ -87,43 +83,17 @@ class MonCon(object):
 
   # this should also work for static virtual clusters, but not for updating
   def add_hw_aggrs(self,groups_dict,hw='hw-'):
-    for group,members in groups_dict.iteritems():
-      if group.startswith(hw):
-        len_hw=len(hw)
-        aggr=group[len_hw:]
-        self.add_aggr(aggr,members)
-
-
-
-  ################################################################################################
-
-  # AM : Apr 29, 2015
-  # Removing IP addresses and host_attributes from hosts.
-  # Hosts will be accesed by their hostnames
-  # Adding IP addresses breaks for containers,
-  # because their IP addresses change with the repartitioning
-
-  def add_host(self,host_name,host_ip=None):
-    host='all_hosts += [ \"'+host_name+'|cmk-agent|prod|lan|tcp|wato|/\" + FOLDER_PATH + \"/\", ]'
-    fop=open(self.hosts_file,'a')
-    fop.write('\n'+host+'\n')
-    fop.close()
-    print "ALL HOSTS: Added host "+host_name
-
-  def add_aggr(self,aggr_name,aggr_members,check='ping'):
-    for host_name in aggr_members:
-      self.add_host_to_aggr(host_name,aggr_name,check)
-
-  def add_host_to_aggr(self,host_name,aggr_name,check='ping'): 
-    aggregation='aggregations += [( \"'+aggr_name+'\", \"'+check+'\", [\"'+host_name+'\"]),]'
-    try:
-        fop=open(self.aggr_file,'a')
-        fop.write("\n"+aggregation+"\n")
-        fop.close()
-    except Exception, e:
-        print e
-    print aggregation
-    print "AGGREGATIONS: Added "+host_name+" to "+aggr_name+" to check "+check
+    with open(self.aggr_file,'a') as fop:
+      aggr_rule='aggregation_rules[\"'+rule+'\"] = (\"'+desc+'\", [ "HOST" ], \"'+func+'\", [( \"$HOST$\", \"'+check+'\" ),])'
+      fop.write("\n"+aggr_rule+"\n")
+      for group,members in groups_dict.iteritems():
+        if group.startswith(hw):
+          len_hw=len(hw)
+          aggr=group[len_hw:]
+          #self.add_aggr(aggr,members)
+          for host_name in aggr_members:
+            aggregation='aggregations += [( \"'+aggr_name+'\", \"'+check+'\", [\"'+host_name+'\"]),]'
+            fop.write("\n"+aggregation+"\n")
       
 ################################################################################################## 
 
@@ -134,12 +104,10 @@ def main(xcat_host,xcat_query,monitoring,hosts_file,aggr_file):
   # Add hosts from the xCAT db
   hosts_dict=mc.get_hosts_from_xcat()
   mc.add_hosts(hosts_dict)
-  #cmd='su - '+monitoring+' -c \"check_mk -R\"'
   cmd = 'docker exec -u monitoring omd bash -lc "check_mk -R"'
   subprocess.call(cmd,shell=True)  
 
   # For now only adding pingability 
-  mc.add_rule(rule="ping",desc="PING",func="worst",check="PING")
   groups_dict=mc.get_groups_from_xcat()
   mc.add_hw_aggrs(groups_dict)
 
