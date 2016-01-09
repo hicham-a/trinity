@@ -14,8 +14,6 @@
 #------------------------------------------------------------------------------
 yum -y install --setopt=tsflags=nodocs python-keystoneclient python-glanceclient python-novaclient python-cinderclient
 yum -y install --setopt=tsflags=nodocs openstack-dashboard httpd mod_wsgi memcached python-memcached
-#yum -y install --setopt=tsflags=nodocs epel-release
-#yum -y install --setopt=tsflags=nodocs http://rdo.fedorapeople.org/openstack-juno/rdo-release-juno.rpm
 
 cp -LrT /trinity/horizon/rootimg/ /
 chown -R apache:apache /usr/share/openstack-dashboard/static
