@@ -175,7 +175,12 @@ source /root/keystonerc_${FIRST_TENANT}
 nova floating-ip-create ${FIRST_POOL}
 nova secgroup-add-rule default tcp 1 65535 0.0.0.0/0
 nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
-nova boot --flavor 2 --image ${LOGIN_IMAGE} --security-groups default --user-data ${LOGIN_DATA} ${LOGIN_NODE}
+if [[ -z "$SITEMASTER ]]; then
+    nova boot --flavor 2 --image ${LOGIN_IMAGE} --security-groups default --user-data ${LOGIN_DATA} ${LOGIN_NODE}
+else
+    nova boot --flavor 2 --image ${LOGIN_IMAGE} --security-groups default ${LOGIN_NODE}
+fi
+
 sleep 5
 nova floating-ip-associate ${LOGIN_NODE} ${FIRST_FLOATING}
 
