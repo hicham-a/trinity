@@ -85,18 +85,29 @@ source /root/keystonerc_admin
 
 
 #-- Download the base login node image (CentOS cloud image) and upload it to glance
-CLOUD_IMAGE_URL="http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2"
-CLOUD_IMAGE="/tmp/CentOS-7-x86_64-GenericCloud.qcow2"
-CLOUD_IMAGE_FORMAT="qcow2"
-CLOUD_CONTAINER_FORMAT="bare"
-LOGIN_IMAGE="login"
-curl -s ${CLOUD_IMAGE_URL} -o ${CLOUD_IMAGE}
+if [[ -z "$SITEMASTER" ]]; then
+    CLOUD_IMAGE_URL="http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2"
+    CLOUD_IMAGE="/tmp/CentOS-7-x86_64-GenericCloud.qcow2"
+    CLOUD_IMAGE_FORMAT="qcow2"
+    CLOUD_CONTAINER_FORMAT="bare"
+    LOGIN_IMAGE="login"
+    curl -s ${CLOUD_IMAGE_URL} -o ${CLOUD_IMAGE}
+else
+    # We have a sitemaster, copy from master node.
+    mkdir -p /trinity/qcows/
+    CLOUD_IMAGE="/trinity/qcows/login.qcow2"
+    scp master:/trinity/qcows/login.qcow2 ${CLOUD_IMAGE}
+    CLOUD_IMAGE_FORMAT="qcow2"
+    CLOUD_CONTAINER_FORMAT="bare"
+    LOGIN_IMAGE="login"
+fi
+
 glance image-create \
-         --name "${LOGIN_IMAGE}" \
-         --disk-format "${CLOUD_IMAGE_FORMAT}" \
-         --container-format "${CLOUD_CONTAINER_FORMAT}" \
-         --is-public True \
-         --file "${CLOUD_IMAGE}"
+    --name "${LOGIN_IMAGE}" \
+    --disk-format "${CLOUD_IMAGE_FORMAT}" \
+    --container-format "${CLOUD_CONTAINER_FORMAT}" \
+    --is-public True \
+    --file "${CLOUD_IMAGE}"
 
 #-- Create the Flat Network
 read ETH0 ETH1 ETH2 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
