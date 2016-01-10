@@ -21,9 +21,9 @@
 }
 
 @test "1.1.7 The timezone is set correctly" {
-  run bash -c "date | grep 'CES\?T'"
+  echo $TIMEZONE > TZ
+  run bash -c "date | grep $TIMEZONE"
   [ "$status" -eq 0 ]
-
 }
 
 @test "1.1.8 Hostname is set correctly" {
