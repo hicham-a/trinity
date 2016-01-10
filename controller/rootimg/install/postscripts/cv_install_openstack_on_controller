@@ -90,6 +90,7 @@ if [[ -z "$SITEMASTER" ]]; then
     CLOUD_CONTAINER_FORMAT="bare"
     LOGIN_IMAGE="login"
     LOGIN_DATA="/root/.login_data"
+    LOGIN_SETUP="/trinity/login/setup.sh"
     curl -s ${CLOUD_IMAGE_URL} -o ${CLOUD_IMAGE}
 else
     # We have a sitemaster, copy from master node.
@@ -100,7 +101,8 @@ else
     CLOUD_IMAGE_FORMAT="qcow2"
     CLOUD_CONTAINER_FORMAT="bare"
     LOGIN_IMAGE="login"
-    LOGIN_DATA="/trinity/login/mini-setup.sh"
+    LOGIN_DATA="/root/.login_data"
+    LOGIN_SETUP="/trinity/login/mini-setup.sh"
 fi
 
 glance image-create \

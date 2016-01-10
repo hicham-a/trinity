@@ -6,4 +6,5 @@ mysql
 mysql-devel
 mysql-connector-odbc
 unixODBC
-
+# Test utility
+sshpass
