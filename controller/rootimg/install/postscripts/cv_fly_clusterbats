@@ -68,20 +68,16 @@ makedns vc-a > /dev/null
 #------------------------------------
 #reboot nodes so they go into genesis
 #------------------------------------
-while [ ! -e "/tftpboot/xcat/xnba/nodes/node001" ]; do sleep 1; done 
-
-if ! ssh -oBatchMode=yes -o StrictHostKeyChecking=no node001 docker ps 2>/dev/null | grep trinity; then
+if [ ! -e "/tftpboot/xcat/xnba/nodes/node001" ]; then
     rpower $NODES reset
-    until nodestat node001 | grep "sshd"; do
-        echo "node001 still booting, hang in there"
-        sleep 5
-    done
-
-
-    nodeset ${NODES} osimage=centos7-x86_64-netboot-trinity
-    rpower ${NODES} reset
-    echo "Go get a coffee!"
 fi
+
+while [ ! -e "/tftpboot/xcat/xnba/nodes/node001" ]; do 
+    sleep 5; 
+done 
+
+nodeset ${NODES} osimage=centos7-x86_64-netboot-trinity
+rpower $NODES reset
 
 CPUs=$(lsdef -t node -o node001 -i cpucount | grep cpucount | cut -d= -f2)
 
@@ -89,6 +85,10 @@ cat > /cluster/vc-a/etc/slurm-nodes.conf << EOF
 NodeName=$CONTAINERS CPUs=${CPUs} State=UNKNOWN
 PartitionName=containers State=UP Nodes=$CONTAINERS Default=YES
 EOF
+
+while ! ssh node001 docker ps 2>/dev/null | grep trinity; do 
+    sleep 5
+done
 
 systemctl restart trinity_api
 sshpass -p 'system' ssh -o StrictHostKeyChecking=no login.vc-a systemctl restart slurm

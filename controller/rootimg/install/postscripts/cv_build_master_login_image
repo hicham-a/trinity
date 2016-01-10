@@ -48,15 +48,7 @@ virt-customize -a ${LOGIN_IMG} \
     --edit "/etc/selinux/config: s/SELINUX=enforcing/SELINUX=permissive/" \
     --run-command "authconfig --enablemkhomedir --update" \
     --install environment-modules \
-    --mkdir /root/.ssh \
-    --run-command "ssh-keygen -t rsa -N \"\" -f /root/.ssh/id_rsa" \
-    --run-command "/root/.ssh/id_rsa.pub:/root/.ssh/authorized_keys" \
-    --run-command "uga-rwx /root/.ssh/id_rsa" \
-    --run-command "chmod u+rw /root/.ssh/id_rsa" \
-    --run-command "chmod ga-wx /root/.ssh/id_rsa.pub" \
-    --run-command "chmod ga-wx /root/.ssh/authorized_keys" \
     --install python-ldap,python-retrying,xorg-x11-xauth,bind-utils,python-pip,git 
-
                                
 virt-copy-in -a ${LOGIN_IMG} /trinity/login/rootimg/* /
 
