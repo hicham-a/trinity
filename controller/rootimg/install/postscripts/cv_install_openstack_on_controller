@@ -89,15 +89,20 @@ if [[ -z "$SITEMASTER" ]]; then
     CLOUD_IMAGE_FORMAT="qcow2"
     CLOUD_CONTAINER_FORMAT="bare"
     LOGIN_IMAGE="login"
+    LOGIN_DATA="/root/.login_data"
+    LOGIN_SETUP="/trinity/login/setup.sh"
     curl -s ${CLOUD_IMAGE_URL} -o ${CLOUD_IMAGE}
 else
     # We have a sitemaster, copy from master node.
     mkdir -p /trinity/qcows/
     CLOUD_IMAGE="/trinity/qcows/login.qcow2"
-    scp master:/trinity/qcows/login.qcow2 ${CLOUD_IMAGE}
+    # FIXME: Find a better location. We cannot assume /tmp/trinity is still mounted here.
+    cp /tmp/trinity/qcows/login.qcow2 ${CLOUD_IMAGE}
     CLOUD_IMAGE_FORMAT="qcow2"
     CLOUD_CONTAINER_FORMAT="bare"
     LOGIN_IMAGE="login"
+    LOGIN_DATA="/root/.login_data"
+    LOGIN_SETUP="/trinity/login/mini-setup.sh"
 fi
 
 glance image-create \
@@ -128,8 +133,6 @@ FIRST_PASS="system"
 FIRST_CLUSTER="vc-a"
 FIRST_POOL="login_a"
 FIRST_FLOATING="172.16.255.254"
-LOGIN_SETUP="/trinity/login/setup.sh"
-LOGIN_DATA="/root/.login_data"
 LOGIN_NODE="login-a"
 SKEL=".skel"
 
@@ -173,11 +176,7 @@ source /root/keystonerc_${FIRST_TENANT}
 nova floating-ip-create ${FIRST_POOL}
 nova secgroup-add-rule default tcp 1 65535 0.0.0.0/0
 nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
-if [[ -z "$SITEMASTER ]]; then
-    nova boot --flavor 2 --image ${LOGIN_IMAGE} --security-groups default --user-data ${LOGIN_DATA} ${LOGIN_NODE}
-else
-    nova boot --flavor 2 --image ${LOGIN_IMAGE} --security-groups default ${LOGIN_NODE}
-fi
+nova boot --flavor 2 --image ${LOGIN_IMAGE} --security-groups default --user-data ${LOGIN_DATA} ${LOGIN_NODE}
 
 sleep 5
 nova floating-ip-associate ${LOGIN_NODE} ${FIRST_FLOATING}
