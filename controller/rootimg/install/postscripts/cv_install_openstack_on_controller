@@ -42,6 +42,10 @@ pip install cherrypy
 cd /opt/trinity/trinity_api
 python setup.py install
 cd -
+if [[ ! -z "${SITEMASTER}" ]]; then
+    sed 's#/trinity/login/setup.sh#/trinity/login/mini-setup.sh#' -i /etc/trinity/trinity_api.conf
+fi 
+
 source /etc/profile.d/xcat.sh
 DHCP_NIC=$(tabdump -w key==dhcpinterfaces site | grep dhcpinterfaces | awk -F "," '{print $2}' | tr -d '\"')
 sed -e "s/127.0.0.1/10.141.255.254/g" \
