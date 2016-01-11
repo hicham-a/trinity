@@ -85,11 +85,16 @@ controller:/trinity /trinity nfs rsize=8192,wsize=8192,timeo=14,intr
 controller:/home/vc-a /home nfs rsize=8192,wsize=8192,timeo=14,intr
 EOF
 
-for in in {1..5}; do
-   if mount -a; then break; fi
+umount ${controller}:/trinity
+
+for in in {1..10}; do
+   error=$(mount -a 2>&1)
+   if [[ -z "$error" ]]; then break; fi
+   echo "mount -a failed: retrying"
    sleep 10
 done
-if ! mount -a; then
+error=$(mount -a 2>&1)
+if [[ ! -z "$error" ]]; then
    echo "ERROR: failure to mount file systems."
 fi
 
