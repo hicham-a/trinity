@@ -10,7 +10,7 @@ if [[ $(nodels compute | wc -l ) = 0 ]]; then
    exit 1
 fi
 chtab node=compute nodehm.serialport=0 nodehm.serialspeed=19200 nodehm.serialflow=hard
-mkconservercf
+makeconservercf
 systemctl start conserver
 chtab node=compute nodehm.serialport="" nodehm.serialspeed="" nodehm.serialflow=""
 
