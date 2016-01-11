@@ -100,6 +100,12 @@ else
     su munge -c "cp /cluster/etc/munge/munge.key /etc/munge/munge.key"
 fi
 
+#--------------------------------------------------------------------------
+# Set the hostname
+#--------------------------------------------------------------------------
+echo “login” > /etc/hostname
+hostname login
+
 service munge restart
 service slurm restart
 
