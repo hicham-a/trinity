@@ -28,7 +28,7 @@ virt-customize -a ${LOGIN_IMG} \
     --run-command "useradd -u 1001 -g 1001 -d /var/run/slurm -s /sbin/nologin slurm" \
     --run-command "groupadd -g 1002 munge" \
     --run-command "useradd -u 1002 -g 1002 -d /var/run/munge -s /sbin/nologin munge" \
-    --install munge,munge-libs,gcc \
+    --install munge,munge-libs,gcc,vim-enhanced \
     --install readline-devel,openssl-devel,perl-ExtUtils-MakeMaker,perl-Switch,pam-devel \
     --install ${SLURM_RPMS} \
     --delete /etc/slurm \
