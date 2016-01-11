@@ -29,3 +29,4 @@ net-snmp-utils
 #
 git
 vim-enhanced
+mlocate
