@@ -72,10 +72,17 @@ if [ ! -e "/tftpboot/xcat/xnba/nodes/node001" ]; then
     rpower $NODES reset
 fi
 
-while [ ! -e "/tftpboot/xcat/xnba/nodes/node001" ]; do 
-    sleep 5; 
-done 
-
+while : ; do
+    for NODE in ${NODES}; do
+        if [[ ! -e "/tftpboot/xcat/xnba/nodes/%{NODE}" ]]; then
+            sleep 5
+            continue;
+        fi
+    done
+    sleep 5
+    break
+done
+    
 CPUs=$(lsdef -t node -o node001 -i cpucount | grep cpucount | cut -d= -f2)
 
 cat > /cluster/vc-a/etc/slurm/slurm-nodes.conf << EOF
@@ -89,6 +96,7 @@ rpower $NODES reset
 while ! ssh node001 docker ps 2>/dev/null | grep trinity; do 
     sleep 5
 done
+sleep 5
 
 systemctl restart trinity_api
 sshpass -p 'system' ssh -o StrictHostKeyChecking=no login.vc-a systemctl restart slurm
