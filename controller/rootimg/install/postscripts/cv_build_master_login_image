@@ -47,7 +47,7 @@ virt-customize -a ${LOGIN_IMG} \
     --mkdir /home \
     --edit "/etc/selinux/config: s/SELINUX=enforcing/SELINUX=permissive/" \
     --run-command "authconfig --enablemkhomedir --update" \
-    --install environment-modules whatsup \
+    --install environment-modules,whatsup \
     --install python-ldap,python-retrying,xorg-x11-xauth,bind-utils,python-pip,git 
                                
 virt-copy-in -a ${LOGIN_IMG} /trinity/login/rootimg/* /
