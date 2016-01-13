@@ -12,9 +12,6 @@ fi
 
 exec &> >(tee -a "/var/log/bats.log")
 
-#------------------------------------------
-# Run the controller bats for test case 1.1
-#-------------------------------------------
 bats /trinity/testing/clusterbats/t1.1.bats 
 bats /trinity/testing/clusterbats/t1.2.bats
 bats /trinity/testing/clusterbats/run_mpi.bats 
