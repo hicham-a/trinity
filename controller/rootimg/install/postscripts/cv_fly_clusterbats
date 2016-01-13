@@ -5,10 +5,10 @@
 ##author         : Themis Athanassiadou
 ##email          : themis.athanassiadou@clustervision.com
 
-if [ -x bats ]; then
+if [ ! -x bats ]; then
     /trinity/testing/bats/install.sh /usr/local
 fi
-source /etc/profile.d/xcat.s h
+source /etc/profile.d/xcat.sh
 
 exec &> >(tee -a "/var/log/bats.log")
 
