@@ -5,13 +5,14 @@
 ##author         : Themis Athanassiadou
 ##email          : themis.athanassiadou@clustervision.com
 
-if [ ! -d /trinity/testing/bats ]; then
-    yum -y -q install git
-    git clone https://github.com/sstephenson/bats.git && bats/install.sh /usr/local
+if [ -x bats ]; then
+    /trinity/testing/bats/install.sh /usr/local
 fi
+source /etc/profile.d/xcat.s h
 
 exec &> >(tee -a "/var/log/bats.log")
 
-bats /trinity/testing/clusterbats/t1.1.bats 
-bats /trinity/testing/clusterbats/t1.2.bats
-bats /trinity/testing/clusterbats/run_mpi.bats 
+bats /trinity/testing/clusterbats/t*.bats 
+if [[ -d /trinity/testing/clusterbugs ]]; then
+    bats /trinity/testing/clusterbugs/*.bats
+fi 

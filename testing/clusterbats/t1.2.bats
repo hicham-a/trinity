@@ -1,8 +1,5 @@
 #!/user/env/bin/bats
-
-CONFIG=/trinity/testing/clusterbats/$(</trinity/site).cfg
-source ${CONFIG}
-export CONTAINERS=${NODES/node/c}
+load configuration
 
 @test "1.2.0.a We can configure the switch" {
   chtab node=switch hosts.ip=${SWITCH}  #10.141.253.1
@@ -29,7 +26,7 @@ export CONTAINERS=${NODES/node/c}
   rpower compute reset
 
   while : ; do
-    for NODE in ${NODES}; do
+    for NODE in ${ALL_NODES}; do
       if [[ ! -e "/tftpboot/xcat/xnba/nodes/%{NODE}" ]]; then
         sleep 5
         continue;
@@ -56,8 +53,8 @@ EOF
   rpower $NODES reset
   # wait until the nodes are booted and trinity is started
   while : ; do
-    for NODE in ${NODES}; do
-      if ! ssh node001 docker ps 2>/dev/null | grep trinity; then
+    for NODE in ${ALL_NODES}; do
+      if ! ssh $NODE docker ps 2>/dev/null | grep trinity; then
         sleep 5
         continue;
       fi
@@ -66,7 +63,6 @@ EOF
     break
   done
   systemctl restart trinity_api
-
 }
 
 @test "1.2.6 There is a virtual login node" {
@@ -86,6 +82,4 @@ EOF
 @test "/cluster/vc-a/.modulespath is a file not a directory" {
   [ -f /cluster/vc-a/.modulespath ]
 }
-
-
 
