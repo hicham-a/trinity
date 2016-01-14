@@ -49,7 +49,8 @@ for profile in "${profiles[@]}"; do
       docker tag ${SITEMASTER}:5050/${profile} ${REGISTRY}/${profile}
   fi
       
-  docker push ${REGISTRY}/${profile}
+  # We can do this in the background, as no other system uses these images.
+  docker push ${REGISTRY}/${profile} &
   cmd_string=""
   for port in ${ports[${profile}]}; do
     cmd_string="${cmd_string} -p ${port}:${port}"
