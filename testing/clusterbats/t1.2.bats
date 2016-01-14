@@ -26,7 +26,7 @@ load configuration
   rpower compute reset
 
   while : ; do
-    for NODE in ${ALL_NODES}; do
+    for NODE in $(expand ${NODES}); do
       if [[ ! -e "/tftpboot/xcat/xnba/nodes/%{NODE}" ]]; then
         sleep 5
         continue;
@@ -53,7 +53,7 @@ EOF
   rpower $NODES reset
   # wait until the nodes are booted and trinity is started
   while : ; do
-    for NODE in ${ALL_NODES}; do
+    for NODE in $(expand ${NODES}); do
       if ! ssh $NODE docker ps 2>/dev/null | grep trinity; then
         sleep 5
         continue;
@@ -63,6 +63,7 @@ EOF
     break
   done
   systemctl restart trinity_api
+  sshpass -p 'system' ssh -o StrictHostKeyChecking=no login.vc-a systemctl restart slurm
 }
 
 @test "1.2.6 There is a virtual login node" {
