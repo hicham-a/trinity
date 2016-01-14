@@ -1,4 +1,4 @@
-load clusterbats/configuration
+load ../clusterbats/configuration
 
 @test "#579 docker logs: nslcd entered FATAL state" {
   for NODE in ${ALL_NODES}; do
