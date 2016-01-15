@@ -104,30 +104,12 @@ yum -y install --enablerepo=extras epel-release
 wget http://sourceforge.net/projects/xcat/files/yum/2.9/xcat-core/xCAT-core.repo -O /etc/yum.repos.d/xCAT-core.repo
 wget http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo -O /etc/yum.repos.d/xCAT-dep.repo
 mkdir /trinity/iso
-wget http://linux.cs.uu.nl/centos/7/isos/x86_64/CentOS-7-x86_64-Everything-1503-01.iso -q -O /trinity/iso/CentOS-7-x86_64-Everything-1503-01.iso
+wget -c http://mirror.denit.net/centos/7/isos/x86_64/CentOS-7-x86_64-Everything-1511.iso \
+     -P /tmp/trinity/iso/
+
 copycds -n centos7 -o /trinity/iso/*.iso
 
 /root/trinity/master/create_repo_snapshot.sh
 
-profiles=(
-  "mariadb"
-  "rabbitmq"
-  "keystone"
-  "glance"
-  "nova_controller"
-)
-
-yum -y install docker docker-registry
-systemctl enable docker docker-registry
-systemctl start docker docker-registry
-
-for profile in "${profiles[@]}"; do
-    docker build --rm=true -t localhost:5050/${profile} /trinity/${profile}
-    docker push localhost:5050/${profile}
-done
-docker build --rm=true -t localhost:5050/trinity /trinity/container
-docker push localhost:5050/trinity
-
 echo "$0 finished" >> /var/log/postinstall.log
-exit 0
 
