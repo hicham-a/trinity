@@ -27,10 +27,10 @@ load configuration
 
   while : ; do
     for NODE in $(expand ${NODES}); do
-      if [[ ! -e "/tftpboot/xcat/xnba/nodes/%{NODE}" ]]; then
+      if ! lsdef -t node ${NODE} | grep standingby ; then
         sleep 5
         continue;
-    fi
+      fi
     done
     sleep 5
     break
@@ -38,8 +38,11 @@ load configuration
 }
 
 @test "1.2.5 We can assign the containers to the default virtual cluster a" {
-  CPUs=$(lsdef -t node -o node001 -i cpucount | grep cpucount | cut -d= -f2)
+  if lsdef -t node node001 | grep booted; then
+    skip
+  fi
 
+  CPUs=$(lsdef -t node -o node001 -i cpucount | grep cpucount | cut -d= -f2)
   cat > /cluster/vc-a/etc/slurm/slurm-nodes.conf << EOF
 NodeName=$CONTAINERS CPUs=${CPUs} State=UNKNOWN
 PartitionName=containers State=UP Nodes=$CONTAINERS Default=YES
