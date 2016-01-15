@@ -5,96 +5,16 @@
 ##author         : Themis Athanassiadou
 ##email          : themis.athanassiadou@clustervision.com
 
-if [ ! -d /trinity/testing/bats ]; then
-    yum -y -q install git
-    git clone https://github.com/sstephenson/bats.git && bats/install.sh /usr/local
+if [ ! -x bats ]; then
+    /trinity/testing/bats/install.sh /usr/local
+    rm /usr/local/bin/bats
+    ln -s ../libexec/bats /usr/local/bin/bats
 fi
-yum -y -q install sshpass
-
-LOGFILE="/trinity/testing/bats.log"
-#touch ${LOGFILE}
-exec &> >(tee -a "${LOGFILE}")
-
-echo "Now flying clusterbats, hold on to your seats"
-
-CONFIG=/trinity/testing/clusterbats/$(</trinity/site).cfg
-
-source ${CONFIG}
-export $(grep =  ${CONFIG} | cut -d= -f1)
 source /etc/profile.d/xcat.sh
 
-#------------------------------------------
-# Run the controller bats for test case 1.1
-#-------------------------------------------
-bats /trinity/testing/clusterbats/t1.1.bats 
+exec &> >(tee -a "/var/log/bats.log")
 
-#---------------------------------------------------------------------------------
-#Outcome of test: if 0, all tests pass, and can proceed with cluster installation.
-#---------------------------------------------------------------------------------
-outcome="$(echo $?)"
-[[ "$outcome" -eq 0 ]] && { echo "controller passed! proceed"; } || { echo "the controller did not pass all tests, exiting"; exit 1; }
-
-#---------------------------------------------------------------
-#Configure xcat tables to deploy cluster 
-#--------------------------------------------------------------
-#change hosts table with correct switch ip address
-chtab node=switch hosts.ip=${SWITCH}  #10.141.253.1
-
-echo "${SWITCH_TABLE}" > /tmp/switch.csv
-tabrestore /tmp/switch.csv
-
-makehosts switch 
-makedns switch > /dev/null 2>&1
-
-#------------------------------------------
-# do a switch ping test before proceeding
-#------------------------------------------
-ping -c 1 switch &> /dev/null && { echo "can ping switch, proceed"; } || { echo "Cannot ping switch, exiting"; exit 1; }
-
-#--------------------------
-#add nodes to xcat database
-#--------------------------
-
-nodeadd ${NODES} groups=compute
-makehosts compute 
-makedns compute > /dev/null
-
-export CONTAINERS=${NODES/node/c}
-nodeadd $CONTAINERS groups=vc-a,hw-default
-
-makehosts vc-a
-makedns vc-a > /dev/null
-
-#------------------------------------
-#reboot nodes so they go into genesis
-#------------------------------------
-if [ ! -e "/tftpboot/xcat/xnba/nodes/node001" ]; then
-    rpower $NODES reset
-fi
-
-while [ ! -e "/tftpboot/xcat/xnba/nodes/node001" ]; do 
-    sleep 5; 
-done 
-
-CPUs=$(lsdef -t node -o node001 -i cpucount | grep cpucount | cut -d= -f2)
-
-cat > /cluster/vc-a/etc/slurm/slurm-nodes.conf << EOF
-NodeName=$CONTAINERS CPUs=${CPUs} State=UNKNOWN
-PartitionName=containers State=UP Nodes=$CONTAINERS Default=YES
-EOF
-
-nodeset ${NODES} osimage=centos7-x86_64-netboot-trinity
-rpower $NODES reset
-# wait until the nodes are booted and trinity is started
-while ! ssh node001 docker ps 2>/dev/null | grep trinity; do 
-    sleep 5
-done
-
-systemctl restart trinity_api
-sshpass -p 'system' ssh -o StrictHostKeyChecking=no login.vc-a systemctl restart slurm
-
-echo "running t1.2.bats"
-bats /trinity/testing/clusterbats/t1.2.bats
-
-echo "running run_mpi.bats"
-bats /trinity/testing/clusterbats/run_mpi.bats 
+bats /trinity/testing/clusterbats/t*.bats 
+if [[ -d /trinity/testing/clusterbugs ]]; then
+    bats /trinity/testing/clusterbugs/*.bats
+fi 

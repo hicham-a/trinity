@@ -1,4 +1,5 @@
 #!/user/bin/env bats
+load configuration
 
 @test "bash executes" {
   run bash --version
