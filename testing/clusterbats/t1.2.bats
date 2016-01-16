@@ -51,6 +51,8 @@ EOF
 
   nodeset ${NODES} osimage=centos7-x86_64-netboot-trinity
   rpower $NODES reset
+  systemctl restart trinity_api
+
   # wait until the nodes are booted and trinity is started
   while : ; do
     for NODE in $(expand ${NODES}); do
@@ -62,7 +64,6 @@ EOF
     sleep 5
     break
   done
-  systemctl restart trinity_api
   sshpass -p 'system' ssh -o StrictHostKeyChecking=no login.vc-a systemctl restart slurm
 }
 
@@ -76,7 +77,7 @@ EOF
 }
 
 @test "1.2.8 The compute nodes can connect to the internet" {
-  ssh -o StrictHostKeyChecking=no node001 ping -c1 8.8.8.8
+  ssh -o StrictHostKeyChecking=no node001 ping -c5 8.8.8.8
 }
 
 
