@@ -6,7 +6,9 @@
 ##email          : themis.athanassiadou@clustervision.com
 
 if [ ! -x bats ]; then
+    cd /tmp
     bash /trinity/testing/install_bats.sh
+    cd -
 fi
 
 source /etc/profile.d/xcat.sh
