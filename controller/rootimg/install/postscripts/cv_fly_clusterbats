@@ -6,9 +6,9 @@
 ##email          : themis.athanassiadou@clustervision.com
 
 if [ ! -x bats ]; then
-    /trinity/testing/bats/install.sh /usr/local
-    rm /usr/local/bin/bats
-    ln -s ../libexec/bats /usr/local/bin/bats
+     cd /tmp
+     bash /trinity/testing/install_bats.sh
+     cd -
 fi
 source /etc/profile.d/xcat.sh
 
