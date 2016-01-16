@@ -1,6 +1,6 @@
 #!/bin/sh
 
 echo 'deadline' > /sys/block/sda/queue/scheduler
-echo "$0 finished" >> /var/log/postinstall.log
+echo "$0 finished @ $(date)" >> /var/log.postinstall.log
 exit 0
 

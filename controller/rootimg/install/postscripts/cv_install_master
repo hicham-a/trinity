@@ -128,6 +128,6 @@ done
 docker build --rm=true -t localhost:5050/trinity /trinity/container
 docker push localhost:5050/trinity
 
-echo "$0 finished" >> /var/log/postinstall.log
+echo "$0 finished @ $(date)" >> /var/log.postinstall.log
 exit 0
 

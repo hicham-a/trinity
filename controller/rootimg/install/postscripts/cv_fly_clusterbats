@@ -18,3 +18,5 @@ bats /trinity/testing/clusterbats/t*.bats
 if [[ -d /trinity/testing/clusterbugs ]]; then
     bats /trinity/testing/clusterbugs/*.bats
 fi 
+
+echo "$0 finished @ $(date)" >> /var/log.postinstall.log
