@@ -117,4 +117,4 @@ def main(xcat_host,xcat_query,monitoring,hosts_file,aggr_file):
 
 if __name__=='__main__':  
   main(default_xcat_host,default_xcat_query,default_monitoring,default_hosts_file,default_aggr_file)
-  
+### python echo "$0 finished @ $(date)" >> /var/log/postinstall.log  

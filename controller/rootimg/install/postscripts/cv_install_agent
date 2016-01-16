@@ -18,4 +18,4 @@ wget https://mathias-kettner.de/download/check_mk-agent-logwatch-1.2.4p5-1.noarc
 yum install -y check_mk-agent*.rpm
 service xinetd restart
 iptables -F
-echo "$0 finished @ $(date)" >> /var/log.postinstall.log
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log

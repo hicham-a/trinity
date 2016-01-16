@@ -8,3 +8,4 @@ for i in {1..30}; do
    fi
 done
 echo Error: Unable to establish network connection.
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log

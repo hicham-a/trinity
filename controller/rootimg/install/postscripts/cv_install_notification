@@ -73,4 +73,4 @@ contacts.update(
 
 EOF
 chown monitoring:monitoring ${contacts}
-echo "$0 finished @ $(date)" >> /var/log.postinstall.log
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log

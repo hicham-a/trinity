@@ -14,5 +14,5 @@ done
 mount -a
 exportfs -a
 o "$0 finished" >> /var/log/postinstall.log
-echo "$0 finished @ $(date)" >> /var/log.postinstall.log
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log
 

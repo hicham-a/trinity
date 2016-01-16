@@ -79,4 +79,4 @@ for profile in "${profiles[@]}"; do
   service=${profile//_/-}
   systemctl enable ${service}.service
 done
-echo $0 finished >> /var/log/postinstall.log
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log

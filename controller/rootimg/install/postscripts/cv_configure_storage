@@ -39,4 +39,4 @@ mount -a
 # Fix for 411 : symlink to stateless var
 rm -rf /var/lib/rpm
 ln -s /.var/lib/rpm /var/lib/
-echo "$0 finished @ $(date)" >> /var/log.postinstall.log
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log

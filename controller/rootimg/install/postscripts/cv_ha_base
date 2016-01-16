@@ -350,4 +350,4 @@ fi
 systemctl enable pacemaker
 systemctl enable corosync
 
-echo "$0 finished @ $(date)" >> /var/log.postinstall.log
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log
