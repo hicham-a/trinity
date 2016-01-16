@@ -53,7 +53,10 @@ systemctl disable NetworkManager
 killall dhclient
 # disable the dhcp based ntp
 # rm /etc/dhcp/dhclient.d/ntp.sh
-systemctl restart network
+if ! systemctl restart network; then
+    sleep 3
+    systemctl start network
+fi
 
 mkdir -p /trinity
 
@@ -181,7 +184,7 @@ exportfs -a
 #--------------------------------------------------------------------------------------
 mkdir -p /install/post/otherpkgs/centos7/x86_64
 yumdownloader --resolve --destdir /install/post/otherpkgs/centos7/x86_64 \
-    $(grep -v ^# grep -v ^# /install/custom/netboot/centos/trinity.centos7.otherpkgs)
+    $(grep -v "^#" /install/custom/netboot/centos/trinity.centos7.otherpkgs)
 
 #if [ -z $SITEMASTER ]; then
 #    reposync -n -r epel -r extras -r updates -r xcat-2-core -r xcat-dep -r openstack-juno -p /install/post/otherpkgs/centos7/x86_64/
