@@ -180,12 +180,14 @@ exportfs -a
 # Selective updates
 #--------------------------------------------------------------------------------------
 mkdir -p /install/post/otherpkgs/centos7/x86_64
+yumdownloader --resolve --destdir /install/post/otherpkgs/centos7/x86_64 \
+    $(grep -v ^# grep -v ^# /install/custom/netboot/centos/trinity.centos7.otherpkgs)
 
-if [ -z $SITEMASTER ]; then
-    reposync -n -r epel -r extras -r updates -r xcat-2-core -r xcat-dep -r openstack-juno -p /install/post/otherpkgs/centos7/x86_64/
-else
-    reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7/x86_64/
-fi
+#if [ -z $SITEMASTER ]; then
+#    reposync -n -r epel -r extras -r updates -r xcat-2-core -r xcat-dep -r openstack-juno -p /install/post/otherpkgs/centos7/x86_64/
+#else
+#    reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7/x86_64/
+#fi
 
 createrepo /install/post/otherpkgs/centos7/x86_64/
 genimage centos7-x86_64-netboot-trinity
