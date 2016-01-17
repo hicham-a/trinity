@@ -111,6 +111,9 @@ fi
 #--------------------------------------------------------------------------
 echo “login” > /etc/hostname
 hostname login
+chmod +x /usr/sbin/custom_hostname
+#systemctl start set-hostname.service
+systemctl enable set-hostname.service
 
 service munge restart
 service slurm restart
