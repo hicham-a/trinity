@@ -31,7 +31,7 @@ load configuration
     for NODE in $(expand ${NODES}); do
       if ! lsdef -t node ${NODE} | grep standingby ; then
         sleep 5
-        continue;
+        continue 2;
       fi
     done
     sleep 5
@@ -65,7 +65,7 @@ EOF
     for NODE in $(expand ${NODES}); do
       if ! ssh $NODE docker ps 2>/dev/null | grep trinity; then
         sleep 5
-        continue;
+        continue 2;
       fi
     done
     sleep 5
