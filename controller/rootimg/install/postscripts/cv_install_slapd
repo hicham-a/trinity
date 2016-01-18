@@ -76,6 +76,4 @@ sed -e 's/^group:.*$/group:\t\tfiles ldap/g' \
 authconfig-tui --kickstart --enableldapauth --ldapbasedn=dc=local \
      --ldapserver=localhost 
 
-echo "$0 finished" >> /var/log/postinstall.log
-exit 0
-
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log

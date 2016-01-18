@@ -8,3 +8,4 @@
 nameservers=$(cat /etc/resolv.conf | grep ^nameserver | awk '{printf "%s%s", sep,$2; sep=","}')
 chtab key=forwarders site.value=${nameservers}
 makedns -n
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log

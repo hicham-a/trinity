@@ -60,7 +60,6 @@ class MonCon(object):
   def add_hosts(self,hosts_dict):
     with open(self.hosts_file,'w') as fop:
       for host_name,host_ip in hosts_dict.iteritems():
-        self.add_host(host_name,host_ip)
         host='all_hosts += [ \"'+host_name+'|cmk-agent|prod|lan|tcp|wato|/\" + FOLDER_PATH + \"/\", ]'
         fop.write('\n'+host+'\n')
     print "ALL HOSTS: Added host "+host_name
@@ -83,8 +82,12 @@ class MonCon(object):
 
   # this should also work for static virtual clusters, but not for updating
   def add_hw_aggrs(self,groups_dict,hw='hw-'):
+    rule="ping"
+    desc="PING"
+    func="worst"
+    check="PING"
     with open(self.aggr_file,'a') as fop:
-      aggr_rule='aggregation_rules[\"'+rule+'\"] = (\"'+desc+'\", [ "HOST" ], \"'+func+'\", [( \"$HOST$\", \"'+check+'\" ),])'
+      aggr_rule='aggregation_rules[\"ping\"] = (\"PING\", [ "HOST" ], \"worst\", [( \"$HOST$\", \"PING\" ),])'
       fop.write("\n"+aggr_rule+"\n")
       for group,members in groups_dict.iteritems():
         if group.startswith(hw):
@@ -114,4 +117,4 @@ def main(xcat_host,xcat_query,monitoring,hosts_file,aggr_file):
 
 if __name__=='__main__':  
   main(default_xcat_host,default_xcat_query,default_monitoring,default_hosts_file,default_aggr_file)
-  
+### python echo "$0 finished @ $(date)" >> /var/log/postinstall.log  

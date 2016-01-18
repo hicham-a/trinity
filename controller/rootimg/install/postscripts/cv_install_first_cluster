@@ -103,3 +103,4 @@ nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
 nova boot --flavor 2 --image ${LOGIN_IMAGE} --security-groups default --user-data ${LOGIN_DATA} ${LOGIN_NODE}
 sleep 5
 nova floating-ip-associate ${LOGIN_NODE} ${FIRST_FLOATING}
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log

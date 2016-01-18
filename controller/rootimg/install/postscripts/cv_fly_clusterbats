@@ -5,182 +5,19 @@
 ##author         : Themis Athanassiadou
 ##email          : themis.athanassiadou@clustervision.com
 
+if [ ! -x bats ]; then
+    cd /tmp
+    bash /trinity/testing/install_bats.sh
+    cd -
+fi
 
-LOGFILE="/trinity/testing/bats.log"
-#touch ${LOGFILE}
-exec 2>&1 | tee ${LOGFILE} 
-
-echo "Now flying clusterbats, hold on to your seats"
-
-CONFIG_FILE=$(</trinity/site).cfg
-
-source /trinity/testing/clusterbats/${CONFIG_FILE}
 source /etc/profile.d/xcat.sh
-yum -y install sshpass
 
-#------------------------------------------------
-# Install the the Bash Automated Testing System:
-#------------------------------------------------
-if [ ! -d /trinity/testing/bats ]; then
-   sh /trinity/testing/install_bats.sh
-fi
+exec &> >(tee -a "/var/log/bats.log")
 
-#------------------------------------------
-# Run the controller bats for test case 1.1
-#-------------------------------------------
-bats /trinity/testing/clusterbats/t1.1.bats 
+bats /trinity/testing/clusterbats/t*.bats 
+if [[ -d /trinity/testing/clusterbugs ]]; then
+    bats /trinity/testing/clusterbugs/*.bats
+fi 
 
-#---------------------------------------------------------------------------------
-#Outcome of test: if 0, all tests pass, and can proceed with cluster installation.
-#---------------------------------------------------------------------------------
-outcome="$(echo $?)"
-[[ "$outcome" -eq 0 ]] && { echo "controller passed! proceed"; } || { echo "the controller did not pass all tests, exiting"; exit 1; }
-
-#---------------------------------------------------------------
-#Configure xcat tables to deploy cluster 
-#--------------------------------------------------------------
-
-#ip_current="$(gettab node=switch hosts.ip)"
-#echo $(ip_current) 
-
-#change hosts table with correct switch ip address
-chtab node=switch hosts.ip=${switch_ip}  #10.141.253.1
-
-
-#change hosttable with openstack node attributes
-
-if [ ! ${dockerize} ]; then
- chtab node=openstack hosts.ip=${openstack_ip} #10.141.255.250
- chtab node=openstack hosts.hostnames=${openstack_hostname} #"openstack"
- chtab node=openstack hosts.otherinterfaces="openstack-bmc:${openstack_bmc_ip}"
-fi
-
-tabdump hosts
-
-#change switch table
-if [ ${cisco} = yes ]; then
-  chtab -d node=node001 switch
-  chtab node=compute switch.port="${compute_switch_port}" #"|\D+(\d+)|fa(\$1+0)|"
-  chtab node=compute switch.switch="switch"
-  chtab node=openstack switch.port="${openstack_switch_port}" #"fa3"
-  chtab node=openstack switch.switch="switch"
-else
-  chtab node=node001 switch.port="${node001_switch_port}"
-  chtab node=node001 switch.switch="switch"
-  chtab node=node002 switch.port="${node002_switch_port}"
-  chtab node=node002 switch.switch="switch"
-fi
-
-tabdump switch
-
-makehosts switch
-makedns switch
-
-#------------------------------------------
-# do a switch ping test before proceeding
-#------------------------------------------
-ping -c 1 switch &> /dev/null && { echo "can ping switch, proceed"; } || { echo "Cannot ping switch, exiting"; exit 1; }
-
-#--------------------------
-#add nodes to xcat database
-#--------------------------
-
-nodeadd node[001-002] groups=compute
-#nodeadd openstack groups=compute
-makehosts compute
-makedns compute
-
-mkdef -t group -o hw-Generic
-nodeadd c001-c002 groups=hw-Generic,vc-a
-
-#makehosts vc-a
-#makedns vc-a 
-
-
-
-#------------------------------------
-#reboot nodes so they go into genesis
-#------------------------------------
-
-#rpower openstack reset
-rpower node001-node002 reset
-
-sleep 10 
-
-#make sure they go into genesis/ssh (node001 usually slow - need to add multiple node checks)
-#while ! ssh node001; do sleep 1; done -- this will ssh into node, do not want this. 
-
-
-#while [ ! -e "/tftpboot/xcat/xnba/nodes/openstack" ]; do sleep 1; done
-
-# until nodestat openstack | grep "sshd"; 
-#    do 
-#	echo "openstack still booting, hang in there" 
-#	sleep 20 
-#    done
-
-#echo "Openstack Node is in Genesis, deploy openstack:" 
-
-#nodeset nodes to appropriate image
-
-#nodeset openstack osimage=centos7-x86_64-install-openstack
-#sleep 5
-#rpower openstack reset
-
-#now compute nodes
-
-while [ ! -e "/tftpboot/xcat/xnba/nodes/node001" ]; do sleep 1; done 
-
- until nodestat node001 | grep "sshd";
-    do
-    echo "node001 still booting, hang in there"
-    sleep 5
-    done
-
-
-nodeset node001-node002 osimage=centos7-x86_64-netboot-trinity
-
-
-sleep 10
-
-rpower node001-node002 reset
-
-echo "Go get a coffee!"
-
-sleep 5
-
-# Need to test whether openstack deployed without errors here
-#tail/grep xcat.log for errors
-
-#until nodestat openstack | grep "sshd";
-#   do
-#   echo "node deploying openstack image"
-#   sleep 50
-#   done
-
-#sshpass -p system ssh -T  node003 <<WTF 
-#  [ tail -f /var/log/xcat/xcat.log | grep -v "lspci\|setpci" | grep "ERROR" ] exit
-#WTF
-
-#--------------------------------------------------
-# when the login-a is up then run_mpi.bats
-#Outcome of test: wait until the floating ip is up
-#---------------------------------------------------
-loginaip="172.16.255.254"
-access=1;
-while [ ${access} -ne "0" ];
-   do ping -q -c 1 ${loginaip} > /dev/null 2>&1 ; access=$? ; sleep 50;
-   echo "login-a still not up"
-done
-
-echo "login-a is up, wait till slurm installs"
-
-sleep 400
-
-service trinity_api restart
-
-echo "running t1.2.bats"
-bats /trinity/testing/clusterbats/t1.2.bats
-
-echo "running run_mpi.bats"
-bats /trinity/testing/clusterbats/run_mpi.bats 
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log
