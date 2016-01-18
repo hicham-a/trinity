@@ -14,5 +14,5 @@ makeconservercf
 systemctl start conserver
 chtab node=compute nodehm.serialport="" nodehm.serialspeed="" nodehm.serialflow=""
 
-echo "$0 finished" >> /var/log/postinstall.log
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log
 

@@ -19,11 +19,6 @@ iptables -D FORWARD -j REJECT --reject-with icmp-host-prohibited
 iptables -D INPUT -j REJECT --reject-with icmp-host-prohibited
 service iptables save
 
-cat > /etc/resolv.conf << EOF
-search clustervision.com
-nameserver 192.168.66.1
-EOF
-
 #---------------------------------------------------------------------------------------
 # Get the Trinity git repository
 #---------------------------------------------------------------------------------------
@@ -111,5 +106,5 @@ copycds -n centos7 -o /trinity/iso/*.iso
 
 /root/trinity/master/create_repo_snapshot.sh
 
-echo "$0 finished" >> /var/log/postinstall.log
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log
 

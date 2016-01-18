@@ -49,12 +49,15 @@ for profile in "${profiles[@]}"; do
       docker tag ${SITEMASTER}:5050/${profile} ${REGISTRY}/${profile}
   fi
       
-  # We can do this in the background, as no other system uses these images.
-  docker push ${REGISTRY}/${profile} &
+  docker push ${REGISTRY}/${profile}
+  # FIXME the run commands should be part of the unit file.
   cmd_string=""
   for port in ${ports[${profile}]}; do
     cmd_string="${cmd_string} -p ${port}:${port}"
   done
+  if [[ "${profile}" = mariadb ]]; then
+    cmd_string="${cmd_string} -e MYSQL_ROOT_PASSWORD=system"
+  fi 
   cmd_string="${cmd_string} --name=${profile} -d ${REGISTRY}/${profile}"
   docker run --net=host --privileged=true ${cmd_string}
   case ${profile} in 
@@ -79,4 +82,4 @@ for profile in "${profiles[@]}"; do
   service=${profile//_/-}
   systemctl enable ${service}.service
 done
-echo $0 finished >> /var/log/postinstall.log
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log

@@ -25,6 +25,8 @@ load configuration
   makedns compute > /dev/null || true
   rpower compute reset
 
+  # wait a bit
+  sleep 3
   while : ; do
     for NODE in $(expand ${NODES}); do
       if ! lsdef -t node ${NODE} | grep standingby ; then
@@ -56,6 +58,8 @@ EOF
   rpower $NODES reset
   systemctl restart trinity_api
 
+  # wait a few secs
+  sleep 5
   # wait until the nodes are booted and trinity is started
   while : ; do
     for NODE in $(expand ${NODES}); do

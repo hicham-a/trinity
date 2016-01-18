@@ -53,7 +53,10 @@ systemctl disable NetworkManager
 killall dhclient
 # disable the dhcp based ntp
 # rm /etc/dhcp/dhclient.d/ntp.sh
-systemctl restart network
+if ! systemctl restart network; then
+    sleep 3
+    systemctl start network
+fi
 
 mkdir -p /trinity
 
@@ -180,12 +183,14 @@ exportfs -a
 # Selective updates
 #--------------------------------------------------------------------------------------
 mkdir -p /install/post/otherpkgs/centos7/x86_64
+yumdownloader --resolve --destdir /install/post/otherpkgs/centos7/x86_64 \
+    $(grep -v "^#" /install/custom/netboot/centos/trinity.centos7.otherpkgs)
 
-if [ -z $SITEMASTER ]; then
-    reposync -n -r epel -r extras -r updates -r xcat-2-core -r xcat-dep -r openstack-juno -p /install/post/otherpkgs/centos7/x86_64/
-else
-    reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7/x86_64/
-fi
+#if [ -z $SITEMASTER ]; then
+#    reposync -n -r epel -r extras -r updates -r xcat-2-core -r xcat-dep -r openstack-juno -p /install/post/otherpkgs/centos7/x86_64/
+#else
+#    reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7/x86_64/
+#fi
 
 createrepo /install/post/otherpkgs/centos7/x86_64/
 genimage centos7-x86_64-netboot-trinity
@@ -232,4 +237,4 @@ mkdef -t policy 6 name=trinity rule=allow
 sed  -e "/<Directory \/>/,/<\/Directory>/ s/Require/#Require/" -i /etc/httpd/conf/httpd.conf
 service httpd restart
 
-echo "$0 finished" >> /var/log/postinstall.log
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log

@@ -17,5 +17,5 @@ cp usr/bin/tlntool /usr/bin/tlntool
 chmod uga+x /usr/bin/tlntool
 cd /
 umount ${file_root}
-echo "$0 finished" >> /var/log/postinstall.log
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log
 
