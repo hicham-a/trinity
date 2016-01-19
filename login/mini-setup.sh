@@ -115,6 +115,11 @@ chmod +x /usr/sbin/custom_hostname
 #systemctl start set-hostname.service
 systemctl enable set-hostname.service
 
+cat << EOF > /etc/resolv.conf
+search cluster. vc-a. cluster
+nameserver 10.141.255.254
+EOF
+
 service munge restart
 service slurm restart
 
