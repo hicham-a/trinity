@@ -48,15 +48,6 @@ else
     copycds -n centos7 -o $(ls -cr /tmp/trinity/iso/*.iso | head -1)
 fi
 
-# Remove stale repositories.
-# Fixme: we should do this after we have installed everything, as a final postscript.
-yum -y install epel-release
-yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno-1.noarch.rpm
-yum-config-manager --disable xcat-otherpkgs* local-centos*
-yum-config-manager --enable base epel extras updates openstack-juno
-yum-config-manager --add-repo http://sourceforge.net/projects/xcat/files/yum/2.9/xcat-core/xCAT-core.repo
-yum-config-manager --add-repo http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo
-
 systemctl stop NetworkManager
 systemctl disable NetworkManager
 killall dhclient
@@ -245,5 +236,14 @@ tabch key=xcat,username=trinity passwd.password=trinity
 mkdef -t policy 6 name=trinity rule=allow
 sed  -e "/<Directory \/>/,/<\/Directory>/ s/Require/#Require/" -i /etc/httpd/conf/httpd.conf
 service httpd restart
+
+# Remove stale repositories.
+# Fixme: we should do this after we have installed everything, as a final postscript.
+yum -y install epel-release
+yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno-1.noarch.rpm
+yum-config-manager --disable xcat-otherpkgs* local-centos*
+yum-config-manager --enable base epel extras updates openstack-juno
+yum-config-manager --add-repo http://sourceforge.net/projects/xcat/files/yum/2.9/xcat-core/xCAT-core.repo
+yum-config-manager --add-repo http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo
 
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log
