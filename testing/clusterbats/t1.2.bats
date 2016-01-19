@@ -25,15 +25,15 @@ load configuration
   makedns compute > /dev/null || true
   rpower compute reset
 
-  # wait a bit
-  sleep 3
-  while : ; do
+  for i in {1..100} ; do
     for NODE in $(expand ${NODES}); do
       if ! lsdef -t node ${NODE} | grep standingby ; then
-        sleep 5
+        sleep 10 
         continue 2;
       fi
     done
+    # trigger the timeout condition
+    [[ "$i" -ne 100 ]] 
     sleep 5
     break
   done
@@ -58,16 +58,17 @@ EOF
   rpower $NODES reset
   systemctl restart trinity_api
 
-  # wait a few secs
-  sleep 5
   # wait until the nodes are booted and trinity is started
-  while : ; do
+  #while : ; do
+  for i in {1..100} ; do
     for NODE in $(expand ${NODES}); do
       if ! ssh $NODE docker ps 2>/dev/null | grep trinity; then
-        sleep 5
+        sleep 10 
         continue 2;
       fi
     done
+    # trigger the timeout condition
+    [[ "$i" -ne 100 ]] 
     sleep 5
     break
   done

@@ -189,9 +189,11 @@ nova floating-ip-associate ${LOGIN_NODE} ${FIRST_FLOATING}
 # setup routing for the virtual clusters
 #--------------------------------------------------------------------------------------
 ip route add 172.16.0.0/12 dev ${BRIDGE}
-if [[ -f /etc/sysconfig/network-scripts/route-${ETH1} ]]; then
-   mv /etc/sysconfig/network-scripts/route-${ETH1} /etc/sysconfig/network-scripts/route-${BRIDGE}
-fi
+systemctl enable trinity-route
+systemctl start trinity-route
+#if [[ -f /etc/sysconfig/network-scripts/route-${ETH1} ]]; then
+#   mv /etc/sysconfig/network-scripts/route-${ETH1} /etc/sysconfig/network-scripts/route-${BRIDGE}
+#fi
 
 # Provide DNS on the bridge interface not the physical interface.
 while ! (ip a show dev ${BRIDGE} | grep 10.141.255.254); do sleep 10; done
