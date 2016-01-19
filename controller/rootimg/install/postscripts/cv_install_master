@@ -100,7 +100,7 @@ wget http://sourceforge.net/projects/xcat/files/yum/2.9/xcat-core/xCAT-core.repo
 wget http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo -O /etc/yum.repos.d/xCAT-dep.repo
 mkdir /trinity/iso
 wget -c http://mirror.denit.net/centos/7/isos/x86_64/CentOS-7-x86_64-Everything-1511.iso \
-     -P /tmp/trinity/iso/
+     -P /trinity/iso/
 
 copycds -n centos7 -o /trinity/iso/*.iso
 
