@@ -12,7 +12,7 @@ RUN useradd munge -u 1002 -U && useradd slurm -u 1001 -U && \
 RUN yum -y install openssh-server openssh-clients python-pip vim-minimal \
     infiniband-diags munge rsyslog bind-utils perl perl-DBI perl-Switch \
     openldap-clients nss-pam-ldapd authconfig environment-modules \
-    infinipath-psm \
+    infinipath-psm iproute \
     xauth xorg-x11-xauth \
     vim-enhanced \
     hostname && yum clean all
