@@ -48,6 +48,12 @@ else
     copycds -n centos7 -o $(ls -cr /tmp/trinity/iso/*.iso | head -1)
 fi
 
+# Remove stale repositories.
+yum-config-manager --disable xcat-otherpkgs* local-centos*
+yum-config-manager --enable base epel extras updates openstack-juno
+yum-config-manager --add-repo http://sourceforge.net/projects/xcat/files/yum/2.9/xcat-core/xCAT-core.repo
+yum-config-manager --add-repo http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo
+
 systemctl stop NetworkManager
 systemctl disable NetworkManager
 killall dhclient
