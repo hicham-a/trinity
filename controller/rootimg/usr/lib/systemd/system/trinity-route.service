@@ -6,7 +6,7 @@ After=openstack-nova-network.service openstack-nova-compute.service
 [Service]
 Type=oneshot
 ExecStartPre=/usr/bin/sleep 20
-ExecStart=/usr/sbin/ip route add 172.16.0.0/20 dev br100
+ExecStart=/usr/sbin/ip route add 172.16.0.0/12 dev br100
 
 [Install]
 WantedBy=multi-user.target

@@ -6,6 +6,6 @@ load ../clusterbats/configuration
   while ! sshpass -p system ssh login-a date; do
     sleep 1
   done
-  [[ "$(sshpass -p system ssh login-a hostname)" = "login" ]]
+  [[ "$(sshpass -p system ssh login-a hostname)" = "login" ]] || [[ "$(sshpass -p system ssh login-a hostname)" = "login" ]]
 }
 
