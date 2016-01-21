@@ -32,7 +32,7 @@ install_packages(){
   for package in ${package_list[*]}; do
     yum -y -q list installed ${package} \
     && echo "${package} is already installed" \
-    || echo "Installing ${package}" ; yum -y install ${package}
+    || echo "Installing ${package}" ; yum -y -q install ${package}
   done
   echo "---------------------------"  
 }

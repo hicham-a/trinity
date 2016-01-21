@@ -16,9 +16,9 @@ cd -
 systemctl stop NetworkManager
 systemctl disable NetworkManager
 
-yum -y install epel-release
-yum -y install https://rdo.fedorapeople.org/rdo-release.rpm
-yum -y install openstack-packstack
+yum -y -q install epel-release
+yum -y -q install https://rdo.fedorapeople.org/rdo-release.rpm
+yum -y -q install openstack-packstack
 
 # Now, find a way to get the packstack answers file from the controller
 # to here.
@@ -44,7 +44,7 @@ ls /etc/yum.repos.d
 yum repolist
 
 echo "exclude=net-snmp-perl" >> /etc/yum.repos.d/xCAT-dep.repo
-yum -y install xCAT 
+yum -y -q install xCAT 
 
 mkdir /tmp/trinity
 mount master:/trinity /tmp/trinity       
@@ -121,7 +121,7 @@ makedns -n
 #END
 
 # setup NAT, so nodes can access the internet (see manual step 1.f)
-yum -y install iptables-services
+yum -y -q install iptables-services
 chkconfig iptables on
 service iptables start
 modprobe iptable_nat
@@ -144,8 +144,8 @@ END
 # Start opensm on the controller
 #--------------------------------------------------------------------------------------
 yum -y -q groupinstall "Infiniband Support"
-yum -y install opensm
-yum -y install infiniband-diags
+yum -y -q install opensm
+yum -y -q install infiniband-diags
 
 systemctl enable opensm
 systemctl start opensm
@@ -154,7 +154,7 @@ systemctl start opensm
 #--------------------------------------------------------------------------------------
 # now setup NFS
 #--------------------------------------------------------------------------------------
-yum -y install nfs-utils nfs-utils-lib
+yum -y -q install nfs-utils nfs-utils-lib
 systemctl enable nfs-server
 systemctl start nfs-server
 
@@ -178,8 +178,8 @@ reposync -n -r updates -r extras -p /install/post/otherpkgs/centos7/x86_64/
 copycds -o /tmp/trinity/iso/*.iso
 # copy openvswitch
 mkdir -p /install/post/otherpkgs/centos7/x86_64/openstack
-yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-icehouse/rdo-release-icehouse-4.noarch.rpm
-yum -y install --downloadonly --downloaddir=/install/post/otherpkgs/centos7/x86_64/openstack openvswitch
+yum -y -q install https://repos.fedorapeople.org/repos/openstack/openstack-icehouse/rdo-release-icehouse-4.noarch.rpm
+yum -y -q install --downloadonly --downloaddir=/install/post/otherpkgs/centos7/x86_64/openstack openvswitch
 # now bundle into a repository
 createrepo /install/post/otherpkgs/centos7/x86_64/
 # generate the image

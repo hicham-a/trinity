@@ -1,7 +1,7 @@
 FROM centos:latest
 MAINTAINER hans.then@clustervision.com
 RUN yum -y swap -- remove systemd-container* -- install systemd systemd-libs
-RUN yum -y install epel-release iproute
+RUN yum -y -q install epel-release iproute
 RUN yum -y -q groupinstall "Infiniband Support"
 
 RUN useradd munge -u 1002 -U && useradd slurm -u 1001 -U && \
@@ -9,7 +9,7 @@ RUN useradd munge -u 1002 -U && useradd slurm -u 1001 -U && \
     mkdir -m 755 -p /var/run/munge && \
     chown munge:munge /var/run/munge
 
-RUN yum -y install openssh-server openssh-clients python-pip vim-minimal \
+RUN yum -y -q install openssh-server openssh-clients python-pip vim-minimal \
     infiniband-diags munge rsyslog bind-utils perl perl-DBI perl-Switch \
     openldap-clients nss-pam-ldapd authconfig environment-modules \
     infinipath-psm iproute \

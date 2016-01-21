@@ -7,7 +7,7 @@
 LOGIN_IMG=/trinity/qcows/login.qcow2
 SLURM_RPMS=$(echo -n /root/rpms/; ls -m /trinity/login/rpms/ | sed -e 's#,#,/root/rpms/#g' | tr -d '\n')
 
-yum -y install guestfish
+yum -y -q install guestfish
 export LIBGUESTFS_BACKEND=direct
 mkdir -p /trinity/qcows/
 wget -c http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2 -P /trinity/qcows/
