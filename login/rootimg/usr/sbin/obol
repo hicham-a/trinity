@@ -47,19 +47,20 @@ def user_add(username, cn, sn, givenName, password, shell, groups):
 
     if not cn:
         cn = username
+    if not sn:
+        sn = username
 
     add_record = [
      ('objectclass', ['top','person', 'organizationalPerson', 'inetOrgPerson', 'posixAccount', 'shadowAccount']),
      ('uid', [username] ),
      ('cn', [cn] ),
+     ('sn', [sn] ),
      ('userPassword', [password] ), 
      ('loginShell', [shell] ),
      ('uidNumber', [uidNumber] ),
      ('gidNumber', [uidNumber] ),
      ('homeDirectory', ['/home/%s' % username] )
     ]
-    if sn:
-        add_record.append(('sn', [sn] ))
     if givenName:
         add_record.append(('givenName', [givenName] ))
 
