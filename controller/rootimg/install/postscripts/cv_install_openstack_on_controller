@@ -14,8 +14,6 @@
 #------------------------------------------------------------------------------
 yum -y install --setopt=tsflags=nodocs python-keystoneclient python-glanceclient python-novaclient python-cinderclient
 yum -y install --setopt=tsflags=nodocs openstack-dashboard httpd mod_wsgi memcached python-memcached
-#yum -y install --setopt=tsflags=nodocs epel-release
-#yum -y install --setopt=tsflags=nodocs http://rdo.fedorapeople.org/openstack-juno/rdo-release-juno.rpm
 
 cp -LrT /trinity/horizon/rootimg/ /
 chown -R apache:apache /usr/share/openstack-dashboard/static
@@ -44,6 +42,10 @@ pip install cherrypy
 cd /opt/trinity/trinity_api
 python setup.py install
 cd -
+if [[ ! -z "${SITEMASTER}" ]]; then
+    sed 's#/trinity/login/setup.sh#/trinity/login/mini-setup.sh#' -i /etc/trinity/trinity_api.conf
+fi 
+
 source /etc/profile.d/xcat.sh
 DHCP_NIC=$(tabdump -w key==dhcpinterfaces site | grep dhcpinterfaces | awk -F "," '{print $2}' | tr -d '\"')
 sed -e "s/127.0.0.1/10.141.255.254/g" \
@@ -85,18 +87,34 @@ source /root/keystonerc_admin
 
 
 #-- Download the base login node image (CentOS cloud image) and upload it to glance
-CLOUD_IMAGE_URL="http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2"
-CLOUD_IMAGE="/tmp/CentOS-7-x86_64-GenericCloud.qcow2"
-CLOUD_IMAGE_FORMAT="qcow2"
-CLOUD_CONTAINER_FORMAT="bare"
-LOGIN_IMAGE="login"
-curl -s ${CLOUD_IMAGE_URL} -o ${CLOUD_IMAGE}
+if [[ -z "$SITEMASTER" ]]; then
+    CLOUD_IMAGE_URL="http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2"
+    CLOUD_IMAGE="/tmp/CentOS-7-x86_64-GenericCloud.qcow2"
+    CLOUD_IMAGE_FORMAT="qcow2"
+    CLOUD_CONTAINER_FORMAT="bare"
+    LOGIN_IMAGE="login"
+    LOGIN_DATA="/root/.login_data"
+    LOGIN_SETUP="/trinity/login/setup.sh"
+    curl -s ${CLOUD_IMAGE_URL} -o ${CLOUD_IMAGE}
+else
+    # We have a sitemaster, copy from master node.
+    mkdir -p /trinity/qcows/
+    CLOUD_IMAGE="/trinity/qcows/login.qcow2"
+    # FIXME: Find a better location. We cannot assume /tmp/trinity is still mounted here.
+    cp /tmp/trinity/qcows/login.qcow2 ${CLOUD_IMAGE}
+    CLOUD_IMAGE_FORMAT="qcow2"
+    CLOUD_CONTAINER_FORMAT="bare"
+    LOGIN_IMAGE="login"
+    LOGIN_DATA="/root/.login_data"
+    LOGIN_SETUP="/trinity/login/mini-setup.sh"
+fi
+
 glance image-create \
-         --name "${LOGIN_IMAGE}" \
-         --disk-format "${CLOUD_IMAGE_FORMAT}" \
-         --container-format "${CLOUD_CONTAINER_FORMAT}" \
-         --is-public True \
-         --file "${CLOUD_IMAGE}"
+    --name "${LOGIN_IMAGE}" \
+    --disk-format "${CLOUD_IMAGE_FORMAT}" \
+    --container-format "${CLOUD_CONTAINER_FORMAT}" \
+    --is-public True \
+    --file "${CLOUD_IMAGE}"
 
 #-- Create the Flat Network
 read ETH0 ETH1 ETH2 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
@@ -119,8 +137,6 @@ FIRST_PASS="system"
 FIRST_CLUSTER="vc-a"
 FIRST_POOL="login_a"
 FIRST_FLOATING="172.16.255.254"
-LOGIN_SETUP="/trinity/login/setup.sh"
-LOGIN_DATA="/root/.login_data"
 LOGIN_NODE="login-a"
 SKEL=".skel"
 
@@ -165,6 +181,7 @@ nova floating-ip-create ${FIRST_POOL}
 nova secgroup-add-rule default tcp 1 65535 0.0.0.0/0
 nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
 nova boot --flavor 2 --image ${LOGIN_IMAGE} --security-groups default --user-data ${LOGIN_DATA} ${LOGIN_NODE}
+
 sleep 5
 nova floating-ip-associate ${LOGIN_NODE} ${FIRST_FLOATING}
 
@@ -172,12 +189,17 @@ nova floating-ip-associate ${LOGIN_NODE} ${FIRST_FLOATING}
 # setup routing for the virtual clusters
 #--------------------------------------------------------------------------------------
 ip route add 172.16.0.0/12 dev ${BRIDGE}
+systemctl enable trinity-route
+systemctl start trinity-route
+#if [[ -f /etc/sysconfig/network-scripts/route-${ETH1} ]]; then
+#   mv /etc/sysconfig/network-scripts/route-${ETH1} /etc/sysconfig/network-scripts/route-${BRIDGE}
+#fi
 
 # Provide DNS on the bridge interface not the physical interface.
-while ! (ip a show dev br100 | grep 10.141.255.254); do sleep 10; done
-chtab key=dnsinterfaces site.value=br100
+while ! (ip a show dev ${BRIDGE} | grep 10.141.255.254); do sleep 10; done
+chtab key=dnsinterfaces site.value=${BRIDGE}
 makedns -n
 
-echo $0 finished >> /var/log/postinstall.log
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log
 
 

@@ -9,12 +9,12 @@ while [ 1 ]; do
     # Determine in which virtual cluster this node is active
     #for VC in vc-{a..l}; do
     for VC in $(ls /cluster | grep "^vc-"); do
-        if host $NAME.$VC; then found=1; break; fi
+        if host $NAME.$VC > /dev/null 2>&1 ; then found=1; break; fi
     done
 
     if [ -z "$found" ]; then
         #echo "Could not determine cluster membership for this node. Sleeping now."
-        sleep 5
+        sleep 60
         continue;
     fi
 
@@ -28,9 +28,9 @@ while [ 1 ]; do
         continue;
     fi
     
-    if ! ping -c 5 -W 5 login.${VC}; then
+    if ! ping -c 5 -W 5 login.${VC} > /dev/null 2>&1 ; then
         #echo "No login node found for ${VC}."; 
-        sleep 5
+        sleep 60
         continue;
     fi
     # All tests succeeded, just get on with it.
@@ -53,11 +53,13 @@ fi
 
 # check if we have infiniband
 if [ "$(ls -A /sys/class/infiniband)" ]; then
-    IB_DEVICES="--device=/dev/infiniband/issm0 \
-               --device=/dev/infiniband/rdma_cm \
-               --device=/dev/infiniband/ucm0 \
-               --device=/dev/infiniband/umad0 \
-               --device=/dev/infiniband/uverbs0"
+    #IB_DEVICES="--device=/dev/infiniband/issm0 \
+    #           --device=/dev/infiniband/rdma_cm \
+    #           --device=/dev/infiniband/ucm0 \
+    #           --device=/dev/infiniband/umad0 \
+    #           --device=/dev/infiniband/uverbs0"
+
+    IB_DEVICES=$(find /dev/infiniband -printf "--device=%p ")
 else
     IB_DEVICES=""
 fi

@@ -5,13 +5,11 @@
     [ "$status" -eq 0 ]
 }
 
+username=$(sshpass -p system ssh -o StrictHostKeyChecking=no login.vc-a obol -w system user list | head -1)
 @test "Create a user for the login node" {
-    sshpass -p system ssh login.vc-a "
-       username=$(obol -w system user list)
-       #if [[ "$username" != "jane" && "$username" != "" ]]; then  
-       	 obol -w system  user add --password 123 --cn Jane --sn Smith --givenName Jane  jane
-       #fi
-    "
+    if [[ $username != jane ]]; then  
+       sshpass -p system ssh -o StrictHostKeyChecking=no login.vc-a obol -w system  user add --password 123 --cn Jane --sn Smith --givenName Jane jane
+    fi;
 }
 
 @test "The user can login to login node" {

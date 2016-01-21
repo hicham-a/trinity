@@ -9,9 +9,8 @@
      s/vmlinuz-//;
  }
  
--@KVERS = <$rootimg_dir/lib/modules/*> unless (scalar(@KVERS));
-+@KVERS = sort { -M $b <=> -M $a } <$rootimg_dir/lib/modules/*> unless (scalar(@KVERS));
+-@KVERS= <$rootimg_dir/lib/modules/*> unless (scalar(@KVERS));
++@KVERS= sort { -M $b <=> -M $a } <$rootimg_dir/lib/modules/*> unless (scalar(@KVERS));
  
  $basekernelver = basename(pop @KVERS) if (scalar(@KVERS));
- 
- 
+

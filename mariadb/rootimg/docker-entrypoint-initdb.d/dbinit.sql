@@ -1,7 +1,3 @@
-DELETE FROM mysql.user ;
-CREATE USER 'root'@'%' IDENTIFIED BY 'system' ;
-GRANT ALL ON *.* TO 'root'@'%' WITH GRANT OPTION ;
-DROP DATABASE IF EXISTS test ;
 CREATE DATABASE keystone;
 GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'localhost' IDENTIFIED BY 'system';
 GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'%'         IDENTIFIED BY 'system';

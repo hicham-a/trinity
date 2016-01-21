@@ -28,6 +28,7 @@ start() {
 
 stop() {
     echo -n "Stopping trinity "
+    killall trinity-start
     docker stop trinity
 }
 
@@ -41,6 +42,7 @@ reload() {
 }
 
 force-reload() {
+    killall trinity-start
     docker stop trinity
     docker rm trinity
     start

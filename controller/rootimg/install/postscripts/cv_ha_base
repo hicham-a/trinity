@@ -278,6 +278,8 @@ EOF
    #pcs resource create nova_controller systemd:nova_controller op monitor interval="34s"
    #pcs resource create omd systemd:omd op monitor interval="34s"
 
+   # For named cloning to work we need to change /etc/resolv.conf as well.
+   #pcs resource clone named clone-max=2 clone-node-max=1 notify=false
 
    # For convenience we create to groups of resources.
    # This will help ordering according to the dependencies.
@@ -348,4 +350,4 @@ fi
 systemctl enable pacemaker
 systemctl enable corosync
 
-echo "$0 finished" >> /var/log.postinstall.log
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log
