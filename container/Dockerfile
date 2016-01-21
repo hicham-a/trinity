@@ -2,7 +2,7 @@ FROM centos:latest
 MAINTAINER hans.then@clustervision.com
 RUN yum -y swap -- remove systemd-container* -- install systemd systemd-libs
 RUN yum -y install epel-release iproute
-RUN yum -y groupinstall "Infiniband Support"
+RUN yum -y -q groupinstall "Infiniband Support"
 
 RUN useradd munge -u 1002 -U && useradd slurm -u 1001 -U && \
     mkdir /var/run/slurm /var/spool/slurm /var/log/slurm && \

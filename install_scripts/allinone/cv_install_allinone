@@ -143,7 +143,7 @@ END
 #--------------------------------------------------------------------------------------
 # Start opensm on the controller
 #--------------------------------------------------------------------------------------
-yum -y groupinstall "Infiniband Support"
+yum -y -q groupinstall "Infiniband Support"
 yum -y install opensm
 yum -y install infiniband-diags
 
