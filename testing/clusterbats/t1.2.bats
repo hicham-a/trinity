@@ -1,4 +1,4 @@
-#!/user/env/bin/bats
+#!/usr/env/bin/bats
 load configuration
 
 @test "1.2.0.a We can configure the switch" {
@@ -85,9 +85,22 @@ EOF
 }
 
 @test "1.2.8 The compute nodes can connect to the internet" {
-  ssh -o StrictHostKeyChecking=no node001 ping -c5 8.8.8.8
+  for NODE in $(expand ${NODES}); do
+    ssh -o StrictHostKeyChecking=no $NODE ping -c5 8.8.8.8
+  done
 }
 
+@test "1.2.10 Modules environment is available on the compute nodes" {
+  for NODE in $(expand ${NODES}); do
+    ssh -o StrictHostKeyChecking=no $NODE docker exec trinity bash -c -l "module avail" || echo "No modules available"
+  done  
+}
+
+@test "1.2.15a Containers are running slurm" {
+  for NODE in $(expand ${NODES}); do
+    ssh -o StrictHostKeyChecking=no $NODE docker exec trinity bash -c -l "sinfo" || echo "Slurm not running"
+  done  
+}
 
 @test "/cluster/vc-a/.modulespath is a file not a directory" {
   [ -f /cluster/vc-a/.modulespath ]

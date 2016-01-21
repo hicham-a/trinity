@@ -32,12 +32,12 @@ else
     cd -
 
     # setup repositories
-    yum -y install $(grep -v ^# $REPODIR/controller/rootimg/install/custom/install/centos/controller.pkglist)
-    yum -y install epel-release
-    yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno-1.noarch.rpm
+    yum -y -q install $(grep -v ^# $REPODIR/controller/rootimg/install/custom/install/centos/controller.pkglist)
+    yum -y -q install epel-release
+    yum -y -q install https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno-1.noarch.rpm
     wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/2.9/xcat-core/xCAT-core.repo -O /etc/yum.repos.d/xCAT-core.repo
     wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo -O /etc/yum.repos.d/xCAT-dep.repo
-    yum -y install $(grep -v ^# $REPODIR/controller/rootimg/install/custom/install/centos/controller.otherpkgs)
+    yum -y -q install $(grep -v ^# $REPODIR/controller/rootimg/install/custom/install/centos/controller.otherpkgs)
     source /etc/profile.d/xcat.sh
     mkdir -p /tmp/trinity/iso
     echo Downloading cd, this may take a while
@@ -166,9 +166,9 @@ systemctl start ntpd
 #--------------------------------------------------------------------------------------
 # Start opensm on the controller
 #--------------------------------------------------------------------------------------
-yum -y groupinstall "Infiniband Support"
-yum -y install opensm
-yum -y install infiniband-diags
+yum -y -q groupinstall "Infiniband Support"
+yum -y -q install opensm
+yum -y -q install infiniband-diags
 
 systemctl enable opensm
 systemctl start opensm
@@ -201,7 +201,7 @@ packimage centos7-x86_64-netboot-trinity
 # install docker and docker-registry
 # and create the trinity image for the compute nodes
 #--------------------------------------------------------------------------------------
-yum -y install docker docker-registry
+yum -y -q install docker docker-registry
 # FIXME: move this to the rootimg profile
 sed -i 's/REGISTRY_PORT=.*/REGISTRY_PORT=5050/' /etc/sysconfig/docker-registry
 
@@ -224,9 +224,9 @@ docker push controller:5050/trinity
 # Install the xCAT web service
 #--------------------------------------------
 # The xCAT web service requires the following
-yum -y install mod_ssl
+yum -y -q install mod_ssl
 service httpd restart
-yum -y install perl-JSON
+yum -y -q install perl-JSON
 
 # Set up the xCAT web service
 useradd trinity
@@ -240,8 +240,8 @@ service httpd restart
 
 # Remove stale repositories.
 # Fixme: we should do this after we have installed everything, as a final postscript.
-yum -y install epel-release
-yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno-1.noarch.rpm
+yum -y -q install epel-release
+yum -y -q install https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno-1.noarch.rpm
 yum-config-manager --disable xcat-otherpkgs* local-centos*
 yum-config-manager --enable base epel extras updates openstack-juno
 yum-config-manager --add-repo http://sourceforge.net/projects/xcat/files/yum/2.9/xcat-core/xCAT-core.repo

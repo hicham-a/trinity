@@ -3,17 +3,17 @@
 # FIXME: this should be part of the package lists. Also we need to add the elrepo repo to the 
 #        master repositories.
 #-----------------------------------------------------------------------------------------------
-yum -y install epel-release
-yum -y install drbdlinks
-yum -y install pacemaker
-yum -y install pcs fence-agents-all
+yum -y -q install epel-release
+yum -y -q install drbdlinks
+yum -y -q install pacemaker
+yum -y -q install pcs fence-agents-all
 systemctl start pcsd
 systemctl enable pcsd
 
 echo system | passwd hacluster --stdin
 
-yum -y install http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
-yum -y install drbd84-utils-8.9.2 kmod-drbd84-8.4.6
+yum -y -q install http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
+yum -y -q install drbd84-utils-8.9.2 kmod-drbd84-8.4.6
 echo drbd > /etc/modules-load.d/drbd.conf
 
 # Disable automatic starting of the services, this should be handled by pacemaker from now

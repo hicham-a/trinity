@@ -4,7 +4,7 @@ Test procedure automation for trinity installations
 ## Instructions
 On controller node (test of controller installation):
 
-1) yum -y install git 
+1) yum -y -q install git 
 
 2) git clone https://github.com/clustervision/clusterbats
 
