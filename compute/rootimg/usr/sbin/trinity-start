@@ -92,6 +92,7 @@ case $state in
            -v /cluster/${VC}/etc/slurm:/etc/slurm \
            -v /cluster/${VC}/etc/munge:/etc/munge \
            -v /cluster/${VC}/.modulespath:/usr/share/Modules/init/.modulespath \
+           ${INJECT} \
            --hostname=${NAME}.${VC} \
            --dns-search=${VC} \
            --name=trinity \
