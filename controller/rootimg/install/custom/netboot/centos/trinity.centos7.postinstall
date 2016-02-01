@@ -23,9 +23,6 @@ workdir=$5
 #-- Copy supporting files
 cp -LrT /trinity/compute/rootimg $installroot
 
-#-- A small docker patch
-sed -i 's/OPTIONS=\(.*\)/OPTIONS=--insecure-registry controller:5050 \1/' $installroot/etc/sysconfig/docker
-
 #-- Enable services
 chroot $installroot chkconfig rdma on
 chroot $installroot chkconfig ntpd on
