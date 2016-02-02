@@ -3,6 +3,26 @@
 # FIXME: this should be part of the package lists. Also we need to add the elrepo repo to the 
 #        master repositories.
 #-----------------------------------------------------------------------------------------------
+filename=$(grep -l "IPADDR=10.141.255.254" /etc/sysconfig/network-scripts/ifcfg-*)
+if [ -z $filename ]; then
+    filename=$(grep -l "IPADDR=10.141.255.253" /etc/sysconfig/network-scripts/ifcfg-*)
+fi
+if [ -z $filename ]; then
+    hostname controller-2.cluster
+    echo controller-2.cluster > /etc/hostname
+else
+    # I am the active node, so make my ip address floating and assign myself a new ip address
+    device=$(echo $filename | awk -F- '{print $3}')
+    ip a a 10.141.255.253 dev $device
+
+    sed -e "s/IPADDR=10.141.255.254/IPADDR=10.141.255.253/g" -e "s/IPADDR1=10.148.255.254/IPADDR1=10.148.255.253/g" -i $filename
+    hostname controller-1.cluster
+    echo controller-1.cluster > /etc/hostname
+fi
+
+#-----------------------------------------------------------------------------------------------
+# first we setup pacemaker
+#-----------------------------------------------------------------------------------------------
 yum -y install epel-release
 yum -y install drbdlinks
 yum -y install pacemaker
@@ -94,9 +114,20 @@ sed -i -e "/vg_root-lv_drbd/d" /etc/fstab
 umount /drbd
 
 # Just to make sure, we clear the disk
+<<<<<<< HEAD
 echo Clearing drbd logical volume, this may take some time.
 dd if=/dev/zero of=/dev/mapper/vg_root-lv_drbd bs=1M count=1024
 echo Clearing drbd logical volume, done.
+=======
+dd if=/dev/zero of=/dev/mapper/vg_root-lv_drbd
+
+# make sure the host names can be resolved
+if ! grep 10.141.255.253 /etc/hosts; then echo "10.141.255.253 controller-1 controller-1.cluster" >> /etc/hosts; fi
+if ! grep 10.141.255.252 /etc/hosts; then echo "10.141.255.252 controller-2 controller-2.cluster" >> /etc/hosts; fi
+
+ip1=10.141.255.253
+ip2=10.141.255.252
+>>>>>>> fdc93e3700d6fe10d7f91e1130541ae6fd6aae3c
 
 cat <<EOF >/etc/drbd.d/ha_disk.res
 resource ha_disk {
