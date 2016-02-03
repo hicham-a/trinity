@@ -52,6 +52,8 @@ chtab key=dhcpinterfaces site.value=${BRIDGE}
 chtab netname=internal_net networks.mgtifname=${BRIDGE}
 chtab netname=bmc_net networks.mgtifname=${BRIDGE}
 chtab netname=vc_a_net networks.mgtifname=${BRIDGE}
+makedhcp -n
+makedns -n
 
 sed -e "s/127.0.0.1/10.141.255.254/g" \
     -e "s/eno2/${BRIDGE}/g" \
