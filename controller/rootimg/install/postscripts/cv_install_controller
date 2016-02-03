@@ -84,7 +84,6 @@ for table in $(ls /tmp/trinity/controller/xcat/tables); do
 done
 
 restorexCATdb -p /tmp/xcattables  
-mknb x86_64
 
 cd /opt/xcat/share/xcat/netboot/centos
 
@@ -93,6 +92,7 @@ ln -s ../rh/dracut .
 
 cd /
 cat /tmp/trinity/controller/xcat/patches/*.patch | patch -p0
+mknb x86_64
 systemctl restart xcatd
 setenforce 0
 sestatus
