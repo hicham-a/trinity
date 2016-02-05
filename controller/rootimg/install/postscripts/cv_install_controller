@@ -97,8 +97,6 @@ systemctl restart xcatd
 setenforce 0
 sestatus
 
-#
-hostname controller.cluster
 makedhcp -n
 makehosts -n
 makedns -n
@@ -148,17 +146,20 @@ sed -i /etc/sysconfig/network-scripts/ifcfg-$ETH1 -e "s/DEFROUTE=\(.*\)/DEFROUTE
 # -e "s/PEERDNS=\(.*\)/PEERDNS=no/"
 
 # Fix for #85
+last=$(ip route get 10.141.255.254 | awk -F. '{print $NF;exit}')
 if [[ ! -z "$ETH2" ]]; then
 cat >> /etc/sysconfig/network-scripts/ifcfg-$ETH2 << EOF
-IPADDR1=10.148.255.254
+IPADDR1=10.148.255.${last}
 PREFIX1=16
-GATEWAY1=10.148.255.254
+GATEWAY1=10.148.255.${last}
 EOF
-ip a a 10.148.255.254/16 dev $ETH2
+ip a a 10.148.255.${last}/16 dev $ETH2
 fi
 
 
 systemctl restart network
+ip a a 10.141.255.254/16 dev $ETH2
+
 systemctl enable ntpd
 systemctl start ntpd
 
