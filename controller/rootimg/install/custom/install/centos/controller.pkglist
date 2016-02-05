@@ -31,7 +31,7 @@ git
 vim-enhanced
 mlocate
 
-@"Infiniband Support"
+@ "Infiniband Support"
 opensm
 infiniband-diags
 
