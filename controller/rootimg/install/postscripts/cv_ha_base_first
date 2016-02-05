@@ -1,0 +1,142 @@
+#-----------------------------------------------------------------------------------------------
+# Determine if this will be the active or passive node. An odd node will become 
+# the active node. Any even node will become the passive node. 
+#
+# Adapt the network configuration accordingly.
+#-----------------------------------------------------------------------------------------------
+n=$(echo $NODE | egrep -o '[[:digit:]]*' | head -n1)
+# normalize to 1 or 2
+N=$((((n-1)%2)+1))
+
+# set the new ip addresses
+octet=$((254-$N))
+
+# update network scripts
+filename=$(grep -l IPADDR=10.141.255.254 /etc/sysconfig/network-scripts/ifcfg-*)
+set -x
+if [ ! -z $filename ]; then 
+    sed -e "s/\(IPADDR.\?\)=\(10\.14[18]\.255\)\.254/\1=\2.$octet/" -i $filename
+    echo "Changing ip addresses to allow floating"
+    echo controller-$N.cluster > /etc/hostname
+    hostname controller-$N.cluster 
+    dev=$(echo $filename | awk -F- '{print $3}')
+    ip addr del 10.141.255.254/16 dev $dev
+    ip addr del 10.148.255.254/16 dev $dev
+    ip addr add 10.141.255.$octet/16 dev $dev
+    ip addr add 10.148.255.$octet/16 dev $dev
+    ip route add 172.16.0.0/12 dev $dev
+    echo "Checking IP addresses"
+    ip addr show dev $dev
+else
+    echo IP address 254 appears to be floating already. Did you run this script earlier?
+fi
+
+if [ $N = 1 ]; then
+   # I am the active node, so will take the floating IP addr here
+   if [ ! -z $filename ]; then 
+       dev=$(echo $filename | awk -F- '{print $3}')
+       ip addr add 10.141.255.254/16 dev $dev
+       ip addr add 10.148.255.254/16 dev $dev
+   fi
+fi 
+
+#-----------------------------------------------------------------------------------------------
+# Install pacemaker
+#-----------------------------------------------------------------------------------------------
+yum -y install epel-release
+yum -y install drbdlinks
+yum -y install pacemaker
+yum -y install pcs fence-agents-all
+systemctl start pcsd
+systemctl enable pcsd
+
+echo system | passwd hacluster --stdin
+
+yum -y install http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
+yum -y install drbd84-utils-8.9.2 kmod-drbd84-8.4.6
+echo drbd > /etc/modules-load.d/drbd.conf
+
+#------------------------------------------------------------
+# configure drbd
+#------------------------------------------------------------
+# remove the drbd volume from mounting
+sed -i -e "/vg_root-lv_drbd/d" /etc/fstab
+umount /drbd
+
+# Just to make sure, we clear the disk
+echo Clearing drbd logical volume, this may take some time.
+dd if=/dev/zero of=/dev/mapper/vg_root-lv_drbd bs=1M count=1024
+
+
+# make sure the host names can be resolved
+if ! grep 10.141.255.253 /etc/hosts; then echo "10.141.255.253 controller-1 controller-1.cluster" >> /etc/hosts; fi
+if ! grep 10.141.255.252 /etc/hosts; then echo "10.141.255.252 controller-2 controller-2.cluster" >> /etc/hosts; fi
+
+ip1=10.141.255.253
+ip2=10.141.255.252
+
+cat <<EOF >/etc/drbd.d/ha_disk.res
+resource ha_disk {
+       net {
+         after-sb-0pri discard-least-changes;
+         after-sb-1pri consensus;
+         after-sb-2pri call-pri-lost-after-sb;
+       }
+       on controller-1.cluster {
+         device    /dev/drbd1;
+         disk      /dev/mapper/vg_root-lv_drbd;
+         address   10.141.255.253:7789;
+         meta-disk internal;
+       }
+       on controller-2.cluster {
+         device    /dev/drbd1;
+         disk      /dev/mapper/vg_root-lv_drbd;
+         address   10.141.255.252:7789;
+         meta-disk internal;
+       }
+}
+EOF
+
+if [[ "$N" = 1 ]]; then 
+   # I am the active node
+   # Wait until the passive controller is ready to continue
+   for i in {1..100}; do
+       if ssh controller-2.cluster cat /tmp/cv_ha_ready; then break; fi
+       sleep 5
+   done
+   if ! ssh controller-2.cluster cat /tmp/cv_ha_ready; then 
+       echo BUGGERALL unable to reach controller-2, exiting.
+       exit -1
+   fi
+   scp /etc/hosts controller-2.cluster:/etc/hosts
+      
+   #-------------------------------------------------------------------
+   # Setup pacemaker
+   #-------------------------------------------------------------------
+   pcs cluster auth controller-1.cluster controller-2.cluster -u hacluster -p system
+   pcs cluster setup --name ha_cluster controller-1.cluster controller-2.cluster --force
+   pcs cluster start --all
+
+   #-------------------------------------------------------------------
+   # Setup drbd and disks
+   #-------------------------------------------------------------------
+   drbdadm create-md ha_disk
+   modprobe drbd
+   drbdadm up ha_disk
+   drbdadm primary --force ha_disk
+
+   mkfs -t ext4 /dev/drbd1
+   mount /dev/drbd1 /drbd
+
+   ssh controller-2.cluster drbdadm create-md ha_disk
+   ssh controller-2.cluster modprobe drbd
+   ssh controller-2.cluster drbdadm up ha_disk
+   sleep 1
+else
+   touch /tmp/cv_ha_ready
+fi
+
+systemctl enable pacemaker
+systemctl enable corosync
+
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log

@@ -1,0 +1,357 @@
+#-----------------------------------------------------------------------------------------------
+# Install pacemaker
+#-----------------------------------------------------------------------------------------------
+yum -y install epel-release
+yum -y install drbdlinks
+yum -y install pacemaker
+yum -y install pcs fence-agents-all
+systemctl start pcsd
+systemctl enable pcsd
+
+echo system | passwd hacluster --stdin
+
+yum -y install http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
+yum -y install drbd84-utils-8.9.2 kmod-drbd84-8.4.6
+echo drbd > /etc/modules-load.d/drbd.conf
+
+# Disable automatic starting of the services, this should be handled by pacemaker from now
+systemctl disable dhcpd
+systemctl disable mysqld
+systemctl disable httpd
+systemctl disable named
+systemctl disable xcatd
+systemctl disable docker
+systemctl disable docker-registry
+systemctl disable slapd
+systemctl disable nfs-server
+
+#-----------------------------------------------------------------------------------------------
+# Determine if this will be the active or passive node. An odd node will become 
+# the active node. Any even node will become the passive node. 
+#
+# Adapt the network configuration accordingly.
+#-----------------------------------------------------------------------------------------------
+n=$(echo $NODE | egrep -o '[[:digit:]]*' | head -n1)
+# normalize to 1 or 2
+N=$((((n-1)%2)+1))
+
+# set the new ip addresses
+octet=$((254-$N))
+
+# update network scripts
+filename=$(grep -l IPADDR=10.141.255.254 /etc/sysconfig/network-scripts/ifcfg-*)
+set -x
+if [ ! -z $filename ]; then 
+    sed -e "s/\(IPADDR.\?\)=\(10\.14[18]\.255\)\.254/\1=\2.$octet/" -i $filename
+    echo "Changing ip addresses to allow floating"
+    echo controller-$N.cluster > /etc/hostname
+    hostname controller-$N.cluster 
+    dev=$(echo $filename | awk -F- '{print $3}')
+    ip addr del 10.141.255.254/16 dev $dev
+    ip addr del 10.148.255.254/16 dev $dev
+    ip addr add 10.141.255.$octet/16 dev $dev
+    ip addr add 10.148.255.$octet/16 dev $dev
+    ip route add 172.16.0.0/12 dev $dev
+    echo "Checking IP addresses"
+    ip addr show dev $dev
+else
+    echo IP address 254 appears to be floating already. Did you run this script earlier?
+fi
+
+if [ $N = 1 ]; then
+   # I am the active node, so will take the floating IP addr here
+   if [ ! -z $filename ]; then 
+       dev=$(echo $filename | awk -F- '{print $3}')
+       ip addr add 10.141.255.254/16 dev $dev
+       ip addr add 10.148.255.254/16 dev $dev
+   fi
+
+   #------------------------------------------------------------
+   # Update xcat tables to add nodes controller-N
+   #------------------------------------------------------------
+
+   source /etc/profile.d/xcat.sh
+   # For some reason we need to add these.
+   # HTH: disabled mysqld
+   # HTH echo "GRANT ALL on xcatdb.* TO xcatadmin@'localhost' IDENTIFIED BY 'system';" | mysql -u root -psystem
+   # HTH echo "GRANT ALL on xcatdb.* TO xcatadmin@'%' IDENTIFIED BY 'system';" | mysql -u root -psystem
+
+   nodeadd controller-1 groups=xcat
+   nodeadd controller-2 groups=xcat
+   chtab node=controller-1 hosts.ip=10.141.255.253 hosts.hostnames=controller-1,controller-1.cluster
+   chtab node=controller-2 hosts.ip=10.141.255.252 hosts.hostnames=controller-2,controller-2.cluster
+   makehosts xcat
+   makedns xcat
+fi 
+
+#------------------------------------------------------------
+# configure drbd
+#------------------------------------------------------------
+# remove the drbd volume from mounting
+sed -i -e "/vg_root-lv_drbd/d" /etc/fstab
+umount /drbd
+
+# Just to make sure, we clear the disk
+echo Clearing drbd logical volume, this may take some time.
+dd if=/dev/zero of=/dev/mapper/vg_root-lv_drbd
+
+# make sure the host names can be resolved
+if ! grep 10.141.255.253 /etc/hosts; then echo "10.141.255.253 controller-1 controller-1.cluster" >> /etc/hosts; fi
+if ! grep 10.141.255.252 /etc/hosts; then echo "10.141.255.252 controller-2 controller-2.cluster" >> /etc/hosts; fi
+
+ip1=10.141.255.253
+ip2=10.141.255.252
+
+cat <<EOF >/etc/drbd.d/ha_disk.res
+resource ha_disk {
+       net {
+         after-sb-0pri discard-least-changes;
+         after-sb-1pri consensus;
+         after-sb-2pri call-pri-lost-after-sb;
+       }
+       on controller-1.cluster {
+         device    /dev/drbd1;
+         disk      /dev/mapper/vg_root-lv_drbd;
+         address   10.141.255.253:7789;
+         meta-disk internal;
+       }
+       on controller-2.cluster {
+         device    /dev/drbd1;
+         disk      /dev/mapper/vg_root-lv_drbd;
+         address   10.141.255.252:7789;
+         meta-disk internal;
+       }
+     }
+EOF
+
+if [[ "$N" = 1 ]]; then 
+   # I am the active node
+   # Wait until the passive controller is ready to continue
+   for i in {1..100}; do
+       if ssh controller-2.cluster cat /tmp/cv_ha_ready; then break; fi
+       sleep 5
+   done
+   if ! ssh controller-2.cluster cat /tmp/cv_ha_ready; then 
+       echo BUGGERALL unable to reach controller-2, exiting.
+       exit -1
+   fi
+   scp /etc/hosts controller-2.cluster:/etc/hosts
+      
+   #-------------------------------------------------------------------
+   # Setup pacemaker
+   #-------------------------------------------------------------------
+   pcs cluster auth controller-1.cluster controller-2.cluster -u hacluster -p system
+   pcs cluster setup --name ha_cluster controller-1.cluster controller-2.cluster --force
+   pcs cluster start --all
+
+   #-------------------------------------------------------------------
+   # Setup drbd and disks
+   #-------------------------------------------------------------------
+   drbdadm create-md ha_disk
+   modprobe drbd
+   drbdadm up ha_disk
+   drbdadm primary --force ha_disk
+
+   mkfs -t ext4 /dev/drbd1
+   mount /dev/drbd1 /drbd
+
+   ssh controller-2.cluster drbdadm create-md ha_disk
+   ssh controller-2.cluster modprobe drbd
+   ssh controller-2.cluster drbdadm up ha_disk
+   sleep 1
+   # I am not sure waiting for sync is actually required.
+   #for i in {1..200}; do
+   #    cat /proc/drbd
+   #    if (cat /proc/drbd | grep ds:UpToDate/UpToDate) ; then break; fi
+   #    sleep 300
+   #done
+
+   rm /etc/httpd/logs ; ln -s /var/log/httpd /etc/httpd/logs
+   rm /etc/httpd/modules ; ln -s /usr/lib64/httpd/modules /etc/httpd/modules
+   rm /etc/httpd/run ; ln -s /var/run/httpd /etc/httpd/run
+
+   cat <<EOF > /drbd/xcat.conf
+
+restartSyslog(1)
+cleanthisconfig(1)
+
+#  One mountpoint must be listed.  This is the location where the DRBD
+#  drive is mounted.
+mountpoint('/drbd')
+# ==== xCAT ====
+link('/install')
+link('/etc/xcat')
+link('/opt/xcat')
+link('/root/.xcat')
+# Hosts is a bit odd - may just want to rsync out...
+#link('/etc/hosts')
+#
+# ==== Conserver ====
+link('/etc/conserver.cf')
+#
+# ==== DNS ====
+link('/etc/named')
+link('/etc/named.conf')
+link('/etc/named.iscdlv.key')
+link('/etc/named.rfc1912.zones')
+link('/etc/named.root.key')
+#link('/etc/rndc.conf')
+#link('/etc/rndc.key')
+link('/etc/sysconfig/named')
+link('/var/named')
+# ==== YUM ====
+link('/etc/yum.repos.d')
+#
+# ==== DHCP ====
+link('/etc/dhcp')
+link('/var/lib/dhcpd')
+link('/etc/sysconfig/dhcpd')
+#link('/etc/sysconfig/dhcpd6')
+#
+# ==== Apache ====
+link('/etc/httpd')
+link('/var/www')
+#
+# ==== MySQL ====
+link('/etc/my.cnf')
+link('/var/lib/mysql')
+#
+# ==== tftp ====
+link('/tftpboot')
+#
+# ==== openldap ====
+link('/etc/openldap')
+link('/var/lib/ldap')
+#
+# ==== docker =====
+link('/var/lib/docker')
+link('/var/lib/docker-registry')
+
+# ==== NFS ====
+link('/etc/exports')
+link('/var/lib/nfs')
+link('/etc/sysconfig/nfs')
+#
+# === Trinity NFS shares ====
+link('/trinity/')
+link('/cluster/')
+link('/home')
+#
+EOF
+
+   systemctl stop xcatd
+   systemctl stop docker
+   systemctl stop docker-registry
+   systemctl stop nfs-server
+
+   drbdlinks -c /drbd/xcat.conf initialize_shared_storage
+   drbdlinks -c /drbd/xcat.conf start
+   systemctl start xcatd
+   systemctl start docker
+   systemctl start docker-registry
+   systemctl start nfs-server
+
+   #-------------------------------------------------------------------
+   # Now setup the common resources
+   #-------------------------------------------------------------------
+   dev=$(ip a | grep 10.148.255.253 | awk '{print $5}')
+
+   pcs resource create ip ocf:heartbeat:IPaddr2 ip="10.141.255.254" iflabel="xCAT" cidr_netmask="16" nic="$dev" op monitor interval="37s"
+   pcs resource create ip_bmc ocf:heartbeat:IPaddr2 ip="10.148.255.254" iflabel="xCAT" cidr_netmask="16" nic="$dev" op monitor interval="37s"
+   pcs resource create drbd ocf:linbit:drbd drbd_resource=ha_disk
+   pcs resource master ms_drbd drbd master-max="1" master-node-max="1" clone-max="2" clone-node-max="1" notify="true"
+   pcs resource create fs_drbd ocf:heartbeat:Filesystem device="/dev/drbd/by-res/ha_disk" directory="/drbd" fstype="ext4" op monitor interval="57s"
+   pcs resource create symlinks_xCAT ocf:tummy:drbdlinks configfile="/drbd/xcat.conf" op monitor interval="31s"
+
+   pcs resource create httpd systemd:httpd op monitor interval="37s"
+   # HTH: disabled mysql
+   #pcs resource create mysqld systemd:mysqld op monitor interval="37s"
+   pcs resource create dhcpd systemd:dhcpd op monitor interval="37s"
+   pcs resource create named systemd:named op monitor interval="37s"
+   pcs resource create nfs nfsserver nfs_no_notify=true op start timeout=240s
+   pcs resource create docker systemd:docker op monitor interval="37s"
+   pcs resource create docker-registry systemd:docker-registry op monitor interval="37s"
+   pcs resource create slapd systemd:slapd op monitor interval="37s"
+   pcs resource create xCAT lsb:xcatd op monitor interval="42s"
+
+   #pcs resource create mariadb systemd:mariadb op monitor interval="34s"
+   #pcs resource create rabbitmq systemd:rabbitmq op monitor interval="34s"
+
+   #pcs resource create keystone systemd:keystone op monitor interval="34s"
+   #pcs resource create glance systemd:glance op monitor interval="34s"
+   #pcs resource create nova_controller systemd:nova_controller op monitor interval="34s"
+   #pcs resource create omd systemd:omd op monitor interval="34s"
+
+   # For named cloning to work we need to change /etc/resolv.conf as well.
+   #pcs resource clone named clone-max=2 clone-node-max=1 notify=false
+
+   # For convenience we create to groups of resources.
+   # This will help ordering according to the dependencies.
+   pcs resource group add grp_drbd fs_drbd symlinks_xCAT
+   # HTH: disable mysqld 
+   #pcs resource group add grp_xCAT httpd dhcpd named mysqld slapd xCAT nfs
+
+   #pcs resource group add grp_docker docker docker-registry
+   #pcs resource group add grp_base_containers mariadb rabbitmq
+   pcs resource group add grp_xCAT httpd dhcpd named docker docker-registry slapd xCAT nfs
+   #pcs resource group add grp_dependent_containers keystone glance nova_controller omd
+
+   # We specify that all services and groups should be on
+   # the same node as where drbd keeps its master copy of the data.
+   pcs constraint colocation add grp_xCAT grp_drbd
+   #pcs constraint colocation add grp_xCAT grp_docker
+   #pcs constraint colocation add grp_xCAT grp_base_containers
+   #pcs constraint colocation add grp_xCAT grp_dependent_containers
+   pcs constraint colocation add grp_drbd ms_drbd INFINITY with-rsc-role=Master
+   pcs constraint colocation add ip ms_drbd INFINITY with-rsc-role=Master
+   pcs constraint colocation add ip_bmc ms_drbd INFINITY with-rsc-role=Master
+   pcs constraint colocation add grp_xCAT xCAT
+
+   # Specify the order in which resources should be started.
+   pcs constraint order fs_drbd then start symlinks_xCAT
+   pcs constraint order ip then start grp_drbd
+   pcs constraint order ip then start ip_bmc
+   pcs constraint order promote ms_drbd then start grp_drbd
+   #pcs constraint order start grp_drbd then start grp_docker
+   #pcs constraint order start grp_docker then start grp_base_containers
+   #pcs constraint order start grp_base_containers then start grp_dependent_containers
+   #pcs constraint order start grp_base_containers then start grp_xCAT
+   #pcs constraint order start grp_drbd then start grp_xCAT
+   pcs constraint order start grp_xCAT then start xCAT
+
+   # Finally some defaults
+   pcs property set no-quorum-policy=ignore
+   pcs resource op defaults timeout="120s"
+   pcs resource defaults resource-stickyness=100
+   pcs property set stonith-enabled=false
+
+   # Just a hack. We noticed drbd came up with not configured errors. 
+   pcs resource cleanup drbd 
+   pcs resource cleanup ip
+   pcs resource cleanup nfs
+
+   ssh controller-2 shutdown -r now
+else
+   touch /tmp/cv_ha_ready
+
+   systemctl stop dhcpd
+   systemctl stop httpd
+   systemctl stop named
+   systemctl stop xcatd
+   systemctl stop omd
+   systemctl stop glance
+   systemctl stop keystone
+   systemctl stop nova_controller
+   systemctl stop rabbitmq
+   systemctl stop mariadb
+
+   systemctl stop docker
+   systemctl stop docker-registry
+   systemctl stop nfs-server
+   systemctl stop slapd
+fi
+
+systemctl enable pacemaker
+systemctl enable corosync
+
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log
