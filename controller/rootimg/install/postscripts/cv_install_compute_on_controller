@@ -9,7 +9,7 @@
 # Install and configure openstack-nova-compute and openstack-nova-network 
 #------------------------------------------------------------------------------
 
-Moved packages to the otherpkgs inside xCAT
+# Moved packages to the otherpkgs inside xCAT
 # generic required packages
 # yum -y install openstack-selinux openstack-utils
 # required for nova compute
