@@ -11,7 +11,7 @@ if [[ ! -x bats ]]; then
     bats/install.sh /usr/local
 fi
 
-if [[ -d /root/clusterbats/ ]]; then
+if [[ ! -d /root/clusterbats/ ]]; then
     cd /root
     git clone http://github.com/clustervision/clusterbats
 fi
