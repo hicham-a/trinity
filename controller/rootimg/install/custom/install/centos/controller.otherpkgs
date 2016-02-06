@@ -12,3 +12,39 @@ perl-JSON
 sshpass
 docker
 docker-registry
+
+# required packages for nova-compute
+openstack-selinux
+openstack-utils
+openstack-nova-compute
+openstack-nova-network
+openstack-nova-api
+sysfsutils
+
+# Needed for nova-compute (no-mac-spoofing error)
+libvirt-daemon-config-nwfilter
+libvirt-daemon-driver-nwfilter
+
+# Needed for Horizon 
+python-keystoneclient
+python-glanceclient
+python-novaclient
+python-cinderclient
+openstack-dashboard
+httpd
+mod_wsgi
+memcached
+python-memcached
+
+
+# Trinity API
+# The Trinity API server init script requires the Linux Standard Base
+redhat-lsb
+
+#-- The Trinity API server needs python Bottle
+epel-release
+python-pip
+python-bottle
+python-cherrypy
+
+

@@ -12,12 +12,16 @@
 #------------------------------------------------------------------------------
 # Install and configure Horizon 
 #------------------------------------------------------------------------------
-yum -y install --setopt=tsflags=nodocs python-keystoneclient python-glanceclient python-novaclient python-cinderclient
-yum -y install --setopt=tsflags=nodocs openstack-dashboard httpd mod_wsgi memcached python-memcached
+# HTH: moved packages into xCAT otherpkgs.
+# yum -y install --setopt=tsflags=nodocs python-keystoneclient python-glanceclient python-novaclient python-cinderclient
+# yum -y install --setopt=tsflags=nodocs openstack-dashboard httpd mod_wsgi memcached python-memcached
 
 cp -LrT /trinity/horizon/rootimg/ /
 chown -R apache:apache /usr/share/openstack-dashboard/static
-echo 'Include "/etc/httpd/conf.modules.d/*.conf"' >> /etc/httpd/conf/httpd.conf
+if ! grep conf.modules.d/ /etc/httpd/conf/httpd.conf; then
+    echo 'Include "/etc/httpd/conf.modules.d/*.conf"' >> /etc/httpd/conf/httpd.conf
+fi
+
 systemctl enable httpd.service memcached.service
 systemctl start memcached.service
 systemctl restart httpd.service
@@ -25,18 +29,21 @@ systemctl restart httpd.service
 #-----------------------------------------------------------------
 # Install the API server, client and dashboard additions
 #-----------------------------------------------------------------
-
 cp -LrT /trinity/openstack/rootimg/ /
 # Assumes that /cluster and  /home are already mounted
 
+
+#----------------------------------------------------------------------------------------------------
+## HTH: move installation of packages into the xCAT otherpkgs
 # The Trinity API server init script requires the Linux Standard Base
-yum -y install redhat-lsb
+# yum -y install redhat-lsb
 
 #-- The Trinity API server needs python Bottle
-yum -y install epel-release
-yum -y install python-pip
-pip install bottle
-pip install cherrypy
+# yum -y install epel-release
+# yum -y install python-pip
+# pip install bottle
+# pip install cherrypy
+#----------------------------------------------------------------------------------------------------
 
 #-- Trinity API setup
 cd /opt/trinity/trinity_api

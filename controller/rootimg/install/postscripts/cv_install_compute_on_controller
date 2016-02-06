@@ -9,14 +9,14 @@
 # Install and configure openstack-nova-compute and openstack-nova-network 
 #------------------------------------------------------------------------------
 
+Moved packages to the otherpkgs inside xCAT
 # generic required packages
-yum -y install openstack-selinux openstack-utils
+# yum -y install openstack-selinux openstack-utils
 # required for nova compute
-yum -y install openstack-nova-compute openstack-nova-network openstack-nova-api
-yum -y install sysfsutils
-
+# yum -y install openstack-nova-compute openstack-nova-network openstack-nova-api
+# yum -y install sysfsutils
 # Needed for nova-compute (no-mac-spoofing error)
-yum -y install libvirt-daemon-config-nwfilter libvirt-daemon-driver-nwfilter
+# yum -y install libvirt-daemon-config-nwfilter libvirt-daemon-driver-nwfilter
 
 # Get config info
 source /trinity/nova/config.sh
@@ -105,5 +105,3 @@ systemctl enable openstack-nova-metadata-api.service
 systemctl start openstack-nova-metadata-api.service
 
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log
-
-
