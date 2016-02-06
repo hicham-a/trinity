@@ -190,7 +190,7 @@ if [ -z $SITEMASTER ]; then
     reposync -n -r epel -r extras -r updates -r xcat-2-core -r xcat-dep -r openstack-juno 
         -p /install/post/otherpkgs/centos7/x86_64/ > /dev/null
 else
-    reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7/x86_64/
+    reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7/x86_64/ > /dev/null
 fi
 
 createrepo /install/post/otherpkgs/centos7/x86_64/
