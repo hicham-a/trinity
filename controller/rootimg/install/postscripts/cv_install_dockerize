@@ -39,7 +39,7 @@ services=(
   "nova"
 )
 
-keystone_endpoint="http://$(hostname -i):35357/v2.0"
+keystone_endpoint="http://controller.cluster:35357/v2.0"
 
 for profile in "${profiles[@]}"; do
   if [ -z ${SITEMASTER} ]; then
