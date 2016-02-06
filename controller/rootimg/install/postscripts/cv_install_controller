@@ -166,9 +166,10 @@ systemctl start ntpd
 #--------------------------------------------------------------------------------------
 # Start opensm on the controller
 #--------------------------------------------------------------------------------------
-yum -y groupinstall "Infiniband Support"
-yum -y install opensm
-yum -y install infiniband-diags
+# HTH: moved to package list
+#yum -y groupinstall "Infiniband Support"
+#yum -y install opensm
+#yum -y install infiniband-diags
 
 systemctl enable opensm
 systemctl start opensm
@@ -201,9 +202,9 @@ packimage centos7-x86_64-netboot-trinity
 # install docker and docker-registry
 # and create the trinity image for the compute nodes
 #--------------------------------------------------------------------------------------
-yum -y install docker docker-registry
+#yum -y install docker docker-registry
 # FIXME: move this to the rootimg profile
-sed -i 's/REGISTRY_PORT=.*/REGISTRY_PORT=5050/' /etc/sysconfig/docker-registry
+# sed -i 's/REGISTRY_PORT=.*/REGISTRY_PORT=5050/' /etc/sysconfig/docker-registry
 
 systemctl enable docker docker-registry
 systemctl start docker docker-registry
@@ -224,9 +225,10 @@ docker push controller:5050/trinity
 # Install the xCAT web service
 #--------------------------------------------
 # The xCAT web service requires the following
-yum -y install mod_ssl
-service httpd restart
-yum -y install perl-JSON
+#yum -y install mod_ssl
+#yum -y install perl-JSON
+
+systemctl restart httpd
 
 # Set up the xCAT web service
 useradd trinity
