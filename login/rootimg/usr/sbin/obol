@@ -47,19 +47,20 @@ def user_add(username, cn, sn, givenName, password, shell, groups):
 
     if not cn:
         cn = username
+    if not sn:
+        sn = username
 
     add_record = [
      ('objectclass', ['top','person', 'organizationalPerson', 'inetOrgPerson', 'posixAccount', 'shadowAccount']),
      ('uid', [username] ),
      ('cn', [cn] ),
+     ('sn', [sn] ),
      ('userPassword', [password] ), 
      ('loginShell', [shell] ),
      ('uidNumber', [uidNumber] ),
      ('gidNumber', [uidNumber] ),
      ('homeDirectory', ['/home/%s' % username] )
     ]
-    if sn:
-        add_record.append(('sn', [sn] ))
     if givenName:
         add_record.append(('givenName', [givenName] ))
 
@@ -108,6 +109,20 @@ def user_list():
     attrs = ['uid']
     for dn, attrs in conn.search_s( base_dn, ldap.SCOPE_SUBTREE, filter, attrs ):
         print attrs['uid'][0]
+
+
+def user_modify(username, **kwargs):
+    """Modify a user"""
+    dn = 'uid=%s,ou=People,dc=local' % username
+
+    mod_attrs = []
+    for key, value in kwargs.iteritems():
+        if key == 'shell':
+            key = 'loginShell'
+        if not value: continue
+        mod_attrs.append((ldap.MOD_DELETE, key, None))
+        mod_attrs.append((ldap.MOD_ADD, key, value))
+    conn.modify_s(dn, mod_attrs)
 
 
 def user_reset(username, password):
@@ -270,6 +285,10 @@ command.add_argument('--password')
 
 command = user_commands.add_parser('modify', help='modify a user attribute')
 command.add_argument('username')
+command.add_argument('--cn', metavar="COMMON NAME")
+command.add_argument('--sn', metavar="SURNAME")
+command.add_argument('--givenName')
+command.add_argument('--shell', default='/bin/bash')
 
 command = user_commands.add_parser('list', help='list users')
 

@@ -6,13 +6,13 @@
 
 
 # generic required packages
-yum -y install openstack-selinux openstack-utils
+yum -y -q install openstack-selinux openstack-utils
 # required for nova compute
-yum -y install openstack-nova-compute openstack-nova-network openstack-nova-api
-yum -y install sysfsutils
+yum -y -q install openstack-nova-compute openstack-nova-network openstack-nova-api
+yum -y -q install sysfsutils
 
 # Needed for nova-compute (no-mac-spoofing error)
-yum -y install libvirt-daemon-config-nwfilter libvirt-daemon-driver-nwfilter
+yum -y -q install libvirt-daemon-config-nwfilter libvirt-daemon-driver-nwfilter
 
 # Get config info
 source /trinity/nova/config.sh

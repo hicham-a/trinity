@@ -24,7 +24,7 @@ done
 # Setup timezone and ntp
 #--------------------------------------------------------------------------
 ln -sf /usr/share/zoneinfo/UTC /etc/localtime
-yum -y install ntp
+yum -y -q install ntp
 sed -e "s/^server/#server/g" -i /etc/ntp.conf
 echo "server 10.141.255.254  prefer" >> /etc/ntp.conf
 service ntpd start
@@ -107,10 +107,10 @@ useradd -u 1002 -g 1002 munge
 groupadd -g 1001 slurm
 useradd -u 1001 -g 1001 slurm
 
-yum -y install epel-release
-yum -y install munge munge-libs gcc
-yum -y install readline-devel openssl-devel perl-ExtUtils-MakeMaker perl-Switch pam-devel
-yum -y install /trinity/login/rpms/slurm*.rpm
+yum -y -q install epel-release
+yum -y -q install munge munge-libs gcc
+yum -y -q install readline-devel openssl-devel perl-ExtUtils-MakeMaker perl-Switch pam-devel
+yum -y -q install /trinity/login/rpms/slurm*.rpm
 rm -rf /etc/slurm/*
 rmdir /etc/slurm
 ln -s /cluster/etc/slurm /etc/
@@ -136,7 +136,7 @@ chown -R slurm:slurm /var/log/slurm
 #--------------------------------------------------------------------------
 # Enable mkhomedir
 #--------------------------------------------------------------------------
-yum -y install oddjob-mkhomedir
+yum -y -q install oddjob-mkhomedir
 sed -i 's/0022/0077/g' /etc/oddjobd.conf.d/oddjobd-mkhomedir.conf
 systemctl enable oddjobd
 systemctl start oddjobd
@@ -151,7 +151,7 @@ authconfig --enablemkhomedir --update
 /postscripts/cv_install_slapd
 
 ##-- The following commented lines should be removed after successful testing
-##yum -y install openldap openldap-clients openldap-servers
+##yum -y -q install openldap openldap-clients openldap-servers
 ##cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
 ##chkconfig slapd on
 ##service slapd start
@@ -193,7 +193,7 @@ authconfig --enablemkhomedir --update
 ###--------------------------------------------------------------------------
 ### Setup PAM
 ###--------------------------------------------------------------------------
-##yum -y install nss-pam-ldapd authconfig
+##yum -y -q install nss-pam-ldapd authconfig
 ##
 ### append our config to the ldap nameserver demon
 ##cat >> /etc/nslcd.conf << EOF 
@@ -226,7 +226,7 @@ authconfig --enablemkhomedir --update
 #---------------------------------------------------------------------------
 # Environment modules
 #---------------------------------------------------------------------------
-yum -y install environment-modules
+yum -y -q install environment-modules
 rm /usr/share/Modules/init/.modulespath 
 ln -s /cluster/.modulespath /usr/share/Modules/init/.modulespath
 #cat << EOF >> /usr/share/Modules/init/.modulespath
@@ -251,7 +251,7 @@ chmod ga-wx /root/.ssh/authorized_keys
 #---------------------------------------------------------------------------
 # User Manager
 #---------------------------------------------------------------------------
-yum -y install python-ldap python-retrying
+yum -y -q install python-ldap python-retrying
 ##cp-rootimg
 ##cp /trinity/login/obol/obol /usr/sbin/
 chmod u=x,go= /usr/sbin/obol
@@ -272,14 +272,14 @@ service sshd restart
 #---------------------------------------------------------------------------
 # Remote X11
 #---------------------------------------------------------------------------
-yum -y install xorg-x11-xauth
+yum -y -q install xorg-x11-xauth
 
 #---------------------------------------------------------------------------
 # Other packages
 #---------------------------------------------------------------------------
-yum -y install bind-utils
-yum -y install python-pip python-ldap python-retrying
-yum -y install git
+yum -y -q install bind-utils
+yum -y -q install python-pip python-ldap python-retrying
+yum -y -q install git
 
 
 #---------------------------------------------------------------------------

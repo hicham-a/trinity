@@ -18,7 +18,7 @@ cp -LrT /trinity/openstack/rootimg/ /
 systemctl stop NetworkManager
 systemctl disable NetworkManager
 
-yum -y install openstack-packstack
+yum -y -q install openstack-packstack
 
 sed "s/=127.0.0.1/=$(hostname -I)/g" //xcatpost/packstack-answers.txt > /tmp/packstack-answers.txt
 read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
@@ -74,11 +74,11 @@ mount -a
 # Assumes that /cluster and  /home are already mounted
 
 # The Trinity API server init script requires the Linux Standard Base
-yum -y install redhat-lsb
+yum -y -q install redhat-lsb
 
 # The Trinity API server needs python Bottle
-yum -y install epel-release
-yum -y install python-pip
+yum -y -q install epel-release
+yum -y -q install python-pip
 pip install bottle
 pip install cherrypy
 

@@ -12,8 +12,8 @@
 #------------------------------------------------------------------------------
 # Install and configure Horizon 
 #------------------------------------------------------------------------------
-yum -y install --setopt=tsflags=nodocs python-keystoneclient python-glanceclient python-novaclient python-cinderclient
-yum -y install --setopt=tsflags=nodocs openstack-dashboard httpd mod_wsgi memcached python-memcached
+yum -y -q install --setopt=tsflags=nodocs python-keystoneclient python-glanceclient python-novaclient python-cinderclient
+yum -y -q install --setopt=tsflags=nodocs openstack-dashboard httpd mod_wsgi memcached python-memcached
 
 cp -LrT /trinity/horizon/rootimg/ /
 chown -R apache:apache /usr/share/openstack-dashboard/static
@@ -30,11 +30,11 @@ cp -LrT /trinity/openstack/rootimg/ /
 # Assumes that /cluster and  /home are already mounted
 
 # The Trinity API server init script requires the Linux Standard Base
-yum -y install redhat-lsb
+yum -y -q install redhat-lsb
 
 #-- The Trinity API server needs python Bottle
-yum -y install epel-release
-yum -y install python-pip
+yum -y -q install epel-release
+yum -y -q install python-pip
 pip install bottle
 pip install cherrypy
 
@@ -46,10 +46,11 @@ if [[ ! -z "${SITEMASTER}" ]]; then
     sed 's#/trinity/login/setup.sh#/trinity/login/mini-setup.sh#' -i /etc/trinity/trinity_api.conf
 fi 
 
+BRIDGE="br100"
 source /etc/profile.d/xcat.sh
-DHCP_NIC=$(tabdump -w key==dhcpinterfaces site | grep dhcpinterfaces | awk -F "," '{print $2}' | tr -d '\"')
+
 sed -e "s/127.0.0.1/10.141.255.254/g" \
-    -e "s/eno2/${DHCP_NIC}/g" \
+    -e "s/eno2/${BRIDGE}/g" \
     -i /etc/trinity/trinity_api.conf
 
 
@@ -120,7 +121,6 @@ glance image-create \
 read ETH0 ETH1 ETH2 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
 PRI_NIC=${ETH1} 
 
-BRIDGE="br100"
 NETWORK_LABEL="novanetwork"
 nova network-create \
        --fixed-range-v4 192.168.32.0/24 \
@@ -198,6 +198,11 @@ systemctl start trinity-route
 # Provide DNS on the bridge interface not the physical interface.
 while ! (ip a show dev ${BRIDGE} | grep 10.141.255.254); do sleep 10; done
 chtab key=dnsinterfaces site.value=${BRIDGE}
+chtab key=dhcpinterfaces site.value=${BRIDGE}
+chtab netname=internal_net networks.mgtifname=${BRIDGE}
+chtab netname=bmc_net networks.mgtifname=${BRIDGE}
+chtab netname=vc_a_net networks.mgtifname=${BRIDGE}
+makedhcp -n
 makedns -n
 
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log
