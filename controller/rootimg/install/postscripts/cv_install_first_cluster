@@ -6,10 +6,10 @@
 ##email          :  abhishek.mukherjee@clustervision.com
 
 
-yum -y install --setopt=tsflags=nodocs epel-release
-yum -y install --setopt=tsflags=nodocs http://rdo.fedorapeople.org/openstack-juno/rdo-release-juno.rpm
-# yum -y install --setopt=tsflags=nodocs openstack-selinux openstack-utils
-yum -y install --setopt=tsflags=nodocs python-keystoneclient python-glanceclient python-novaclient python-cinderclient
+yum -y -q install --setopt=tsflags=nodocs epel-release
+yum -y -q install --setopt=tsflags=nodocs http://rdo.fedorapeople.org/openstack-juno/rdo-release-juno.rpm
+# yum -y -q install --setopt=tsflags=nodocs openstack-selinux openstack-utils
+yum -y -q install --setopt=tsflags=nodocs python-keystoneclient python-glanceclient python-novaclient python-cinderclient
 
 sed -e "s/<TENANT>/admin/g" \
     -e "s/<USER>/admin/g" \

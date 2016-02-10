@@ -47,4 +47,10 @@ python-pip
 python-bottle
 python-cherrypy
 
+# On request
+strace
+tcpdump
+telnet
+minicom
+screen
 

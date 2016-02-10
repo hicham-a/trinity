@@ -7,7 +7,7 @@
 LOGIN_IMG=/trinity/qcows/login.qcow2
 SLURM_RPMS=$(echo -n /root/rpms/; ls -m /trinity/login/rpms/ | sed -e 's#,#,/root/rpms/#g' | tr -d '\n')
 
-yum -y install guestfish
+yum -y -q install guestfish
 export LIBGUESTFS_BACKEND=direct
 mkdir -p /trinity/qcows/
 wget -c http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2 -P /trinity/qcows/
@@ -48,15 +48,12 @@ virt-customize -a ${LOGIN_IMG} \
     --edit "/etc/selinux/config: s/SELINUX=enforcing/SELINUX=permissive/" \
     --run-command "authconfig --enablemkhomedir --update" \
     --install environment-modules,whatsup \
-    --install python-ldap,python-retrying,xorg-x11-xauth,bind-utils,python-pip,git 
+    --delete /usr/share/Modules/init/.modulespath \
+    --link /cluster/.modulespath:/usr/share/Modules/init/.modulespath \
+    --install python-ldap,python-retrying,xorg-x11-xauth,bind-utils,python-pip,git,jq,traceroute,tcpdump
                                
 virt-copy-in -a ${LOGIN_IMG} /trinity/login/rootimg/* /
 
 # Diagnostics
 virt-cat -a ${LOGIN_IMG} /etc/ssh/sshd_config | grep PasswordAuthentication
 virt-cat -a ${LOGIN_IMG} /etc/sysconfig/network-scripts/ifcfg-eth0
-
-# TODO:
-# 1. update fstab to mount data from the controller (or storage node)
-# 2. enable and start the LDAP server (maybe use a container for that)
-# 3. obol default groups and default permissions

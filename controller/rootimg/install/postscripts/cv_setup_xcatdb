@@ -7,7 +7,7 @@
 ##-- Abhishek Mukherjee: 16/09/2015
 ##-- Made necessary modification to make this compatible with cv_install_dockerize
 
-yum -y install perl-DBD-MySQL
+yum -y -q install perl-DBD-MySQL
 
 source /etc/profile.d/xcat.sh
 # docker run -p 3306:3306 --name=db -it -d -e MYSQL_ROOT_PASSWORD=system mariadb

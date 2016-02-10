@@ -36,7 +36,7 @@ fi
 /postscripts/cv_install_slapd
 
 ##-- The following commented lines should be removed after successful testing
-##yum -y install openldap openldap-clients openldap-servers
+##yum -y -q install openldap openldap-clients openldap-servers
 ##cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
 ##chkconfig slapd on
 ##service slapd start
@@ -78,7 +78,7 @@ fi
 ###--------------------------------------------------------------------------
 ### Setup PAM
 ###--------------------------------------------------------------------------
-##yum -y install nss-pam-ldapd authconfig
+##yum -y -q install nss-pam-ldapd authconfig
 ##
 ### append our config to the ldap nameserver demon
 ##cat >> /etc/nslcd.conf << EOF 
