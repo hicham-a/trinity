@@ -81,7 +81,6 @@ cd -
 
 service httpd restart
 
-
 #-- Download the base login node image (CentOS cloud image) and upload it to glance
 if [[ -z "$SITEMASTER" ]]; then
     CLOUD_IMAGE_URL="http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2"
