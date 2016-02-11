@@ -156,6 +156,7 @@ ip a a 10.148.255.${last}/16 dev $ETH2
 fi
 
 systemctl restart network
+# HTH: R8HACK hacked this for now
 ip a a 10.141.255.254/16 dev $ETH2
 
 systemctl enable ntpd
