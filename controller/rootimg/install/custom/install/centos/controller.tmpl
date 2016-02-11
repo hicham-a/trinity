@@ -24,17 +24,17 @@ clearpart --all --initlabel
 
 #XCAT_PARTITION_START#
 #No RAID
-# %include /tmp/partitioning
+%include /tmp/partitioning
 
-part /boot --fstype ext3 --size=1024
-part swap --size=2048
-part pv.01 --size=1 --grow
-volgroup vg_root pv.01
-logvol  /  --vgname=vg_root  --size=131072  --name=lv_root
-logvol  /tmp  --vgname=vg_root  --size=2048  --name=lv_tmp
-logvol  /var  --vgname=vg_root  --size=8192  --name=lv_var
-logvol  /drbd  --vgname=vg_root  --size=131072  --name=lv_drbd
-logvol  /spare  --vgname=vg_root  --size=1 --grow  --name=lv_spare
+#part /boot --fstype ext3 --size=1024
+#part swap --size=2048
+#part pv.01 --size=1 --grow
+#volgroup vg_root pv.01
+#logvol  /  --vgname=vg_root  --size=131072  --name=lv_root
+#logvol  /tmp  --vgname=vg_root  --size=2048  --name=lv_tmp
+#logvol  /var  --vgname=vg_root  --size=8192  --name=lv_var
+#logvol  /drbd  --vgname=vg_root  --size=131072  --name=lv_drbd
+#logvol  /spare  --vgname=vg_root  --size=1 --grow  --name=lv_spare
 
 #XCAT_PARTITION_END#
 
