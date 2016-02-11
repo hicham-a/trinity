@@ -132,6 +132,15 @@ if [[ "$N" = 1 ]]; then
    ssh controller-2.cluster modprobe drbd
    ssh controller-2.cluster drbdadm up ha_disk
    sleep 1
+   
+   #-------------------------------------------------------------------
+   # Now setup the common resources
+   #-------------------------------------------------------------------
+   dev=$(ip a | grep 10.148.255.253 | awk '{print $5}')
+
+   pcs resource create ip ocf:heartbeat:IPaddr2 ip="10.141.255.254" iflabel="xCAT" cidr_netmask="16" nic="$dev" op monitor interval="37s"
+   pcs resource create drbd ocf:linbit:drbd drbd_resource=ha_disk
+
 else
    touch /tmp/cv_ha_ready
 fi
