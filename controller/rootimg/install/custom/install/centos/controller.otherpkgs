@@ -54,3 +54,11 @@ telnet
 minicom
 screen
 
+#-- packages required for HA --#
+drbdlinks
+pacemaker
+pcs
+fence-agents-all
+drbd84-utils-8.9.2
+kmod-drbd84-8.4.6
+
