@@ -98,8 +98,6 @@ resource ha_disk {
 }
 EOF
 
-systemctl start drbd
-
 if [[ "$N" = 1 ]]; then 
    # I am the active node
    # Wait until the passive controller is ready to continue
