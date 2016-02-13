@@ -144,6 +144,13 @@ if [[ "$N" = 1 ]]; then
    pcs resource master ms_drbd drbd master-max="1" master-node-max="1" clone-max="2" clone-node-max="1" notify="true"
    pcs resource create fs_drbd ocf:heartbeat:Filesystem device="/dev/drbd/by-res/ha_disk" directory="/drbd" fstype="ext4" op monitor interval="57s"
 
+
+   # We specify that all services and groups should be on
+   # the same node as where drbd keeps its master copy of the data.
+   pcs constraint colocation add ip ms_drbd INFINITY with-rsc-role=Master
+   pcs constraint colocation add ip fs_drbd
+   pcs constraint order ms_drbd then start fs_drbd
+
 else
    touch /tmp/cv_ha_ready
 fi
