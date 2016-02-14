@@ -110,12 +110,6 @@ pcs constraint colocation add fs_drbd grp_xCAT
 pcs constraint order fs_drbd then start symlinks_xCAT
 pcs constraint order symlinks_xCAT then start grp_xCAT
 
-# Finally some defaults
-pcs property set no-quorum-policy=ignore
-pcs resource op defaults timeout="120s"
-pcs resource defaults resource-stickyness=100
-pcs property set stonith-enabled=false
-
 systemctl enable pacemaker
 systemctl enable corosync
 

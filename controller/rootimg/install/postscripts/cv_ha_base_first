@@ -43,17 +43,10 @@ fi
 #-----------------------------------------------------------------------------------------------
 # Install pacemaker
 #-----------------------------------------------------------------------------------------------
-#yum -y install epel-release
-#yum -y install drbdlinks
-#yum -y install pacemaker
-#yum -y install pcs fence-agents-all
 systemctl start pcsd
 systemctl enable pcsd
 
 echo system | passwd hacluster --stdin
-
-#yum -y install http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
-#yum -y install drbd84-utils-8.9.2 kmod-drbd84-8.4.6
 echo drbd > /etc/modules-load.d/drbd.conf
 
 #------------------------------------------------------------
@@ -98,7 +91,6 @@ resource ha_disk {
 EOF
 
 if [[ "$N" = 1 ]]; then 
-   # I am the active node
    # Wait until the passive controller is ready to continue
    for i in {1..100}; do
        if ssh controller-2.cluster cat /tmp/cv_ha_ready; then break; fi
@@ -126,7 +118,6 @@ if [[ "$N" = 1 ]]; then
    drbdadm primary --force ha_disk
 
    mkfs -t ext4 /dev/drbd1
-   mount /dev/drbd1 /drbd
 
    ssh controller-2.cluster drbdadm create-md ha_disk
    ssh controller-2.cluster modprobe drbd
@@ -137,6 +128,12 @@ if [[ "$N" = 1 ]]; then
    # Now setup the common resources
    #-------------------------------------------------------------------
    dev=$(ip a | grep 10.148.255.253 | awk '{print $5}')
+
+   # Set basic defaults
+   pcs property set no-quorum-policy=ignore
+   pcs resource op defaults timeout="120s"
+   pcs resource defaults resource-stickyness=100
+   pcs property set stonith-enabled=false
 
    pcs resource create ip ocf:heartbeat:IPaddr2 ip="10.141.255.254" iflabel="xCAT" cidr_netmask="16" nic="$dev" op monitor interval="37s"
    pcs resource create drbd ocf:linbit:drbd drbd_resource=ha_disk
