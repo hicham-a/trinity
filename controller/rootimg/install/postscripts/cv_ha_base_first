@@ -63,7 +63,6 @@ echo drbd > /etc/modules-load.d/drbd.conf
 sed -i -e "/vg_root-lv_drbd/d" /etc/fstab
 umount /drbd
 
-
 # Just to make sure, we clear the disk
 echo Clearing drbd logical volume, this may take some time.
 dd if=/dev/zero of=/dev/mapper/vg_root-lv_drbd bs=1M count=1024
@@ -79,9 +78,9 @@ ip2=10.141.255.252
 cat <<EOF >/etc/drbd.d/ha_disk.res
 resource ha_disk {
        net {
-         after-sb-0pri discard-least-changes;
-         after-sb-1pri consensus;
-         after-sb-2pri call-pri-lost-after-sb;
+         after-sb-0pri discard-younger-primary;
+         after-sb-1pri discard-secondary;
+         after-sb-2pri disconnect;
        }
        on controller-1.cluster {
          device    /dev/drbd1;
@@ -144,13 +143,11 @@ if [[ "$N" = 1 ]]; then
    pcs resource master ms_drbd drbd master-max="1" master-node-max="1" clone-max="2" clone-node-max="1" notify="true"
    pcs resource create fs_drbd ocf:heartbeat:Filesystem device="/dev/drbd/by-res/ha_disk" directory="/drbd" fstype="ext4" op monitor interval="57s"
 
-
    # We specify that all services and groups should be on
    # the same node as where drbd keeps its master copy of the data.
    pcs constraint colocation add ip ms_drbd INFINITY with-rsc-role=Master
    pcs constraint colocation add ip fs_drbd
-   pcs constraint order ms_drbd then start fs_drbd
-
+   pcs constraint order promote ms_drbd then start fs_drbd
 else
    touch /tmp/cv_ha_ready
 fi

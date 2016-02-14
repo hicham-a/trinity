@@ -198,6 +198,7 @@ yum-config-manager --enable base epel extras updates openstack-juno
 yum-config-manager --add-repo http://sourceforge.net/projects/xcat/files/yum/2.9/xcat-core/xCAT-core.repo
 yum-config-manager --add-repo http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo
 
+echo "Syncing repositories, this may take some time"
 if [ -z $SITEMASTER ]; then
     reposync -n -r elrepo -r epel -r extras -r updates -r xcat-2-core -r xcat-dep -r openstack-juno 
         -p /install/post/otherpkgs/centos7/x86_64/ > /dev/null
