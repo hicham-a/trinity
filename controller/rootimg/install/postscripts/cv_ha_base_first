@@ -16,6 +16,7 @@ filename=$(grep -l IPADDR=10.141.255.254 /etc/sysconfig/network-scripts/ifcfg-*)
 set -x
 if [ ! -z $filename ]; then 
     sed -e "s/\(IPADDR.\?\)=\(10\.14[18]\.255\)\.254/\1=\2.$octet/" -i $filename
+    sed -e "s/\(IPADDR.\?\)=\(10\.149\.255\)\.254/\1=\2.$octet/" -i /etc/sysconfig/network-scripts/ifcfg-ib0
     echo "Changing ip addresses to allow floating"
     echo controller-$N.cluster > /etc/hostname
     hostname controller-$N.cluster 
@@ -25,6 +26,8 @@ if [ ! -z $filename ]; then
     ip addr add 10.141.255.$octet/16 dev $dev
     ip addr add 10.148.255.$octet/16 dev $dev
     ip route add 172.16.0.0/12 dev $dev
+    ip addr del 10.149.255.254/16 dev ib0
+    ip addr add 10.149.255.$octet/16 dev ib0
     echo "Checking IP addresses"
     ip addr show dev $dev
 else
@@ -65,8 +68,14 @@ dd if=/dev/zero of=/dev/mapper/vg_root-lv_drbd bs=1M count=1024
 if ! grep 10.141.255.253 /etc/hosts; then echo "10.141.255.253 controller-1 controller-1.cluster" >> /etc/hosts; fi
 if ! grep 10.141.255.252 /etc/hosts; then echo "10.141.255.252 controller-2 controller-2.cluster" >> /etc/hosts; fi
 
-ip1=10.141.255.253
-ip2=10.141.255.252
+# If we can use the IB interface for DRBD we will do so.
+if ping -c1 10.149.255.$octet > /dev/null 2>&1; then
+    ip1=10.149.255.253
+    ip2=10.149.255.252
+else
+    ip1=10.141.255.253
+    ip2=10.141.255.252
+fi
 
 cat <<EOF >/etc/drbd.d/ha_disk.res
 resource ha_disk {
@@ -78,13 +87,13 @@ resource ha_disk {
        on controller-1.cluster {
          device    /dev/drbd1;
          disk      /dev/mapper/vg_root-lv_drbd;
-         address   10.141.255.253:7789;
+         address   ${ip1}:7789;
          meta-disk internal;
        }
        on controller-2.cluster {
          device    /dev/drbd1;
          disk      /dev/mapper/vg_root-lv_drbd;
-         address   10.141.255.252:7789;
+         address   ${ip2}:7789;
          meta-disk internal;
        }
 }
