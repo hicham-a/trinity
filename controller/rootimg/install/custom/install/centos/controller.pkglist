@@ -29,17 +29,12 @@ pciutils
 createrepo
 net-snmp-utils
 
-# Trinity API
-# The Trinity API server init script requires the Linux Standard Base
 redhat-lsb
-
-#-- The Trinity API server needs python Bottle
 epel-release
 python-pip
 python-bottle
 python-cherrypy
 
-# On request
 strace
 tcpdump
 telnet
@@ -55,6 +50,10 @@ mlocate
 openldap
 openldap-clients
 openldap-servers
+python-ldap
+nss-pam-ldapd
+authconfig
+
 
 # Infiniband
 opensm
