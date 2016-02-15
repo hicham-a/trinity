@@ -30,7 +30,6 @@ createrepo
 net-snmp-utils
 
 redhat-lsb
-epel-release
 python-pip
 
 strace

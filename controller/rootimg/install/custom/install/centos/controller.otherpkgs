@@ -12,6 +12,7 @@ perl-JSON
 sshpass
 docker
 docker-registry
+epel-release
 
 openstack-selinux
 openstack-utils
