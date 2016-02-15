@@ -30,6 +30,7 @@ python-novaclient
 python-cinderclient
 openstack-dashboard
 memcached
+python-pip
 python-memcached
 python-retrying
 python-bottle
