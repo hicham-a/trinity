@@ -107,8 +107,12 @@ pcs resource group add grp_xCAT httpd dhcpd nfs docker-registry slapd xCAT
 pcs constraint colocation add fs_drbd symlinks_xCAT
 pcs constraint colocation add fs_drbd grp_xCAT
 
-pcs constraint order fs_drbd then start symlinks_xCAT
-pcs constraint order symlinks_xCAT then start grp_xCAT
+pcs constraint order start fs_drbd then start symlinks_xCAT
+pcs constraint order start symlinks_xCAT then start grp_xCAT
+
+pcs resource create sentinel ocf:pacemaker:Dummy
+pcs constraint colocation add sentinel with ip
+pcs constraint order start grp_xCAT then start sentinel
 
 echo pcs resource cleanup | at now +5 minutes
 
