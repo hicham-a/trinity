@@ -31,28 +31,8 @@ python-glanceclient
 python-novaclient
 python-cinderclient
 openstack-dashboard
-httpd
-mod_wsgi
 memcached
 python-memcached
-
-
-# Trinity API
-# The Trinity API server init script requires the Linux Standard Base
-redhat-lsb
-
-#-- The Trinity API server needs python Bottle
-epel-release
-python-pip
-python-bottle
-python-cherrypy
-
-# On request
-strace
-tcpdump
-telnet
-minicom
-screen
 
 #-- packages required for HA --#
 drbdlinks
