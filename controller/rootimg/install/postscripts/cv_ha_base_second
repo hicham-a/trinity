@@ -103,7 +103,7 @@ pcs resource create xCAT lsb:xcatd op monitor interval="42s"
 pcs resource clone named clone-max=2 clone-node-max=1 notify=false
 
    #pcs resource group add grp_dependent_containers keystone glance nova_controller omd
-pcs resource group add grp_xCAT httpd dhcpd named nfs docker-registry slapd xCAT
+pcs resource group add grp_xCAT httpd dhcpd nfs docker-registry slapd xCAT
 pcs constraint colocation add fs_drbd symlinks_xCAT
 pcs constraint colocation add fs_drbd grp_xCAT
 
