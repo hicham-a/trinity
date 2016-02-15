@@ -31,6 +31,8 @@ openstack-dashboard
 memcached
 python-memcached
 python-retrying
+python-bottle
+python-cherrypy
 
 #-- packages required for HA --#
 drbdlinks

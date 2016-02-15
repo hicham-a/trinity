@@ -32,8 +32,6 @@ net-snmp-utils
 redhat-lsb
 epel-release
 python-pip
-python-bottle
-python-cherrypy
 
 strace
 tcpdump
