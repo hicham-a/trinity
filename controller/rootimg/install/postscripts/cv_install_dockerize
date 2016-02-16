@@ -35,6 +35,5 @@ for profile in "${profiles[@]}"; do
       
   cp -LrT ${TOPDIR}/${profile}/host/rootimg /
   service=${profile//_/-}
-  systemctl enable ${service}.service
 done
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log
