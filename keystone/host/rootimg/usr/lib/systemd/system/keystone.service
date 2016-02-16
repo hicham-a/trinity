@@ -5,6 +5,7 @@ After=mariadb.service rabbitmq.service
 
 [Service]
 Restart=always
+ExecStartPre=-/usr/bin/docker create --net=host --privileged=true --name=keystone controller:5050/keystone
 ExecStart=/usr/bin/docker start -a keystone
 ExecStop=/usr/bin/docker stop -t 2 keystone
 

@@ -6,6 +6,7 @@ Before=xcatd.service
 
 [Service]
 Restart=always
+ExecStartPre=-/usr/bin/docker create --net=host --privileged=true --name=mariadb controller:5050/mariadb
 ExecStart=/usr/bin/docker start -a mariadb
 ExecStop=/usr/bin/docker stop -t 300 mariadb
 TimeoutSec=600
