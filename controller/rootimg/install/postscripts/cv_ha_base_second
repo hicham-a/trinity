@@ -119,4 +119,9 @@ echo pcs resource cleanup | at now +5 minutes
 systemctl enable pacemaker
 systemctl enable corosync
 
+#Make xCAT available via the floating IP.
+if grep -v XCATHOST /etc/profile.d/xcat.sh; then
+    echo "export XCATHOST=controller.cluster:3001" >> /etc/profile.d/xcat.sh
+fi
+
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log

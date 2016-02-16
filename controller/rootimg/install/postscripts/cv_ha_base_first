@@ -63,7 +63,6 @@ umount /drbd
 echo Clearing drbd logical volume, this may take some time.
 dd if=/dev/zero of=/dev/mapper/vg_root-lv_drbd bs=1M count=1024
 
-
 # make sure the host names can be resolved
 if ! grep 10.141.255.253 /etc/hosts; then echo "10.141.255.253 controller-1 controller-1.cluster" >> /etc/hosts; fi
 if ! grep 10.141.255.252 /etc/hosts; then echo "10.141.255.252 controller-2 controller-2.cluster" >> /etc/hosts; fi
@@ -161,12 +160,5 @@ fi
 
 systemctl enable pacemaker
 systemctl enable corosync
-
-# FIXME: this the only xCAT related command in this script. This should be put somewhere
-# in a different, xCAT related script. 
-# For HA, make xCAT available via the floating IP.
-if grep -v XCATHOST /etc/profile.d/xcat.sh; then
-    echo "export XCATHOST=controller.cluster:3001" >> /etc/profile.d/xcat.sh
-fi
 
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log
