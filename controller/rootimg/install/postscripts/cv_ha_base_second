@@ -72,6 +72,8 @@ systemctl stop xcatd
 systemctl stop docker-registry
 systemctl stop nfs-server
 
+touch /var/lib/docker-registry
+
 drbdlinks -c /drbd/xcat.conf initialize_shared_storage
 drbdlinks -c /drbd/xcat.conf start
 systemctl start xcatd
@@ -94,15 +96,8 @@ pcs resource create docker-registry systemd:docker-registry op monitor interval=
 pcs resource create slapd systemd:slapd op monitor interval="37s"
 pcs resource create xCAT lsb:xcatd op monitor interval="42s"
 
-   #pcs resource create keystone systemd:keystone op monitor interval="34s"
-   #pcs resource create glance systemd:glance op monitor interval="34s"
-   #pcs resource create nova_controller systemd:nova_controller op monitor interval="34s"
-   #pcs resource create omd systemd:omd op monitor interval="34s"
-
-   # For named cloning to work we need to change /etc/resolv.conf as well.
 pcs resource clone named clone-max=2 clone-node-max=1 notify=false
 
-   #pcs resource group add grp_dependent_containers keystone glance nova_controller omd
 pcs resource group add grp_xCAT httpd dhcpd nfs docker-registry slapd xCAT
 pcs constraint colocation add fs_drbd symlinks_xCAT
 pcs constraint colocation add fs_drbd grp_xCAT
