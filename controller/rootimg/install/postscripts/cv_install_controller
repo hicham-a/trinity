@@ -86,9 +86,7 @@ if [[ -f /tmp/trinity/site ]]; then
     cp /tmp/trinity/site /trinity/site
 fi
 
-systemctl enable ntpd
 systemctl start ntpd
-systemctl enable opensm
 systemctl start opensm
 
 #--------------------------------------------------------------------------------------
