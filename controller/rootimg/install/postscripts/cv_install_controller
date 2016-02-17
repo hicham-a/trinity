@@ -7,13 +7,11 @@
 ##                 abhishek.mukherjee@clustervision.com
 
 #--------------------------------------------------------------------------------------
-# install xcat
+# Install Trinity stuff
 #--------------------------------------------------------------------------------------
 # determine if a master is used to install this node:
 if [ ! -z $SITEMASTER ]; then
     echo master is present
-    mkdir /tmp/trinity
-    mount ${SITEMASTER}:/trinity /tmp/trinity       
     echo "Creating installation tree"
     source /etc/profile.d/xcat.sh
     copycds -n centos7 -o $(ls -cr /tmp/trinity/iso/*.iso | head -1) > /dev/null
@@ -48,18 +46,7 @@ else
     copycds -n centos7 -o $(ls -cr /tmp/trinity/iso/*.iso | head -1) > /dev/null
 fi
 
-systemctl stop NetworkManager
-systemctl disable NetworkManager
-killall dhclient
-# disable the dhcp based ntp
-# rm /etc/dhcp/dhclient.d/ntp.sh
-if ! systemctl restart network; then
-    sleep 3
-    systemctl start network
-fi
-
-mkdir -p /trinity
-
+#----------------------------------------------------------------------------------
 # create runimages
 #--------------------------------------------------------------------------------------
 if [[ -d /install/runimages ]]; then
@@ -85,93 +72,22 @@ for table in $(ls /tmp/trinity/controller/xcat/tables); do
 done
 
 restorexCATdb -p /tmp/xcattables  
-
-cd /opt/xcat/share/xcat/netboot/centos
-
-ln -s ../rh/dracut_033 .
-ln -s ../rh/dracut .
-
-cd /
-cat /tmp/trinity/controller/xcat/patches/*.patch | patch -p0
 mknb x86_64
-systemctl restart xcatd
-setenforce 0
-sestatus
 
+systemctl restart xcatd
 makedhcp -n
 makehosts -n
 makedns -n
 
-# Fix for #356
-systemctl disable firewalld
-
-# setup NAT, so nodes can access the internet (see manual step 1.f)
-chkconfig iptables on
-service iptables start
-modprobe iptable_nat
-iptables -A FORWARD -i $ETH2 -j ACCEPT
-iptables -t nat -A POSTROUTING -o $ETH1 -j MASQUERADE
-iptables -D FORWARD -j REJECT --reject-with icmp-host-prohibited
-iptables -D INPUT -j REJECT --reject-with icmp-host-prohibited
-service iptables save
-
-#--------------------------------------------------------------------------------------
-# copy required files from the master node to the controller node
-#--------------------------------------------------------------------------------------
 cp -LrT /tmp/trinity/clustervision /trinity/clustervision &
-cp -LrT /tmp/trinity/controller/rootimg /
 cp /tmp/trinity/version /trinity/version
 
 if [[ -f /tmp/trinity/site ]]; then
     cp /tmp/trinity/site /trinity/site
 fi
 
-#--------------------------------------------------------------------------------------
-# setup routing for the virtual clusters
-#--------------------------------------------------------------------------------------
-ip route add 172.16.0.0/12 dev $ETH2
-mv /etc/sysconfig/network-scripts/route-eno2 /etc/sysconfig/network-scripts/route-${ETH2} 2> /dev/null
-
-#--------------------------------------------------------------------------------------
-# Additional network processing
-#--------------------------------------------------------------------------------------
-# remove the default route from other devices
-#for file in /etc/sysconfig/network-scripts/ifcfg-{$ETH2,$ETH3}; do
-#    sed -i $file -e "s/DEFROUTE=\(.*\)/DEFROUTE=no/"
-#done
-sed -i /etc/sysconfig/network-scripts/ifcfg-${ETH2} -e "s/DEFROUTE=\(.*\)/DEFROUTE=no/"
-
-# disable default route
-sed -i /etc/sysconfig/network-scripts/ifcfg-$ETH1 -e "s/DEFROUTE=\(.*\)/DEFROUTE=yes/" 
-# HTH: we no longer disable peerdns in R7
-# -e "s/PEERDNS=\(.*\)/PEERDNS=no/"
-
-# Fix for #85
-last=$(ip route get 10.141.255.254 | head -1 | awk -F' ' '{print $NF}' | awk -F. '{print $NF}')
-if [[ ! -z "$ETH2" ]]; then
-cat >> /etc/sysconfig/network-scripts/ifcfg-$ETH2 << EOF
-IPADDR1=10.148.255.${last}
-PREFIX1=16
-GATEWAY1=10.148.255.${last}
-EOF
-ip a a 10.148.255.${last}/16 dev $ETH2
-fi
-
-systemctl restart network
-# HTH: R8HACK hacked this for now
-ip a a 10.141.255.254/16 dev $ETH2
-
 systemctl enable ntpd
 systemctl start ntpd
-
-#--------------------------------------------------------------------------------------
-# Start opensm on the controller
-#--------------------------------------------------------------------------------------
-# HTH: moved to package list
-#yum -y groupinstall "Infiniband Support"
-#yum -y install opensm
-#yum -y install infiniband-diags
-
 systemctl enable opensm
 systemctl start opensm
 
@@ -183,13 +99,15 @@ systemctl start nfs-server
 exportfs -a
 
 #--------------------------------------------------------------------------------------
-# Selective updates
+# Setup local repository
 #--------------------------------------------------------------------------------------
 mkdir -p /install/post/otherpkgs/centos7/x86_64
 #yumdownloader --resolve --destdir /install/post/otherpkgs/centos7/x86_64 \
 #    $(grep -v "^#" /install/custom/netboot/centos/trinity.centos7.otherpkgs)
 
 mkdir -p /install/post/otherpkgs/centos7/x86_64
+
+# FIXME: check if we need this
 yum -y -q install epel-release
 yum -y -q install https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno-1.noarch.rpm
 yum -y -q install http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
@@ -206,20 +124,16 @@ else
     reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7/x86_64/ > /dev/null
 fi
 createrepo /install/post/otherpkgs/centos7/x86_64/
+
+#----------------------------------------------------------------------------------------
+# Generate images
+#----------------------------------------------------------------------------------------
 (genimage centos7-x86_64-netboot-trinity; packimage centos7-x86_64-netboot-trinity) &
 (genimage centos7-x86_64-netboot-nova; packimage centos7-x86_64-netboot-nova) &
 
-#--------------------------------------------------------------------------------------
-# install docker and docker-registry
-# and create the trinity image for the compute nodes
-#--------------------------------------------------------------------------------------
-#yum -y install docker docker-registry
-# FIXME: move this to the rootimg profile
-# sed -i 's/REGISTRY_PORT=.*/REGISTRY_PORT=5050/' /etc/sysconfig/docker-registry
-
-systemctl enable docker docker-registry
-systemctl start docker docker-registry
-
+#----------------------------------------------------------------------------------------
+# Build the Trinity container
+#----------------------------------------------------------------------------------------
 if [ -z ${SITEMASTER} ]; then
     docker build -t controller:5050/trinity /trinity/container
 else
@@ -228,20 +142,12 @@ else
 fi
 docker push controller:5050/trinity &
 
-#--------------------------------------------
-# Install the xCAT web service
-#--------------------------------------------
-# The xCAT web service requires the following
-#yum -y install mod_ssl
-#yum -y install perl-JSON
-
-systemctl restart httpd
-
+#---------------------------------------------------------------------------------------
 # Set up the xCAT web service
-useradd trinity
-echo "trinity" | passwd trinity --stdin
+#---------------------------------------------------------------------------------------
 source /etc/profile.d/xcat.sh
 export HOME=/root
+obol -w system -H ldap://controller.cluster user add trinity --pasword trinity
 tabch key=xcat,username=trinity passwd.password=trinity
 mkdef -t policy 6 name=trinity rule=allow
 sed  -e "/<Directory \/>/,/<\/Directory>/ s/Require/#Require/" -i /etc/httpd/conf/httpd.conf
