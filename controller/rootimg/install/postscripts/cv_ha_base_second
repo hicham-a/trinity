@@ -72,7 +72,6 @@ systemctl stop xcatd
 systemctl stop docker-registry
 systemctl stop nfs-server
 
-touch /var/lib/docker-registry
 
 drbdlinks -c /drbd/xcat.conf initialize_shared_storage
 drbdlinks -c /drbd/xcat.conf start

@@ -222,9 +222,7 @@ fi
 # copy required files from the master node to the controller node
 #--------------------------------------------------------------------------------------
 cp -LrT /tmp/trinity/controller/rootimg /
-#----------------------------------------------------------------------------------
-# HTH: END BOTH
-#----------------------------------------------------------------------------------
+
 if [ $N = 1 ]; then
    # I am the active node, so will take the floating IP addr here
    if [ ! -z $filename ]; then 
@@ -233,3 +231,5 @@ if [ $N = 1 ]; then
        ip addr add 10.148.255.254/16 dev $dev
    fi
 fi 
+
+mkdir -p /var/lib/docker-registry
