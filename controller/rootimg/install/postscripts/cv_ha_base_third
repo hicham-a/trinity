@@ -42,5 +42,4 @@ export OS_REGION_NAME=regionOne
 export PS1='[\u@\h \W(keystone_admin)]\$ '
 EOF
 
-
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log
