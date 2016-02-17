@@ -1,0 +1,23 @@
+# Setup high availability for the docker containers
+pcs resource create docker systemd:docker op monitor interval="37s"
+pcs resource clone docker clone-node-max=1 notify=false
+
+pcs resource create mariadb systemd:mariadb op monitor interval="37s"
+pcs resource create rabbitmq systemd:rabbitmq op monitor interval="37s"
+pcs resource create keystone systemd:keystone op monitor interval="37s"
+pcs resource create glance systemd:glance op monitor interval="37s"
+pcs resource create nova-controller systemd:nova-controller op monitor interval="37s"
+
+pcs resource group add grp_OpenStack mariadb rabbitmq keystone glance nova-controller
+pcs constraint colocation add ip grp_OpenStack
+
+#--------------------------------------------------------------------------
+# Create keystone endpoints for glance etc
+#--------------------------------------------------------------------------
+/trinity/keystone/keystone-setup.sh
+/trinity/keystone/glance-setup.sh
+/trinity/keystone/nova-setup.sh
+
+
+
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log
