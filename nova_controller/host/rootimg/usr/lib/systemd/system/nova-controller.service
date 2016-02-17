@@ -6,8 +6,8 @@ After=keystone.service glance.service
 [Service]
 Restart=always
 ExecStartPre=-/usr/bin/docker create --net=host --privileged=true --name=nova-controller controller:5050/nova_controller
-ExecStart=/usr/bin/docker start -a nova_controller
-ExecStop=/usr/bin/docker stop -t 2 nova_controller
+ExecStart=/usr/bin/docker start -a nova-controller
+ExecStop=/usr/bin/docker stop -t 2 nova-controller
 
 [Install]
 WantedBy=multi-user.target
