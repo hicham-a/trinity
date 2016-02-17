@@ -14,10 +14,17 @@ pcs constraint colocation add ip grp_OpenStack
 #--------------------------------------------------------------------------
 # Create keystone endpoints for glance etc
 #--------------------------------------------------------------------------
-/trinity/keystone/keystone-setup.sh
-/trinity/keystone/glance-setup.sh
-/trinity/keystone/nova-setup.sh
-
-
+keystone_endpoint="http://controller.cluster:35357/v2.0"
+for i in {1..10}; do
+    if curl -s ${keystone_endpoint}; then 
+        /tmp/trinity/keystone/keystone-setup.sh
+        /tmp/trinity/keystone/glance-setup.sh
+        /tmp/trinity/keystone/nova-setup.sh
+        echo "Applied keystone initialization scripts"
+        break
+    fi
+    echo "Waiting for keystone to come up!"
+    sleep 5
+done
 
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log
