@@ -33,7 +33,7 @@ for profile in "${profiles[@]}"; do
       docker tag ${SITEMASTER}:5050/${profile} ${REGISTRY}/${profile}
   fi
       
-  cp -LrT ${TOPDIR}/${profile}/host/rootimg /
+  cp -LrT /tmp/${TOPDIR}/${profile}/host/rootimg /
   service=${profile//_/-}
 done
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log
