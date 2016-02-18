@@ -28,6 +28,8 @@ if [ ! -z $filename ]; then
     ip route add 172.16.0.0/12 dev $dev
     ip addr del 10.149.255.254/16 dev ib0
     ip addr add 10.149.255.$octet/16 dev ib0
+    ifdown ib0
+    ifup ib0
     echo "Checking IP addresses"
     ip addr show dev $dev
 else
