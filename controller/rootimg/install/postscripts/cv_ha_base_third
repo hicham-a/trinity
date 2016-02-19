@@ -10,7 +10,6 @@ pcs resource create nova-controller systemd:nova-controller op monitor interval=
 
 pcs resource group add grp_OpenStack mariadb rabbitmq keystone glance nova-controller
 pcs constraint colocation add ip grp_OpenStack
-pcs constraint order start grp_OpenStack then start sentinel
 pcs constraint order start fs_drbd then start mariadb
 pcs constraint order start mariadb then start xCAT
 pcs constraint order start mariadb then start keystone
@@ -21,7 +20,7 @@ pcs constraint order start keystone then start nova-controller
 # Create keystone endpoints for glance etc
 #--------------------------------------------------------------------------
 keystone_endpoint="http://controller.cluster:35357/v2.0"
-for i in {1..10}; do
+for i in {1..60}; do
     if curl -s ${keystone_endpoint}; then 
         /tmp/trinity/keystone/keystone-setup.sh
         /tmp/trinity/keystone/glance-setup.sh
@@ -30,8 +29,9 @@ for i in {1..10}; do
         break
     fi
     echo "Waiting for keystone to come up!"
-    sleep 5
+    sleep 30
 done
+[[ ${i} == 60 ]] && "Probably a timeout waiting for keystone to come up"
 
 echo > /root/keystonerc_admin << EOF
 export OS_USERNAME=admin
