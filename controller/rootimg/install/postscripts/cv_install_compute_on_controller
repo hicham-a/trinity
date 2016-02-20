@@ -94,7 +94,6 @@ systemctl start openstack-nova-network.service
 systemctl enable openstack-nova-metadata-api.service
 systemctl start openstack-nova-metadata-api.service
 
-systemctl enable trinity-route
-systemctl start trinity-route
+systemctl daemon-reload
 
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log

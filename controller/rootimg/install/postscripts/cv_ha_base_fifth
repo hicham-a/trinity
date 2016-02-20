@@ -13,4 +13,4 @@ pcs constraint colocation add ip with sentinel
 pcs constraint order start grp_xCAT then start sentinel
 pcs constraint order start grp_OpenStack then start sentinel
 pcs constraint order start trinity-api then start sentinel
-pcs constraint order start grp_NovaCompute then start sentinel
+pcs constraint order start grp_NovaCompute-clone then start sentinel

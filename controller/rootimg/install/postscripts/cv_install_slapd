@@ -3,10 +3,6 @@
 #----------------------------------------------------------------------------
 # Install OpenLDAP on the controller node
 #----------------------------------------------------------------------------
-yum -y -q install openldap openldap-clients openldap-servers
-yum -y -q install python-ldap python-retrying
-yum -y -q install nss-pam-ldapd authconfig
-
 cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
 
 rm -rf /etc/openldap/slapd.d
@@ -53,9 +49,9 @@ cat >> /etc/nslcd.conf << EOF
 uri ldap://localhost
 ssl no
 tls_cacertdir /etc/openldap/cacerts
-base   group  ou=Group,dc=cluster
-base   passwd ou=People,dc=cluster
-base   shadow ou=People,dc=cluster
+base group  ou=Group,dc=cluster
+base passwd ou=People,dc=cluster
+base shadow ou=People,dc=cluster
 EOF
 
 # configure the ldap server. Not sure this is needed.

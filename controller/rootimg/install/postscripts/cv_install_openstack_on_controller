@@ -118,6 +118,8 @@ nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
 systemctl enable trinity-route
 systemctl start trinity-route
 
+systemctl daemon-reload
+
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log
 
 
