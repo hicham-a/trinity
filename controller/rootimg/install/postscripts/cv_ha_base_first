@@ -15,6 +15,7 @@ octet=$((254-$N))
 filename=$(grep -l IPADDR=10.141.255.254 /etc/sysconfig/network-scripts/ifcfg-*)
 set -x
 if [ ! -z $filename ]; then 
+    echo "SWitching IP addresses"
     sed -e "s/\(IPADDR.\?\)=\(10\.14[18]\.255\)\.254/\1=\2.$octet/" -i $filename
     sed -e "s/\(IPADDR.\?\)=\(10\.149\.255\)\.254/\1=\2.$octet/" -i /etc/sysconfig/network-scripts/ifcfg-ib0
     echo "Changing ip addresses to allow floating"
@@ -225,13 +226,5 @@ fi
 #--------------------------------------------------------------------------------------
 cp -LrT /tmp/trinity/controller/rootimg /
 
-if [ $N = 1 ]; then
-   # I am the active node, so will take the floating IP addr here
-   if [ ! -z $filename ]; then 
-       dev=$(echo $filename | awk -F- '{print $3}')
-       ip addr add 10.141.255.254/16 dev $dev
-       ip addr add 10.148.255.254/16 dev $dev
-   fi
-fi 
-
+sed -e "s/\(IPADDR.\?\)=\(10\.149\.255\)\.254/\1=\2.${last}/" -i /etc/sysconfig/network-scripts/ifcfg-ib0
 mkdir -p /var/lib/docker-registry
