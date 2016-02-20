@@ -112,8 +112,6 @@ glance image-create \
     --file "${CLOUD_IMAGE}"
 
 useradd -u 1002 -U munge --no-create-home
-nova secgroup-add-rule default tcp 1 65535 0.0.0.0/0
-nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
 
 systemctl enable trinity-route
 systemctl start trinity-route

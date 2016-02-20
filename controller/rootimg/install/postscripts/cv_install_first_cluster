@@ -49,6 +49,9 @@ sed -e "s/FLOATING_IP=127.0.0.1/FLOATING_IP=${FIRST_FLOATING}/g" \
     -e "s/vc-a/${FIRST_CLUSTER}/g" \
     -i "${LOGIN_DATA}"
 
+nova secgroup-add-rule default tcp 1 65535 0.0.0.0/0
+nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
+
 sed -e "s/<TENANT>/${FIRST_TENANT}/g" \
     -e "s/<USER>/${FIRST_USER}/g" \
     -e "s/<PASSWORD>/${FIRST_PASS}/g" \

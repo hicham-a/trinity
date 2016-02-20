@@ -88,10 +88,8 @@ echo "-----------------------------------"
 
 # Start virtualization and nova-compute
 systemctl restart libvirtd.service openstack-nova-compute.service
-systemctl enable  libvirtd.service openstack-nova-compute.service
-systemctl enable openstack-nova-network.service
+systemctl enable  libvirtd.service 
 systemctl start openstack-nova-network.service
-systemctl enable openstack-nova-metadata-api.service
 systemctl start openstack-nova-metadata-api.service
 
 systemctl daemon-reload
