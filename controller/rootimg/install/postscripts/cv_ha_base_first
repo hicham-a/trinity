@@ -17,7 +17,6 @@ set -x
 if [ ! -z $filename ]; then 
     echo "SWitching IP addresses"
     sed -e "s/\(IPADDR.\?\)=\(10\.14[18]\.255\)\.254/\1=\2.$octet/" -i $filename
-    sed -e "s/\(IPADDR.\?\)=\(10\.149\.255\)\.254/\1=\2.$octet/" -i /etc/sysconfig/network-scripts/ifcfg-ib0
     echo "Changing ip addresses to allow floating"
     echo controller-$N.cluster > /etc/hostname
     hostname controller-$N.cluster 
@@ -27,10 +26,6 @@ if [ ! -z $filename ]; then
     ip addr add 10.141.255.$octet/16 dev $dev
     ip addr add 10.148.255.$octet/16 dev $dev
     ip route add 172.16.0.0/12 dev $dev
-    ip addr del 10.149.255.254/16 dev ib0
-    ip addr add 10.149.255.$octet/16 dev ib0
-    ifdown ib0
-    ifup ib0
     echo "Checking IP addresses"
     ip addr show dev $dev
 else
@@ -227,4 +222,5 @@ fi
 cp -LrT /tmp/trinity/controller/rootimg /
 
 sed -e "s/\(IPADDR.\?\)=\(10\.149\.255\)\.254/\1=\2.${last}/" -i /etc/sysconfig/network-scripts/ifcfg-ib0
+ifup ib0
 mkdir -p /var/lib/docker-registry
