@@ -1,3 +1,16 @@
+#! /usr/bin/bash
+##description    : Setup the first round of High Availability.
+##                 This will setup:
+##                 1. networking
+##                 2. Pacemaker
+##                 3. Drbd replication
+##                 4. IB configuration
+##                 5. Initial file layout for the controller(s)
+##                 6. IPTables NAT
+##author         : Hans Then 
+##email          : hans.then@clustervision
+
+
 #-----------------------------------------------------------------------------------------------
 # Determine if this will be the active or passive node. An odd node will become 
 # the active node. Any even node will become the passive node. 

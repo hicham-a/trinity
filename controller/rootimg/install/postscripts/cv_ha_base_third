@@ -1,3 +1,11 @@
+#! /usr/bin/bash
+##description    : The third round of High Availability.
+##                 This will setup:
+##                 1. Pacemaker configuration for the OpenStack Controller services
+##                 This needs to be called after cv_install_dockerize.
+##author         : Hans Then
+##email          : hans.then@clustervision
+
 # Setup high availability for the docker containers
 pcs resource create docker systemd:docker op monitor interval="37s"
 pcs resource clone docker clone-node-max=1 notify=false
@@ -32,14 +40,5 @@ for i in {1..60}; do
     sleep 30
 done
 [[ ${i} == 60 ]] && "Probably a timeout waiting for keystone to come up"
-
-echo > /root/keystonerc_admin << EOF
-export OS_USERNAME=admin
-export OS_TENANT_NAME=admin
-export OS_PASSWORD=system
-export OS_AUTH_URL=http://controller.cluster:5000/v2.0/
-export OS_REGION_NAME=regionOne
-export PS1='[\u@\h \W(keystone_admin)]\$ '
-EOF
 
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log
