@@ -15,7 +15,6 @@ pcs constraint colocation add ip with trinity-api
 pcs constraint order start xCAT then start trinity_api
 pcs constraint order start httpd then start trinity_api
 
-
 pcs resource create sentinel ocf:pacemaker:Dummy
 pcs constraint colocation add ip with sentinel
 pcs constraint order start grp_xCAT then start sentinel
