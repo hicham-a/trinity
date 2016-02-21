@@ -133,6 +133,7 @@ createrepo /install/post/otherpkgs/centos7/x86_64/
 #----------------------------------------------------------------------------------------
 # Build the Trinity container
 #----------------------------------------------------------------------------------------
+systemctl start docker
 if [ -z ${SITEMASTER} ]; then
     docker build -t controller:5050/trinity /trinity/container
 else

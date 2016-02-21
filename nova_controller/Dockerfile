@@ -17,4 +17,4 @@ EXPOSE 8773 8774 8775 3333 6080 5800 5900
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
 COPY rootimg /
-RUN sed s/\"compute_extension:extended_server_attributes\": \"\(.*\)\",/\"compute_extension:extended_server_attributes\": \"rule:admin_or_owner\"/ /etc/nova/policy.json
+RUN sed -i -e "s#\"compute_extension:extended_server_attributes\": \"\(.*\)\",#\"compute_extension:extended_server_attributes\": \"rule:admin_or_owner\",#" /etc/nova/policy.json
