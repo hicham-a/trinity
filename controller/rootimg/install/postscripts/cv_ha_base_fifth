@@ -23,6 +23,12 @@ pcs constraint order start grp_OpenStack then start sentinel
 pcs constraint order start trinity-api then start sentinel
 pcs constraint order start grp_NovaCompute-clone then start sentinel
 
+pcs constraint order stop grp_OpenStack then stop fs_drbd
+pcs constraint order stop grp_xCAT then stop fs_drbd
+pcs constraint order stop fs_drbd then demote drbd
+pcs constraint order stop fs_drbd then demote ms_drbd
+
+
 source /root/keystonerc_admin
 for server in $(nova host-list --zone nova | grep compute | awk -F\| '{print $2}' | cut -b2-); do
     nova aggregate-create $server $server
