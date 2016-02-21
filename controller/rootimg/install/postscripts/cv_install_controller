@@ -93,7 +93,6 @@ systemctl start opensm
 #--------------------------------------------------------------------------------------
 # now setup NFS exports
 #--------------------------------------------------------------------------------------
-systemctl enable nfs-server
 systemctl start nfs-server
 exportfs -a
 
