@@ -12,8 +12,8 @@ pcs resource clone grp_NovaCompute clone-max=3 clone-node-max=1 notify=false
 
 pcs resource create trinity-api lsb:trinity_api op monitor interval="37s"
 pcs constraint colocation add ip with trinity-api
-pcs constraint order start xCAT then start trinity_api
-pcs constraint order start httpd then start trinity_api
+pcs constraint order start xCAT then start trinity-api
+pcs constraint order start httpd then start trinity-api
 
 pcs resource create sentinel ocf:pacemaker:Dummy
 pcs constraint colocation add ip with sentinel
