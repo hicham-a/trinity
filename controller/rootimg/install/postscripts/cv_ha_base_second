@@ -102,6 +102,7 @@ pcs resource create nfs nfsserver nfs_no_notify=true op start timeout=240s
 pcs resource create docker-registry systemd:docker-registry op monitor interval="37s"
 pcs resource create slapd systemd:slapd op monitor interval="37s"
 pcs resource create xCAT lsb:xcatd op monitor interval="42s"
+pcs resource create conserver lsb:conserver op monitor interval="42s"
 
 pcs resource clone named clone-max=2 clone-node-max=1 notify=false
 

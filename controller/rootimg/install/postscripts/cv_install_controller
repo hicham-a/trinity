@@ -78,6 +78,7 @@ systemctl restart xcatd
 makedhcp -n
 makehosts -n
 makedns -n
+makeconservercf
 
 cp -LrT /tmp/trinity/clustervision /trinity/clustervision &
 cp /tmp/trinity/version /trinity/version
