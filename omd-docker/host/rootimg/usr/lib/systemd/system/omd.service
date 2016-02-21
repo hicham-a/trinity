@@ -1,0 +1,13 @@
+[Unit]
+Description=Dockerized Omd
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+ExecStartPre=-/usr/bin/docker create --net=host --privileged=true --name=omd controller:5050/omd
+ExecStart=/usr/bin/docker start -a omd
+ExecStop=/usr/bin/docker stop -t 2 omd
+
+[Install]
+WantedBy=multi-user.target

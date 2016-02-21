@@ -34,6 +34,9 @@ else
    cp -rT /var /tmp/var
    umount /tmp/var
 fi
+# Fix for #608
+mkdir -p /.var/lib
+mv /var/lib/rpm /.var/lib/
 echo "/dev/storage/$PROFILE	/var/ 	ext4	defaults,errors=remount-ro  0  2" >> /etc/fstab 
 mount -a
 # Fix for 411 : symlink to stateless var

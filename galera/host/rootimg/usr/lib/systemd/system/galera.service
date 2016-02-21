@@ -1,0 +1,16 @@
+[Unit]
+Description=Dockerized galera service
+Requires=docker.service
+After=docker.service
+Before=xcatd.service
+
+[Service]
+Alias=mariadb
+Restart=always
+ExecStartPre=-/usr/bin/docker create --net=host --privileged=true --name=galera controller:5050/galera
+ExecStart=/usr/bin/docker start -a galera
+ExecStop=/usr/bin/docker stop -t 300 galera
+TimeoutSec=600
+
+[Install]
+WantedBy=multi-user.target

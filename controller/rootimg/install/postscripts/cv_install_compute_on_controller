@@ -8,16 +8,6 @@
 #------------------------------------------------------------------------------
 # Install and configure openstack-nova-compute and openstack-nova-network 
 #------------------------------------------------------------------------------
-
-# Moved packages to the otherpkgs inside xCAT
-# generic required packages
-# yum -y install openstack-selinux openstack-utils
-# required for nova compute
-# yum -y install openstack-nova-compute openstack-nova-network openstack-nova-api
-# yum -y install sysfsutils
-# Needed for nova-compute (no-mac-spoofing error)
-# yum -y install libvirt-daemon-config-nwfilter libvirt-daemon-driver-nwfilter
-
 # Get config info
 source /trinity/nova/config.sh
 
@@ -79,8 +69,8 @@ echo "-----------------------------------"
 echo "----Configuring openstack-nova-network: editing /etc/nova/nova.conf----"
 # Parameters and constants
 read ETH0 ETH1 ETH2 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
-PUB_NIC=br100
-PRI_NIC=${ETH1} 
+PUB_NIC=${ETH1}
+PRI_NIC=${ETH2} 
 
 openstack-config --set /etc/nova/nova.conf DEFAULT network_api_class  nova.network.api.API
 openstack-config --set /etc/nova/nova.conf DEFAULT security_group_api  nova
@@ -100,10 +90,10 @@ echo "-----------------------------------"
 
 # Start virtualization and nova-compute
 systemctl restart libvirtd.service openstack-nova-compute.service
-systemctl enable  libvirtd.service openstack-nova-compute.service
-systemctl enable openstack-nova-network.service
+systemctl enable  libvirtd.service 
 systemctl start openstack-nova-network.service
-systemctl enable openstack-nova-metadata-api.service
 systemctl start openstack-nova-metadata-api.service
+
+systemctl daemon-reload
 
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log
