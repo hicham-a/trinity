@@ -17,7 +17,7 @@ pcs resource create glance systemd:glance op monitor interval="37s"
 pcs resource create nova-controller systemd:nova-controller op monitor interval="37s"
 
 pcs resource group add grp_OpenStack mariadb rabbitmq keystone glance nova-controller
-pcs constraint colocation add ip grp_OpenStack
+pcs constraint colocation add grp_OpenStack ip
 pcs constraint order start fs_drbd then start mariadb
 pcs constraint order start mariadb then start xCAT
 pcs constraint order start mariadb then start keystone

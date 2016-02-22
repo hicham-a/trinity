@@ -154,8 +154,8 @@ if [[ "$N" = 1 ]]; then
 
    # We specify that all services and groups should be on
    # the same node as where drbd keeps its master copy of the data.
-   pcs constraint colocation add ip ms_drbd INFINITY with-rsc-role=Master
-   pcs constraint colocation add ip fs_drbd
+   pcs constraint colocation add fs_drbd ms_drbd INFINITY with-rsc-role=Master
+   pcs constraint colocation add fs_drbd ip
    pcs constraint order promote ms_drbd then start fs_drbd
 else
    touch /tmp/cv_ha_ready
