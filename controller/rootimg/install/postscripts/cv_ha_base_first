@@ -40,6 +40,8 @@ if [ ! -z $filename ]; then
     ip addr add 10.148.255.$octet/16 dev $dev
     ip route add 172.16.0.0/12 dev $dev
     echo "Checking IP addresses"
+    ip addr add 10.149.255.$octet/16 dev ib0
+    ip link set ib0 up
     ip addr show dev $dev
 else
     echo IP address 254 appears to be floating already. Did you run this script earlier?
