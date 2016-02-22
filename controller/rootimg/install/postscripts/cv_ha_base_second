@@ -13,6 +13,7 @@ rm /etc/httpd/run ; ln -s /var/run/httpd /etc/httpd/run
 pcs resource move ip $(hostname)
 pcs resource move ms_drbd $(hostname)
 pcs resource move fs_drbd $(hostname)
+mkdir /nfshome
 
 cat <<EOF > /drbd/xcat.conf
 
