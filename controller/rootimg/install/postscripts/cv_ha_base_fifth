@@ -36,4 +36,9 @@ done
 nova aggregate-list
 nova availability-zone-list
 
+pcs resource clear ip
+pcs resource clear drbd
+pcs resource clear ms_drbd
+pcs resource clear fs_drbd
+
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log

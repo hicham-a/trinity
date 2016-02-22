@@ -159,6 +159,12 @@ if [[ "$N" = 1 ]]; then
    pcs constraint colocation add fs_drbd ms_drbd INFINITY with-rsc-role=Master
    pcs constraint colocation add fs_drbd ip
    pcs constraint order promote ms_drbd then start fs_drbd
+
+pcs resource move ip $(hostname)
+pcs resource move ms_drbd $(hostname)
+pcs resource move fs_drbd $(hostname)
+mkdir /nfshome
+
 else
    touch /tmp/cv_ha_ready
 fi
