@@ -173,7 +173,7 @@ dev=$(ip a | grep 10.148.255.${octet} | awk '{print $5}')
 pcs resource create ipmi-$(hostname) ocf:heartbeat:IPaddr2 ip="10.141.255.${octet}" iflabel="ipmi" cidr_netmask="16" nic="$dev" op monitor interval="37s"
 pcs constraint location ipmi-$(hostname) prefers $(hostname)
 
-pcs stonith create fence-$(hostname) fence_ipmi_lan pcmk_host_list="$(hostname)" ipaddr="192.168.8.${octet}" action="reboot" login="root" passwd="system" delay=15     op monitor interval=60s
+pcs stonith create fence-$(hostname) fence_ipmi_lan pcmk_host_list="$(hostname)" ipaddr="192.168.8.${N}" action="reboot" login="root" passwd="system" delay=15     op monitor interval=60s
 
 systemctl enable pacemaker
 systemctl enable corosync
