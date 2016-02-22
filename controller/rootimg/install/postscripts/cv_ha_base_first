@@ -218,17 +218,17 @@ sestatus
 #-----------------------------------------------------------------------------------------
 # Patch xCAT. Needs to be done on both nodes.
 #-----------------------------------------------------------------------------------------
+if [ ! -z $SITEMASTER ]; then
+    mkdir /tmp/trinity
+    mount ${SITEMASTER}:/trinity /tmp/trinity       
+fi
+
 cd /opt/xcat/share/xcat/netboot/centos
 ln -s ../rh/dracut_033 .
 ln -s ../rh/dracut .
 cd /
 cat /tmp/trinity/controller/xcat/patches/*.patch | patch -p0
 systemctl restart xcatd
-
-if [ ! -z $SITEMASTER ]; then
-    mkdir /tmp/trinity
-    mount ${SITEMASTER}:/trinity /tmp/trinity       
-fi
 #--------------------------------------------------------------------------------------
 # copy required files from the master node to the controller node
 #--------------------------------------------------------------------------------------

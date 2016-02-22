@@ -40,7 +40,7 @@ chmod +t /tmp
 cat <<EOF >> /etc/fstab
 controller:/cluster/vc-a /cluster nfs rsize=8192,wsize=8192,timeo=14,intr
 controller:/trinity /trinity nfs rsize=8192,wsize=8192,timeo=14,intr
-controller:/home/vc-a /home nfs rsize=8192,wsize=8192,timeo=14,intr
+controller:/nfshome/vc-a /home nfs rsize=8192,wsize=8192,timeo=14,intr
 EOF
 
 umount ${controller}:/trinity

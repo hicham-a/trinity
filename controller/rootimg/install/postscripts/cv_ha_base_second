@@ -10,6 +10,10 @@ rm /etc/httpd/logs ; ln -s /var/log/httpd /etc/httpd/logs
 rm /etc/httpd/modules ; ln -s /usr/lib64/httpd/modules /etc/httpd/modules
 rm /etc/httpd/run ; ln -s /var/run/httpd /etc/httpd/run
 
+pcs resource move ip $(hostname)
+pcs resource move ms_drbd $(hostname)
+pcs resource move fs_drbd $(hostname)
+
 cat <<EOF > /drbd/xcat.conf
 
 restartSyslog(1)
@@ -72,7 +76,7 @@ link('/etc/sysconfig/nfs')
 # === Trinity NFS shares ====
 link('/trinity/')
 link('/cluster/')
-link('/home')
+link('/nfshome')
 #
 EOF
 
