@@ -160,14 +160,18 @@ if [[ "$N" = 1 ]]; then
    pcs constraint colocation add fs_drbd ip
    pcs constraint order promote ms_drbd then start fs_drbd
 
-pcs resource move ip $(hostname)
-pcs resource move ms_drbd $(hostname)
-pcs resource move fs_drbd $(hostname)
-mkdir /nfshome
+   pcs resource move ip $(hostname)
+   pcs resource move ms_drbd $(hostname)
+   pcs resource move fs_drbd $(hostname)
+   mkdir /nfshome
 
 else
    touch /tmp/cv_ha_ready
 fi
+
+dev=$(ip a | grep 10.148.255.${octet} | awk '{print $5}')
+pcs resource create ipmi-$(hostname) ocf:heartbeat:IPaddr2 ip="10.141.255.${octet}" iflabel="ipmi" cidr_netmask="16" nic="$dev" op monitor interval="37s"
+pcs constraint location ipmi-$(hostname) prefers $(hostname)
 
 systemctl enable pacemaker
 systemctl enable corosync
