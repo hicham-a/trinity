@@ -121,6 +121,7 @@ if [[ "$N" = 1 ]]; then
    pcs cluster auth controller-1.cluster controller-2.cluster -u hacluster -p system
    pcs cluster setup --name ha_cluster controller-1.cluster controller-2.cluster --force
    pcs cluster start --all
+   touch /tmp/cv_ha_ready/
 
    #-------------------------------------------------------------------
    # Setup drbd and disks
@@ -166,14 +167,22 @@ if [[ "$N" = 1 ]]; then
 
 else
    touch /tmp/cv_ha_ready
+   for i in {1..100}; do
+       if ssh controller-1.cluster cat /tmp/cv_ha_ready; then break; fi
+       sleep 5
+   done
 fi
 
-last=$(ip route get 192.168.1.254 | head -1 | awk -F' ' '{print $NF}' | awk -F. '{print $NF}')
-dev=$(ip route get 192.168.1.254 | head -1 | awk -F' ' '{print $(NF-2)}')
-pcs resource create ipmi-$(hostname) ocf:heartbeat:IPaddr2 ip="192.168.8.${last}" iflabel="ipmi" cidr_netmask="16" nic="$dev" op monitor interval="37s"
-pcs constraint location ipmi-$(hostname) prefers $(hostname)
+for i in {1..2}; do 
+    dev=$(ip route get 192.168.1.254 | head -1 | awk -F' ' '{print $(NF-2)}')
+    pcs resource create ipmi-${i} ocf:heartbeat:IPaddr2 ip="192.168.8.${i}" \
+        iflabel="ipmi" cidr_netmask="16" nic="$dev" op monitor interval="37s"
+    pcs constraint location ipmi-${i} prefers controller-${i}.cluster
+    pcs stonith create fence-${i} fence_ipmilan pcmk_host_list="controller-${i}.cluster" \
+        ipaddr="192.168.8.${i}" action="reboot" login="root" \
+        passwd="system" delay=15 op monitor interval=60s
+done
 
-pcs stonith create fence-$(hostname) fence_ipmilan pcmk_host_list="$(hostname)" ipaddr="192.168.8.${N}" action="reboot" login="root" passwd="system" delay=15     op monitor interval=60s
 
 systemctl enable pacemaker
 systemctl enable corosync
