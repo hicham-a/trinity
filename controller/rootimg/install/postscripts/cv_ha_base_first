@@ -147,7 +147,7 @@ if [[ "$N" = 1 ]]; then
    pcs property set no-quorum-policy=ignore
    pcs resource op defaults timeout="120s"
    pcs resource defaults resource-stickyness=100
-   pcs property set stonith-enabled=false
+   pcs property set stonith-enabled=true
 
    pcs resource create ip ocf:heartbeat:IPaddr2 ip="10.141.255.254" iflabel="xCAT" cidr_netmask="16" nic="$dev" op monitor interval="37s"
    pcs resource create drbd ocf:linbit:drbd drbd_resource=ha_disk
@@ -169,11 +169,12 @@ else
    touch /tmp/cv_ha_ready
 fi
 
-dev=$(ip a | grep 10.148.255.${octet} | awk '{print $5}')
-pcs resource create ipmi-$(hostname) ocf:heartbeat:IPaddr2 ip="10.141.255.${octet}" iflabel="ipmi" cidr_netmask="16" nic="$dev" op monitor interval="37s"
+last=$(ip route get 192.168.1.254 | head -1 | awk -F' ' '{print $NF}' | awk -F. '{print $NF}')
+dev=$(ip route get 192.168.1.254 | head -1 | awk -F' ' '{print $(NF-2)')
+pcs resource create ipmi-$(hostname) ocf:heartbeat:IPaddr2 ip="192.168.8.${last}" iflabel="ipmi" cidr_netmask="16" nic="$dev" op monitor interval="37s"
 pcs constraint location ipmi-$(hostname) prefers $(hostname)
 
-pcs stonith create fence-$(hostname) fence_ipmi_lan pcmk_host_list="$(hostname)" ipaddr="192.168.8.${N}" action="reboot" login="root" passwd="system" delay=15     op monitor interval=60s
+pcs stonith create fence-$(hostname) fence_ipmilan pcmk_host_list="$(hostname)" ipaddr="192.168.8.${N}" action="reboot" login="root" passwd="system" delay=15     op monitor interval=60s
 
 systemctl enable pacemaker
 systemctl enable corosync
