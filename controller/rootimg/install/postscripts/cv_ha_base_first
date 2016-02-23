@@ -170,7 +170,7 @@ else
 fi
 
 last=$(ip route get 192.168.1.254 | head -1 | awk -F' ' '{print $NF}' | awk -F. '{print $NF}')
-dev=$(ip route get 192.168.1.254 | head -1 | awk -F' ' '{print $(NF-2)')
+dev=$(ip route get 192.168.1.254 | head -1 | awk -F' ' '{print $(NF-2)}')
 pcs resource create ipmi-$(hostname) ocf:heartbeat:IPaddr2 ip="192.168.8.${last}" iflabel="ipmi" cidr_netmask="16" nic="$dev" op monitor interval="37s"
 pcs constraint location ipmi-$(hostname) prefers $(hostname)
 
