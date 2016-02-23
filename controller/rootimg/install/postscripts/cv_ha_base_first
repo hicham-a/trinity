@@ -38,7 +38,6 @@ if [ ! -z $filename ]; then
     ip addr del 10.148.255.254/16 dev $dev
     ip addr add 10.141.255.$octet/16 dev $dev
     ip addr add 10.148.255.$octet/16 dev $dev
-    ip route add 172.16.0.0/12 dev $dev
     echo "Checking IP addresses"
     ip addr add 10.149.255.$octet/16 dev ib0
     ip link set ib0 up
@@ -202,9 +201,11 @@ iptables -D FORWARD -j REJECT --reject-with icmp-host-prohibited
 iptables -D INPUT -j REJECT --reject-with icmp-host-prohibited
 service iptables save
 
-# FIXME:
+#--------------------------------------------------------------------------------------
+# setup routing for the virtual clusters
+#--------------------------------------------------------------------------------------
 ip route add 172.16.0.0/12 dev $ETH2
-mv /etc/sysconfig/network-scripts/route-eno2 /etc/sysconfig/network-scripts/route-${ETH2} 2> /dev/null
+echo "172.16.0.0/12 dev $ETH2" > /etc/sysconfig/network-scripts/route-${ETH2} 
 
 #--------------------------------------------------------------------------------------
 # Additional network processing
