@@ -37,8 +37,8 @@ for i in {1..60}; do
         break
     fi
     echo "Waiting for keystone to come up!"
-    sleep 30
+    sleep 60
 done
-[[ ${i} == 60 ]] && echo "Probably a timeout waiting for keystone to come up"
+[[ ${i} == 60 ]] && echo "Timeout waiting for keystone to come up"
 
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log

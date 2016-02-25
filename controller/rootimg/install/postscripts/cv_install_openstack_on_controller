@@ -112,10 +112,6 @@ glance image-create \
     --file "${CLOUD_IMAGE}"
 
 useradd -u 1002 -U munge --no-create-home
-
-systemctl enable trinity-route
-systemctl start trinity-route
-
 systemctl daemon-reload
 
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log

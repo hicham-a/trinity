@@ -38,7 +38,6 @@ if [ ! -z $filename ]; then
     ip addr del 10.148.255.254/16 dev $dev
     ip addr add 10.141.255.$octet/16 dev $dev
     ip addr add 10.148.255.$octet/16 dev $dev
-    ip route add 172.16.0.0/12 dev $dev
     echo "Checking IP addresses"
     ip addr add 10.149.255.$octet/16 dev ib0
     ip link set ib0 up
@@ -122,6 +121,7 @@ if [[ "$N" = 1 ]]; then
    pcs cluster auth controller-1.cluster controller-2.cluster -u hacluster -p system
    pcs cluster setup --name ha_cluster controller-1.cluster controller-2.cluster --force
    pcs cluster start --all
+   touch /tmp/cv_ha_ready/
 
    #-------------------------------------------------------------------
    # Setup drbd and disks
@@ -147,7 +147,7 @@ if [[ "$N" = 1 ]]; then
    pcs property set no-quorum-policy=ignore
    pcs resource op defaults timeout="120s"
    pcs resource defaults resource-stickyness=100
-   pcs property set stonith-enabled=false
+   pcs property set stonith-enabled=true
 
    pcs resource create ip ocf:heartbeat:IPaddr2 ip="10.141.255.254" iflabel="xCAT" cidr_netmask="16" nic="$dev" op monitor interval="37s"
    pcs resource create drbd ocf:linbit:drbd drbd_resource=ha_disk
@@ -160,14 +160,29 @@ if [[ "$N" = 1 ]]; then
    pcs constraint colocation add fs_drbd ip
    pcs constraint order promote ms_drbd then start fs_drbd
 
-pcs resource move ip $(hostname)
-pcs resource move ms_drbd $(hostname)
-pcs resource move fs_drbd $(hostname)
-mkdir /nfshome
+   pcs resource move ip $(hostname)
+   pcs resource move ms_drbd $(hostname)
+   pcs resource move fs_drbd $(hostname)
+   mkdir /nfshome
 
 else
    touch /tmp/cv_ha_ready
+   for i in {1..100}; do
+       if ssh controller-1.cluster cat /tmp/cv_ha_ready; then break; fi
+       sleep 5
+   done
 fi
+
+for i in {1..2}; do 
+    dev=$(ip route get 192.168.1.254 | head -1 | awk -F' ' '{print $(NF-2)}')
+    pcs resource create ipmi-${i} ocf:heartbeat:IPaddr2 ip="192.168.8.${i}" \
+        iflabel="ipmi" cidr_netmask="16" nic="$dev" op monitor interval="37s"
+    pcs constraint location ipmi-${i} prefers controller-${i}.cluster
+    pcs stonith create fence-${i} fence_ipmilan pcmk_host_list="controller-${i}.cluster" \
+        ipaddr="192.168.8.${i}" action="reboot" login="root" \
+        passwd="system" delay=15 op monitor interval=60s
+done
+
 
 systemctl enable pacemaker
 systemctl enable corosync
@@ -195,9 +210,11 @@ iptables -D FORWARD -j REJECT --reject-with icmp-host-prohibited
 iptables -D INPUT -j REJECT --reject-with icmp-host-prohibited
 service iptables save
 
-# FIXME:
+#--------------------------------------------------------------------------------------
+# setup routing for the virtual clusters
+#--------------------------------------------------------------------------------------
 ip route add 172.16.0.0/12 dev $ETH2
-mv /etc/sysconfig/network-scripts/route-eno2 /etc/sysconfig/network-scripts/route-${ETH2} 2> /dev/null
+echo "172.16.0.0/12 dev $ETH2" > /etc/sysconfig/network-scripts/route-${ETH2} 
 
 #--------------------------------------------------------------------------------------
 # Additional network processing
