@@ -87,22 +87,9 @@ if [[ -f /tmp/trinity/site ]]; then
     cp /tmp/trinity/site /trinity/site
 fi
 
-systemctl start ntpd
-systemctl start opensm
-
-#--------------------------------------------------------------------------------------
-# now setup NFS exports
-#--------------------------------------------------------------------------------------
-systemctl start nfs-server
-exportfs -a
-
 #--------------------------------------------------------------------------------------
 # Setup local repository
 #--------------------------------------------------------------------------------------
-mkdir -p /install/post/otherpkgs/centos7/x86_64
-#yumdownloader --resolve --destdir /install/post/otherpkgs/centos7/x86_64 \
-#    $(grep -v "^#" /install/custom/netboot/centos/trinity.centos7.otherpkgs)
-
 mkdir -p /install/post/otherpkgs/centos7/x86_64
 
 # FIXME: check if we need this
@@ -152,6 +139,11 @@ mkdef -t policy 6 name=trinity rule=allow
 sed  -e "/<Directory \/>/,/<\/Directory>/ s/Require/#Require/" -i /etc/httpd/conf/httpd.conf
 service httpd restart
 
-wait 
 
+#Make xCAT available via the floating IP.
+if grep -v XCATHOST /etc/profile.d/xcat.sh; then
+    echo "export XCATHOST=controller.cluster:3001" >> /etc/profile.d/xcat.sh
+fi
+
+wait 
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log

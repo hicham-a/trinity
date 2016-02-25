@@ -26,6 +26,19 @@ pcs constraint order stop grp_OpenStack then stop fs_drbd
 pcs constraint order stop grp_xCAT then stop fs_drbd
 pcs constraint order stop fs_drbd then demote ms_drbd
 
+#setup fencing
+for in {1..2}; do
+    dev=$(ip route get 192.168.1.254 | head -1 | awk -F' ' '{print $(NF-2)}')
+    pcs resource create ipmi-${i} ocf:heartbeat:IPaddr2 ip="192.168.8.${i}" \
+        iflabel="ipmi" cidr_netmask="16" nic="$dev" op monitor interval="37s"
+    pcs constraint location ipmi-${i} prefers controller-${i}.cluster
+    pcs stonith create fence-${i} fence_ipmilan pcmk_host_list="controller-${i}.cluster" \
+        ipaddr="192.168.8.${i}" action="reboot" login="root" \
+        passwd="system" delay=15 op monitor interval=60s
+done
+pcs property set stonith-enabled=false
+
+
 source /root/keystonerc_admin
 for server in $(nova host-list --zone nova | grep compute | awk -F\| '{print $2}' | cut -b2-); do
     nova aggregate-create $server $server

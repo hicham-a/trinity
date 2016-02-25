@@ -32,7 +32,8 @@ mkdir -p /home/${FIRST_CLUSTER}
 mkdir -p /cluster/${FIRST_CLUSTER}/etc/munge
 [ -e  /cluster/${FIRST_CLUSTER}/etc/munge/munge.key ] && rm /cluster/${FIRST_CLUSTER}/etc/munge/munge.key
 dd if=/dev/urandom bs=1 count=1024 > /cluster/${FIRST_CLUSTER}/etc/munge/munge.key
-chown -R munge:munge /cluster/${FIRST_CLUSTER}/etc/munge
+# FIXME munge userid is hardcoded to 1002 now.
+chown -R 1002:1002 /cluster/${FIRST_CLUSTER}/etc/munge
 chmod u=rwx,go= /cluster/${FIRST_CLUSTER}/etc/munge
 chmod u=r,go=   /cluster/${FIRST_CLUSTER}/etc/munge/munge.key
 

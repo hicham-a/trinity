@@ -147,7 +147,7 @@ if [[ "$N" = 1 ]]; then
    pcs property set no-quorum-policy=ignore
    pcs resource op defaults timeout="120s"
    pcs resource defaults resource-stickyness=100
-   pcs property set stonith-enabled=true
+   pcs property set stonith-enabled=false
 
    pcs resource create ip ocf:heartbeat:IPaddr2 ip="10.141.255.254" iflabel="xCAT" cidr_netmask="16" nic="$dev" op monitor interval="37s"
    pcs resource create drbd ocf:linbit:drbd drbd_resource=ha_disk
@@ -172,17 +172,6 @@ else
        sleep 5
    done
 fi
-
-for i in {1..2}; do 
-    dev=$(ip route get 192.168.1.254 | head -1 | awk -F' ' '{print $(NF-2)}')
-    pcs resource create ipmi-${i} ocf:heartbeat:IPaddr2 ip="192.168.8.${i}" \
-        iflabel="ipmi" cidr_netmask="16" nic="$dev" op monitor interval="37s"
-    pcs constraint location ipmi-${i} prefers controller-${i}.cluster
-    pcs stonith create fence-${i} fence_ipmilan pcmk_host_list="controller-${i}.cluster" \
-        ipaddr="192.168.8.${i}" action="reboot" login="root" \
-        passwd="system" delay=15 op monitor interval=60s
-done
-
 
 systemctl enable pacemaker
 systemctl enable corosync
