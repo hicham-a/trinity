@@ -27,7 +27,7 @@ keystone user-create --name ${FIRST_USER} --tenant ${FIRST_TENANT} --pass ${FIRS
 nova floating-ip-bulk-create --pool ${FIRST_POOL} ${FIRST_FLOATING}
 mkdir -p /cluster/${FIRST_CLUSTER}
 cp -Tr /cluster/${SKEL}/ /cluster/${FIRST_CLUSTER}/
-mkdir -p /home/${FIRST_CLUSTER}
+mkdir -p /nfshome/${FIRST_CLUSTER}
 
 mkdir -p /cluster/${FIRST_CLUSTER}/etc/munge
 [ -e  /cluster/${FIRST_CLUSTER}/etc/munge/munge.key ] && rm /cluster/${FIRST_CLUSTER}/etc/munge/munge.key

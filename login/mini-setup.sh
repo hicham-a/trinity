@@ -33,6 +33,9 @@ cp -LrT /trinity/login/rootimg /
 chmod -R 777 /tmp
 chmod +t /tmp
 
+if grep -v controller /etc/hosts; then
+    echo "10.141.255.254 controller controller.cluster" >> /etc/hosts
+fi
 
 #---------------------------------------------------------------------------
 # Setup NFS mounts

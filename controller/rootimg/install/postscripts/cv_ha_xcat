@@ -1,0 +1,56 @@
+#! /usr/bin/bash
+##description    : The second round of High Availability.
+##                 This will setup:
+##author         : Hans Then
+##email          : hans.then@clustervision
+
+#-------------------------------------------------------------------
+# Now setup the common resources
+#-------------------------------------------------------------------
+systemctl stop xcatd
+systemctl stop docker-registry
+systemctl stop docker
+systemctl stop nfs-server
+
+dev=$(ip a | grep 10.148.255.253 | awk '{print $5}')
+
+pcs cluster cib config
+pcs -f config resource create symlinks_xCAT ocf:tummy:drbdlinks configfile="/drbd/xcat.conf" op monitor interval="31s"
+
+pcs -f config resource create httpd systemd:httpd op monitor interval="37s"
+pcs -f config resource create dhcpd systemd:dhcpd op monitor interval="37s"
+pcs -f config resource create named systemd:named op monitor interval="37s"
+pcs -f config resource create nfs nfsserver nfs_no_notify=true op start timeout=240s
+pcs -f config resource create docker-registry systemd:docker-registry op monitor interval="37s"
+pcs -f config resource create slapd systemd:slapd op monitor interval="37s"
+pcs -f config resource create xCAT lsb:xcatd op monitor interval="42s"
+pcs -f config resource create conserver lsb:conserver op monitor interval="42s"
+
+pcs -f config resource clone named clone-max=2 clone-node-max=1 notify=false
+
+pcs -f config resource group add grp_xCAT httpd dhcpd nfs docker-registry slapd xCAT
+pcs -f config constraint colocation add symlinks_xCAT fs_drbd 
+pcs -f config constraint colocation add grp_xCAT fs_drbd 
+pcs -f config constraint colocation add conserver grp_xCAT 500
+
+pcs -f config constraint order start fs_drbd then start symlinks_xCAT
+pcs -f config constraint order start symlinks_xCAT then start grp_xCAT
+pcs -f config constraint order start symlinks_xCAT then start conserver
+
+pcs cluster cib-push config
+
+echo pcs resource cleanup | at now +5 minutes
+
+systemctl enable pacemaker
+systemctl enable corosync
+systemctl enable opensm
+systemctl start opensm
+systemctl enable ntpd
+systemctl start ntpd
+
+#Make xCAT available via the floating IP.
+if grep -v XCATHOST /etc/profile.d/xcat.sh; then
+    echo "export XCATHOST=controller.cluster:3001" >> /etc/profile.d/xcat.sh
+fi
+
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log
