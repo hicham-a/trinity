@@ -937,6 +937,7 @@ def modify_cluster(cluster,version=1):
       # "controller=10.141.255.254":"controller=controller",
       # "FLOATING_IP=127.0.0.1": "FLOATING_IP="+"172."+second_octet+".255.254",
       "vc-a":vc_cluster
+      "UTC":time.tzname[1]
     }
     for i,j in replacements.iteritems():
       print i,j

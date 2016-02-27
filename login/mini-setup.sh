@@ -21,7 +21,6 @@ while [ ${access} -ne "0" ];
    do ping -c 1 ${controller} ; access=$? ; sleep 1;
 done
 
-
 #--------------------------------------------------------------------------
 # Copy the required files from controller to the login node  
 #--------------------------------------------------------------------------
@@ -59,7 +58,11 @@ if [[ ! -z "$error" ]]; then
    echo "ERROR: failure to mount file systems."
 fi
 
-
+#--------------------------------------------------------------------------
+# Set the timezone
+#--------------------------------------------------------------------------
+timedatectl set-timezone UTC
+echo "export TZ=UTC" > /etc/profile.d/timezone.sh
 
 #--------------------------------------------------------------------------
 # Install LDAP

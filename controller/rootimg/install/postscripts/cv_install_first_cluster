@@ -49,6 +49,7 @@ cp ${LOGIN_SETUP} ${LOGIN_DATA}
 
 sed -e "s/FLOATING_IP=127.0.0.1/FLOATING_IP=${FIRST_FLOATING}/g" \
     -e "s/vc-a/${FIRST_CLUSTER}/g" \
+    -e "s/UTC/$(date +%Z)/g" \
     -i "${LOGIN_DATA}"
 
 sed -e "s/<TENANT>/${FIRST_TENANT}/g" \
