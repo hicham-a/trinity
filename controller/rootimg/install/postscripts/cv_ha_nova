@@ -11,7 +11,7 @@ pcs -f config resource create nova-metadata-api systemd:openstack-nova-metadata-
 pcs -f config resource group add grp_NovaCompute nova-compute nova-network nova-metadata-api
 pcs -f config resource clone grp_NovaCompute clone-max=3 clone-node-max=1 notify=false
 
-pcs -f config resource create trinity-api lsb:trinity_api op monitor interval="37s"
+pcs -f config resource create trinity-api systemd:trinity-api op monitor interval="37s"
 pcs -f config constraint colocation add trinity-api ip
 pcs -f config constraint order start xCAT then start trinity-api
 pcs -f config constraint order start httpd then start trinity-api
