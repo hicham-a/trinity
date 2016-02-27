@@ -1,0 +1,18 @@
+#! /usr/bin/bash
+##description    : Add a sentinel to check if failover is done.
+##                 This needs to be called last
+##author         : Hans Then
+##email          : hans.then@clustervision
+
+pcs cluster cib config
+
+pcs -f config resource create sentinel ocf:pacemaker:Dummy
+pcs -f config constraint colocation add sentinel ip
+pcs -f config constraint order start grp_xCAT then start sentinel
+pcs -f config constraint order start grp_OpenStack then start sentinel
+pcs -f config constraint order start trinity-api then start sentinel
+pcs -f config constraint order start grp_NovaCompute-clone then start sentinel
+
+pcs cluster cib-push config
+
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log
