@@ -6,10 +6,10 @@
 pcs cluster cib config
 # Setup high availability for the docker containers
 pcs -f config resource create omd systemd:omd op monitor interval="37s"
-pcs -f config resource clone docker clone-node-max=1 notify=false
 
 pcs -f config constraint colocation add omd with ip
 pcs -f config constraint order start fs_drbd then start omd
 pcs -f config constraint order start docker then start omd
+
 pcs cluster cib-push config
 
