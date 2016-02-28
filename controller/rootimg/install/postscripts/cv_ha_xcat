@@ -51,7 +51,9 @@ if grep -v XCATHOST /etc/profile.d/xcat.sh; then
     echo "export XCATHOST=controller.cluster:3001" >> /etc/profile.d/xcat.sh
 fi
 # Hacky workaround
+source /etc/profile.d/xcat.sh
 makedns -n
 cat /etc/named.conf
+pcs source cleanup symlinks_xCAT
 
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log

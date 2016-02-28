@@ -239,6 +239,8 @@ set -x
 useradd -u 1002 -U munge --no-create-home
 
 mkdir -p /var/log/trinity
+# FIXME: rather hackish, ensure this directory exists on both nodes.
+mkdir -p /nfshome
 systemctl daemon-reload
 
 #---------------------------------------------------------------------------------------
