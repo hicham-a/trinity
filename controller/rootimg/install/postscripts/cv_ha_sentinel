@@ -13,6 +13,9 @@ pcs -f config constraint order start grp_OpenStack then start sentinel
 pcs -f config constraint order start trinity-api then start sentinel
 pcs -f config constraint order start grp_NovaCompute-clone then start sentinel
 
+# After everything is installed we remove the location constraint.
+pcs -f config constraint remove location-ip-controller-1.cluster-50
+
 pcs cluster cib-push config
 
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log
