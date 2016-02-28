@@ -40,7 +40,7 @@ pcs -f config constraint colocation add master ms_drbd with ip INFINITY
 pcs -f config constraint order promote ms_drbd then start fs_drbd
 
 # Give the first node a slight preference.
-pcs -f config constraint location ip prefers controller-1.cluster=50
+pcs -f config constraint location ip prefers controller-1.cluster=100
 
 pcs cluster cib-push config
 
