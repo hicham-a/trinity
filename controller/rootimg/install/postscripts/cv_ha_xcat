@@ -15,7 +15,9 @@ systemctl stop nfs-server
 dev=$(ip a | grep 10.148.255.253 | awk '{print $5}')
 
 pcs cluster cib config
-pcs -f config resource create symlinks_xCAT ocf:tummy:drbdlinks configfile="/drbd/xcat.conf" op monitor interval="31s"
+pcs -f config resource create symlinks_xCAT ocf:tummy:drbdlinks \
+    configfile="/drbd/xcat.conf" op monitor interval="31s" \
+    op start timeout="2m"
 
 pcs -f config resource create httpd systemd:httpd op monitor interval="37s"
 pcs -f config resource create dhcpd systemd:dhcpd op monitor interval="37s"
