@@ -43,14 +43,13 @@ echo pcs resource cleanup | at now +5 minutes
 
 systemctl enable pacemaker
 systemctl enable corosync
-systemctl enable opensm
-systemctl start opensm
-systemctl enable ntpd
-systemctl start ntpd
 
 #Make xCAT available via the floating IP.
 if grep -v XCATHOST /etc/profile.d/xcat.sh; then
     echo "export XCATHOST=controller.cluster:3001" >> /etc/profile.d/xcat.sh
 fi
+# Hacky workaround
+makedns -n
+cat /etc/named.conf
 
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log

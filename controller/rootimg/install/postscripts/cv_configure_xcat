@@ -76,6 +76,7 @@ mknb x86_64
 makedhcp -n
 makehosts
 makedns -n
+cat /etc/named.conf
 makeconservercf
 
 #-------------------------------------------------------------------------------------
