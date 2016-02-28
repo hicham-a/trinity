@@ -53,7 +53,7 @@ fi
 
 for i in {1..20}; do
     if pcs resource | grep "lsb:xcatd" | grep Started; then
-        breal
+        break
     fi
     echo waiting for xCAT to come up
     sleep 10
@@ -63,6 +63,5 @@ done
 source /etc/profile.d/xcat.sh
 makedns -n
 cat /etc/named.conf
-pcs source cleanup symlinks_xCAT
 
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log
