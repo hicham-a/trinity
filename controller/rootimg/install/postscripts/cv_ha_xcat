@@ -29,8 +29,9 @@ pcs -f config resource create xCAT lsb:xcatd op monitor interval="42s"
 pcs -f config resource create conserver lsb:conserver op monitor interval="42s"
 
 pcs -f config resource clone named clone-max=2 clone-node-max=1 notify=false
+pcs -f config resource clone slapd clone-max=2 clone-node-max=1 notify=false
 
-pcs -f config resource group add grp_xCAT httpd dhcpd nfs docker-registry slapd xCAT
+pcs -f config resource group add grp_xCAT httpd dhcpd nfs docker-registry xCAT
 pcs -f config constraint colocation add symlinks_xCAT fs_drbd 
 pcs -f config constraint colocation add grp_xCAT fs_drbd 
 pcs -f config constraint colocation add conserver grp_xCAT 500
