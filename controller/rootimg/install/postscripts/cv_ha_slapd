@@ -14,7 +14,7 @@ overlay syncprov
 syncprov-checkpoint 100 10
 syncprov-sessionlog 100
 
-syncrepl rid=200
+syncrepl rid=${me}00
          provider=ldap://controller-${other}.cluster:389
          type=refreshAndPersist
          retry="60 +"
@@ -27,14 +27,12 @@ syncrepl rid=200
 
 mirrormode on
 
-##################################################
-# Database for the monitoring #
-##################################################
-database monitor
-
 access to *
        by dn.exact="cn=Manager,dc=local" read
        by * none
 
 EOF
+
+chmod go-r /etc/openldap/cv_syncrepl
+systemctl restart slapd
 
