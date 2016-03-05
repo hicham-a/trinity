@@ -5,14 +5,17 @@ if [ "${1:0:1}" = '-' ]; then
         set -- mysqld "$@"
 fi
 
-for i in "$@"
-do
-case $i in
+bootstrap=()
+for i in "$@"; do
+    case $i in
     --wsrep_cluster_address=*)
-    CLUSTERADDRESS="${i#*=gcomm://}"
-    echo $CLUSTERADDRESS
-    ;;
-esac
+        CLUSTERADDRESS="${i#*=gcomm://}"
+        bootstrap+=(--wsrep_cluster_address=gcomm://)
+        ;;
+    *)
+        bootstrap+=($i)
+        ;;
+    esac
 done
 
 IFS=',' read -ra NODES <<< "$CLUSTERADDRESS"
@@ -39,7 +42,7 @@ if hostname -I | grep ${NODES[0]}; then
     ps -ef
     netstat -anp | grep LIST
     if grep "WSREP: New cluster view" /tmp/mysql.log | grep "non-Primary" ; then
-        exec mysqld --wsrep_cluster_address=gcomm:// --wsrep_cluster_name=trinity --wsrep_node_address=$(hostname -i)
+        exec "$bootstrap"
     else
         exec "$@"
     fi
