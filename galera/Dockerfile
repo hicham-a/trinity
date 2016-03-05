@@ -10,6 +10,7 @@ RUN add-apt-repository 'deb http://releases.galeracluster.com/ubuntu trusty main
 RUN apt-get update
 RUN apt-get install -y galera-3 galera-arbitrator-3 mysql-wsrep-5.6 rsync lsof
 COPY my.cnf /etc/mysql/my.cnf
-ENTRYPOINT ["mysqld"]
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+ENTRYPOINT ["/docker-entrypoint.sh"]
 
 
