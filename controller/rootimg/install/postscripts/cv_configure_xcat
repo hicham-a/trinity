@@ -71,6 +71,7 @@ for table in $(ls /tmp/trinity/controller/xcat/tables); do
 done
 
 restorexCATdb -p /tmp/xcattables  
+chtab key=timezone site.value=$(date +%Z)
 mknb x86_64
 
 makedhcp -n
