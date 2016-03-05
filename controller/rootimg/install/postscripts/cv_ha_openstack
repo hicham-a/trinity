@@ -78,7 +78,6 @@ cp /tmp/trinity/qcows/login.qcow2 ${CLOUD_IMAGE}
 CLOUD_IMAGE_FORMAT="qcow2"
 CLOUD_CONTAINER_FORMAT="bare"
 LOGIN_IMAGE="login"
-LOGIN_DATA="/root/.login_data"
 LOGIN_SETUP="/trinity/login/mini-setup.sh"
 
 glance image-create \
