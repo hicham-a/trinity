@@ -18,8 +18,11 @@ while [ 1 ]; do
         continue;
     fi
 
-    IP=$(host ${NAME}.${VC} | grep "has address" | awk -F' ' '{print $4}')
-    GW=$(echo $IP | awk -F. '{ print $1"."$2".255.254" }')
+    # Better use gethostip
+    #IP=$(host ${NAME}.${VC} | grep "has address" | awk -F' ' '{print $4}')
+    #GW=$(echo $IP | awk -F. '{ print $1"."$2".255.254" }')
+    IP=$(gethostip -d ${NAME}.${VC})
+    GW=$(gethostip -d login.${VC})
  
     # Check a few directories and files
     if [ ! -d /cluster/${VC} ]; then
