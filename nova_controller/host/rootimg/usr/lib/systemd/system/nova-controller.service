@@ -1,7 +1,7 @@
 [Unit]
 Description=Dockerized Nova-controller
-Requires=keystone.service glance.service
-After=keystone.service glance.service
+Requires=keystone.service glance.service galera.service
+After=keystone.service glance.service galera.service
 
 [Service]
 Restart=always

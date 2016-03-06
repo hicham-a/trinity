@@ -1,7 +1,7 @@
 [Unit]
 Description=Dockerized Glance
-Requires=keystone.service
-After=keystone.service
+Requires=keystone.service galera.service
+After=keystone.service galera.service
 
 [Service]
 Restart=always
