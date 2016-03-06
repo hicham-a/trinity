@@ -35,12 +35,7 @@ if hostname -I | grep ${NODES[0]}; then
     done
     ps -ef
     kill -SIGTERM ${pid}
-    #wait ${pid}
-    killall mysqld
-    sleep 30
-    kill -KILL ${pid}
-    ps -ef
-    netstat -anp | grep LIST
+    wait ${pid}
     if grep "WSREP: New cluster view" /tmp/mysql.log | grep "non-Primary" ; then
         exec "$bootstrap"
     else
