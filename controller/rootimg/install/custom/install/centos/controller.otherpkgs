@@ -1,9 +1,7 @@
 xCAT
 # required for mysql setup
 perl-DBD-MySQL
-mysql-server
 mysql
-mysql-devel
 mysql-connector-odbc
 unixODBC
 mod_ssl
