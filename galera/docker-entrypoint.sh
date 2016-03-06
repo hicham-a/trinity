@@ -41,7 +41,7 @@ if hostname -I | grep ${NODES[0]}; then
     ps -ef
 
     if grep "WSREP: New cluster view" /tmp/mysql.log | grep "non-Primary" ; then
-        exec "$bootstrap"
+        exec "${bootstrap[@]}"
     else
         exec "$@"
     fi
