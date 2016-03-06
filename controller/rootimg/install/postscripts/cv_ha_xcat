@@ -52,13 +52,18 @@ if grep -v XCATHOST /etc/profile.d/xcat.sh; then
     echo "export XCATHOST=controller.cluster:3001" >> /etc/profile.d/xcat.sh
 fi
 
-for i in {1..20}; do
-    if pcs resource | grep "lsb:xcatd" | grep Started; then
+for i in {30..0}; do
+    if pcs resource | grep "lsb:xcatd" | grep "Started $(hostname)"; then
         break
     fi
     echo waiting for xCAT to come up
     sleep 10
 done
+
+if [[ $i = 0 ]]; then
+    echo Timeout starting xCAT
+    exit 1
+fi
 
 # Hacky workaround
 source /etc/profile.d/xcat.sh
