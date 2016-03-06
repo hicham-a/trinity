@@ -29,13 +29,17 @@ if hostname -I | grep ${NODES[0]}; then
 
     for i in {30..0}; do
         sleep 3 
-        if grep "WSREP: New cluster view:" /tmp/mysql.log; then
-            break
-        fi
+        grep "WSREP: New cluster view:" /tmp/mysql.log && break
     done
     ps -ef
     kill -SIGTERM ${pid}
-    wait ${pid}
+    for i in {30..0}; do
+       kill -s 0 ${pid} || break
+    done
+    ps -ef
+    [[ $i = 0 ]] || kill -SIGKILL ${pid}
+    ps -ef
+
     if grep "WSREP: New cluster view" /tmp/mysql.log | grep "non-Primary" ; then
         exec "$bootstrap"
     else
