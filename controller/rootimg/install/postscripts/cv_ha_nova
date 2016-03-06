@@ -16,7 +16,7 @@ pcs -f config constraint colocation add trinity-api ip
 pcs -f config constraint order start xCAT then start trinity-api
 pcs -f config constraint order start httpd then start trinity-api
 
-pcs -f config constraint order start mariadb then start grp_NovaCompute-clone
+pcs -f config constraint order start galera then start grp_NovaCompute-clone
 
 pcs -f config constraint order stop grp_OpenStack then stop fs_drbd
 pcs -f config constraint order stop grp_xCAT then stop fs_drbd

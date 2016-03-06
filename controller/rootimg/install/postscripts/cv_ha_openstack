@@ -8,9 +8,11 @@
 ##email          : hans.then@clustervision
 
 #--------------------------------------------------------------------------
-# Setup mariadb password and initial databases
+# Setup galera password and initial databases
 #--------------------------------------------------------------------------
-systemctl start mariadb
+systemctl stop mariadb
+systemctl disable mariadb
+systemctl start galera
 
 mysql=( mysql --protocol=socket -uroot )
 for i in {30..0}; do
@@ -58,18 +60,20 @@ pcs cluster cib config
 pcs -f config resource create docker systemd:docker op monitor interval="37s"
 pcs -f config resource clone docker clone-node-max=1 notify=false
 
-pcs -f config resource create mariadb systemd:mariadb op monitor interval="37s"
+pcs -f config resource create galera systemd:galera op monitor interval="37s"
+pcs -f config resource clone galera clone-node-max=1 notify=false
+
 pcs -f config resource create rabbitmq systemd:rabbitmq op monitor interval="37s"
 pcs -f config resource create keystone systemd:keystone op monitor interval="37s"
 pcs -f config resource create glance systemd:glance op monitor interval="37s"
 pcs -f config resource create nova-controller systemd:nova-controller op monitor interval="37s"
 
-pcs -f config resource group add grp_OpenStack mariadb rabbitmq keystone glance nova-controller
+pcs -f config resource group add grp_OpenStack rabbitmq keystone glance nova-controller
 pcs -f config constraint colocation add grp_OpenStack ip
-pcs -f config constraint order start fs_drbd then start mariadb
-# This is only required when we run xCAT from inside mariadb
-#pcs -f config constraint order start mariadb then start xCAT
-pcs -f config constraint order start mariadb then start keystone
+pcs -f config constraint order start fs_drbd then start galera
+# This is only required when we run xCAT from inside galera
+#pcs -f config constraint order start galera then start xCAT
+pcs -f config constraint order start galera then start keystone
 pcs -f config constraint order start keystone then start glance
 pcs -f config constraint order start keystone then start nova-controller
 
@@ -79,7 +83,7 @@ pcs cluster cib-push config
 # Create keystone endpoints for glance etc
 #--------------------------------------------------------------------------
 keystone_endpoint="http://controller.cluster:35357/v2.0"
-for i in {1..60}; do
+for i in {60..0}; do
     if curl -s ${keystone_endpoint}; then 
         /tmp/trinity/keystone/keystone-setup.sh
         /tmp/trinity/keystone/glance-setup.sh
@@ -90,7 +94,7 @@ for i in {1..60}; do
     echo "Waiting for keystone to come up!"
     sleep 60
 done
-[[ ${i} == 60 ]] && echo "Timeout waiting for keystone to come up"
+[[ ${i} == 0 ]] && echo "Timeout waiting for keystone to come up"
 
 read ETH0 ETH1 ETH2 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
 BRIDGE="br100"
