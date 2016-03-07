@@ -37,7 +37,7 @@ if hostname -I | grep ${NODES[0]}; then
        kill -s 0 ${pid} || break
     done
     ps -ef
-    [[ $i = 0 ]] || kill -SIGKILL ${pid}
+    [[ $i = 0 ]] && kill -SIGKILL ${pid}
     ps -ef
 
     if grep "WSREP: New cluster view" /tmp/mysql.log | grep "non-Primary" ; then
