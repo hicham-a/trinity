@@ -1,7 +1,7 @@
 [Unit]
 Description=Dockerized Keystone
-Requires=mariadb.service rabbitmq.service
-After=mariadb.service rabbitmq.service
+Requires=galera.service rabbitmq.service
+After=galera.service rabbitmq.service
 
 [Service]
 Restart=always

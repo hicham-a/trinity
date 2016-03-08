@@ -2,4 +2,4 @@
 /install *(rw,no_root_squash,async,no_subtree_check)
 /trinity *(rw,async,no_root_squash,no_all_squash)
 /cluster *(rw,async,no_root_squash,no_all_squash)
-/home *(rw,async,no_root_squash,no_all_squash)
+/nfshome *(rw,async,no_root_squash,no_all_squash)

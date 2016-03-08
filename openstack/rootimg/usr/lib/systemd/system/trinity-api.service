@@ -1,0 +1,15 @@
+[Unit]
+Description=Trinity Api
+After=docker.service
+Requires=docker.service
+After=xcatd.service
+Requires=xcatd.service
+After=httpd.service
+Requires=httpd.service
+
+[Service]
+ExecStart=/usr/bin/trinity_api
+
+[Install]
+WantedBy=multi-user.target
+

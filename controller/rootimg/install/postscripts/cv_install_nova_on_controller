@@ -12,9 +12,7 @@
 source /trinity/nova/config.sh
 
 # Parameters and constants
-# FIXME: ip address is not available here
-#NODE_IP=$(hostname -i)
-NODE_IP=10.141.255.253
+NODE_IP=$(hostname -i)
 
 # Set SeLinux to permissive mode
 setenforce 0

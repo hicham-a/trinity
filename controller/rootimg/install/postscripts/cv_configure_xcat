@@ -1,0 +1,135 @@
+#! /usr/bin/bash
+##title          : cv_install_controller
+##description    : Installs an xCAT controller node. Additionally it also configures
+##                 the xCAT web service 
+##author         : Hans Then & Abhishek Mukherjee
+##email          : hans.then@clustervision
+##                 abhishek.mukherjee@clustervision.com
+
+#--------------------------------------------------------------------------------------
+# Install Trinity stuff
+#--------------------------------------------------------------------------------------
+# determine if a master is used to install this node:
+if [ ! -z $SITEMASTER ]; then
+    echo master is present
+    echo "Creating installation tree"
+    source /etc/profile.d/xcat.sh
+    copycds -n centos7 -o $(ls -cr /tmp/trinity/iso/*.iso | head -1) > /dev/null
+else
+    echo No master found, checking for a git repository.
+    SCRIPT=$(readlink -f $0)
+    SCRIPTDIR=$(dirname $SCRIPT)
+    REPODIR=$(readlink -f $SCRIPTDIR/../../../../)
+    echo Found repository in $REPODIR
+    cp -Lrv --preserve $REPODIR /tmp
+
+    # Fix #379
+    cd $REPODIR
+    (git branch | grep "*"; git rev-parse --short HEAD; git status --porcelain) > /tmp/trinity/version
+    cd -
+
+    # setup repositories
+    yum -y -q install $(grep -v ^# $REPODIR/controller/rootimg/install/custom/install/centos/controller.pkglist)
+    yum -y -q install epel-release
+    yum -y -q install http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
+    yum -y -q install https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno-1.noarch.rpm
+    wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/2.9/xcat-core/xCAT-core.repo -O /etc/yum.repos.d/xCAT-core.repo
+    wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo -O /etc/yum.repos.d/xCAT-dep.repo
+    yum -y -q install $(grep -v ^# $REPODIR/controller/rootimg/install/custom/install/centos/controller.otherpkgs)
+    source /etc/profile.d/xcat.sh
+    mkdir -p /tmp/trinity/iso
+    echo Downloading cd, this may take a while
+    wget -c http://mirror.denit.net/centos/7/isos/x86_64/CentOS-7-x86_64-Everything-1511.iso \
+         -P /tmp/trinity/iso/
+
+    echo "Creating installation tree"
+    copycds -n centos7 -o $(ls -cr /tmp/trinity/iso/*.iso | head -1) > /dev/null
+fi
+
+#----------------------------------------------------------------------------------
+# create runimages
+#--------------------------------------------------------------------------------------
+if [[ -d /install/runimages ]]; then
+    for file in $(ls /install/runimages); do
+        if [ -d /install/runimages/${file} ]; then 
+            tar czf /install/runimages/${file}.tgz -C /install/runimages/${file}/ .
+        fi
+    done
+fi
+
+#--------------------------------------------------------------------------------------
+# copy default database configuration
+#--------------------------------------------------------------------------------------
+source /etc/profile.d/xcat.sh
+mkdir -p /tmp/xcattables
+
+# FIXME: make these configurable
+read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
+for table in $(ls /tmp/trinity/controller/xcat/tables); do
+    sed -e "s/\<eno1\>/$ETH1/g" -e "s/\<eno2\>/$ETH2/g"  -e "s/\<eno3\>/$ETH3/g"\
+            /tmp/trinity/controller/xcat/tables/$table > /tmp/xcattables/$table;
+done
+
+restorexCATdb -p /tmp/xcattables  
+chtab key=timezone site.value=$(date +%Z)
+mknb x86_64
+
+makedhcp -n
+makehosts
+makedns -n
+cat /etc/named.conf
+makeconservercf
+
+#-------------------------------------------------------------------------------------
+# Copy the modules environment
+#-------------------------------------------------------------------------------------
+cp -LrT /tmp/trinity/clustervision /trinity/clustervision &
+cp /tmp/trinity/version /trinity/version
+if [[ -f /tmp/trinity/site ]]; then
+    cp /tmp/trinity/site /trinity/site
+fi
+
+#--------------------------------------------------------------------------------------
+# Setup local repository
+#--------------------------------------------------------------------------------------
+mkdir -p /install/post/otherpkgs/centos7/x86_64
+
+# FIXME: check if we need this
+yum -y -q install epel-release
+yum -y -q install https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno-1.noarch.rpm
+yum -y -q install http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
+yum-config-manager --disable xcat-otherpkgs* local-centos* > /dev/null
+yum-config-manager --enable base epel extras updates openstack-juno > /dev/null
+yum-config-manager --add-repo http://sourceforge.net/projects/xcat/files/yum/2.9/xcat-core/xCAT-core.repo > /dev/null
+yum-config-manager --add-repo http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo > /dev/null
+
+echo "Syncing repositories, this may take some time"
+if [ -z $SITEMASTER ]; then
+    reposync -n -r elrepo -r epel -r extras -r updates -r xcat-2-core -r xcat-dep -r openstack-juno 
+        -p /install/post/otherpkgs/centos7/x86_64/ > /dev/null
+else
+    reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7/x86_64/ > /dev/null
+fi
+createrepo /install/post/otherpkgs/centos7/x86_64/
+
+#----------------------------------------------------------------------------------------
+# Generate images
+#----------------------------------------------------------------------------------------
+(genimage centos7-x86_64-netboot-trinity; packimage centos7-x86_64-netboot-trinity) &
+(genimage centos7-x86_64-netboot-nova; packimage centos7-x86_64-netboot-nova) &
+
+#----------------------------------------------------------------------------------------
+# Build the Trinity container
+#----------------------------------------------------------------------------------------
+systemctl start docker
+systemctl start docker-registry
+if [ -z ${SITEMASTER} ]; then
+    docker build -t controller:5050/trinity /trinity/container
+else
+    docker pull ${SITEMASTER}:5050/trinity
+    docker tag ${SITEMASTER}:5050/trinity controller:5050/trinity
+fi
+docker push controller:5050/trinity &
+
+wait 
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log

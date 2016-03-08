@@ -1,123 +1,38 @@
 #!/usr/bin/env bash
-##title          : cv_install_openstack_on_controller
-##description    : Setup the openstack dashboard + trinity_api services baremetal on controller
-##                   Dashboard (Openstack Horizon)
-##                   Trinity API
-##                   Trinity client
-##                   Trinity dashboard additions
-##                 Also the first tenant is created and the first virtual cluster is setup 
+##title          : cv_install_containers
+##description    : Sets up a dockerized infrastructure.
+##                 The following services are dockerized
+##                   MariaDB (Database)
+##                   RabbitMQ (Message Queue)
+##                   Keystone (OpenStack Identity)
+##                   Glance (OpenStack Image)
+##                   Nova controller (OpenStack Compute: controller part)
 ##author         : Abhishek Mukherjee, Hans Then
 ##email          : abhishek.mukherjee@clustervision.com, hans.then@clustervision.com
 
 #------------------------------------------------------------------------------
-# Install and configure Horizon 
+# Setup the dockerized components
 #------------------------------------------------------------------------------
-cp -LrT /trinity/horizon/rootimg/ /
-chown -R apache:apache /usr/share/openstack-dashboard/static
-if ! grep conf.modules.d/ /etc/httpd/conf/httpd.conf; then
-    echo 'Include "/etc/httpd/conf.modules.d/*.conf"' >> /etc/httpd/conf/httpd.conf
-fi
+systemctl start docker
+REGISTRY="controller:5050"
+TOPDIR="/trinity"
+profiles=(
+  "galera"
+  "rabbitmq"
+  "keystone"
+  "glance"
+  "nova_controller"        
+)
+keystone_endpoint="http://controller.cluster:35357/v2.0"
 
-systemctl enable httpd.service memcached.service
-systemctl start memcached.service
-systemctl restart httpd.service
-
-#-----------------------------------------------------------------
-# Install the API server, client and dashboard additions
-#-----------------------------------------------------------------
-cp -LrT /trinity/openstack/rootimg/ /
-# Assumes that /cluster and  /home are already mounted
-
-#-- Trinity API setup
-cd /opt/trinity/trinity_api
-python setup.py install
-cd -
-if [[ ! -z "${SITEMASTER}" ]]; then
-    sed 's#/trinity/login/setup.sh#/trinity/login/mini-setup.sh#' -i /etc/trinity/trinity_api.conf
-fi 
-
-read ETH0 ETH1 ETH2 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
-BRIDGE="br100"
-PRI_NIC=${ETH1} 
-source /etc/profile.d/xcat.sh
-sed -e "s/<TENANT>/admin/g" \
-    -e "s/<USER>/admin/g" \
-    -e "s/<PASSWORD>/system/g" \
-    -e "s/<OPENSTACK>/10.141.255.254/g" \
-    /trinity/openstack/keystonerc > /root/keystonerc_admin
-source /root/keystonerc_admin
-
-# FIXME: HTH R8 HACK this needs to be verified.
-sed -e "s/127.0.0.1/10.141.255.254/g" \
-    -e "s/eno2/${ETH1}/g" \
-    -i /etc/trinity/trinity_api.conf
-
-#-- Create the Flat Network
-NETWORK_LABEL="novanetwork"
-nova network-create \
-       --fixed-range-v4 192.168.32.0/24 \
-       --fixed-cidr 192.168.32.0/24 \
-       --bridge-interface ${PRI_NIC} \
-       --bridge ${BRIDGE} \
-       ${NETWORK_LABEL}
-
-mkdir -p /var/log/trinity
-
-# Start the API
-service trinity_api start
-chkconfig trinity_api on
-
-#-- Install the python client
-cd /opt/trinity/trinity_client
-python setup.py install
-cd -
-sed -e "s/127.0.0.1/10.141.255.254/g" \
-    -i /etc/trinity/trinity_client.conf
-
-#-- Install the dashboard additions
-cd /opt/trinity/trinity_dashboard
-sh setup.sh
-cd -
-
-service httpd restart
-
-#-- Download the base login node image (CentOS cloud image) and upload it to glance
-if [[ -z "$SITEMASTER" ]]; then
-    CLOUD_IMAGE_URL="http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2"
-    CLOUD_IMAGE="/tmp/CentOS-7-x86_64-GenericCloud.qcow2"
-    CLOUD_IMAGE_FORMAT="qcow2"
-    CLOUD_CONTAINER_FORMAT="bare"
-    LOGIN_IMAGE="login"
-    LOGIN_DATA="/root/.login_data"
-    LOGIN_SETUP="/trinity/login/setup.sh"
-    curl -s ${CLOUD_IMAGE_URL} -o ${CLOUD_IMAGE}
-else
-    # We have a sitemaster, copy from master node.
-    mkdir -p /trinity/qcows/
-    CLOUD_IMAGE="/trinity/qcows/login.qcow2"
-    # FIXME: Find a better location. We cannot assume /tmp/trinity is still mounted here.
-    cp /tmp/trinity/qcows/login.qcow2 ${CLOUD_IMAGE}
-    CLOUD_IMAGE_FORMAT="qcow2"
-    CLOUD_CONTAINER_FORMAT="bare"
-    LOGIN_IMAGE="login"
-    LOGIN_DATA="/root/.login_data"
-    LOGIN_SETUP="/trinity/login/mini-setup.sh"
-fi
-
-glance image-create \
-    --name "${LOGIN_IMAGE}" \
-    --disk-format "${CLOUD_IMAGE_FORMAT}" \
-    --container-format "${CLOUD_CONTAINER_FORMAT}" \
-    --is-public True \
-    --file "${CLOUD_IMAGE}"
-
-useradd -u 1002 -U munge --no-create-home
-
-systemctl enable trinity-route
-systemctl start trinity-route
-
-systemctl daemon-reload
-
+for profile in "${profiles[@]}"; do
+  if [ -z ${SITEMASTER} ]; then
+      docker build --rm=true -t ${REGISTRY}/${profile} ${TOPDIR}/${profile}
+  else
+      docker pull ${SITEMASTER}:5050/${profile} 
+      docker tag ${SITEMASTER}:5050/${profile} ${REGISTRY}/${profile}
+  fi
+      
+  cp -LrT /tmp/${TOPDIR}/${profile}/host/rootimg /
+done
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log
-
-

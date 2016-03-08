@@ -21,7 +21,6 @@ while [ ${access} -ne "0" ];
    do ping -c 1 ${controller} ; access=$? ; sleep 1;
 done
 
-
 #--------------------------------------------------------------------------
 # Copy the required files from controller to the login node  
 #--------------------------------------------------------------------------
@@ -33,6 +32,9 @@ cp -LrT /trinity/login/rootimg /
 chmod -R 777 /tmp
 chmod +t /tmp
 
+if grep -v controller /etc/hosts; then
+    echo "10.141.255.254 controller controller.cluster" >> /etc/hosts
+fi
 
 #---------------------------------------------------------------------------
 # Setup NFS mounts
@@ -40,7 +42,7 @@ chmod +t /tmp
 cat <<EOF >> /etc/fstab
 controller:/cluster/vc-a /cluster nfs rsize=8192,wsize=8192,timeo=14,intr
 controller:/trinity /trinity nfs rsize=8192,wsize=8192,timeo=14,intr
-controller:/home/vc-a /home nfs rsize=8192,wsize=8192,timeo=14,intr
+controller:/nfshome/vc-a /home nfs rsize=8192,wsize=8192,timeo=14,intr
 EOF
 
 umount ${controller}:/trinity
@@ -56,7 +58,11 @@ if [[ ! -z "$error" ]]; then
    echo "ERROR: failure to mount file systems."
 fi
 
-
+#--------------------------------------------------------------------------
+# Set the timezone
+#--------------------------------------------------------------------------
+timedatectl set-timezone UTC
+echo "export TZ=UTC" > /etc/profile.d/timezone.sh
 
 #--------------------------------------------------------------------------
 # Install LDAP

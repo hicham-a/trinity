@@ -20,6 +20,7 @@ REGISTRY="localhost:5050"
 TOPDIR="/trinity"
 profiles=(
   "mariadb"
+  "galera"
   "rabbitmq"
   "keystone"
   "glance"

@@ -13,12 +13,13 @@ source /root/keystonerc_admin
 FIRST_TENANT="a"
 FIRST_USER="a"
 FIRST_PASS="system"
-FIRST_CLUSTER="a"
+FIRST_CLUSTER="vc-a"
 FIRST_POOL="login_a"
 FIRST_FLOATING="172.16.255.254"
 LOGIN_SETUP="/trinity/login/mini-setup.sh"
 LOGIN_DATA="/root/.setup-login-a"
 LOGIN_NODE="login-a"
+LOGIN_IMAGE="login"
 SKEL=".skel"
 
 keystone tenant-create --name ${FIRST_TENANT}
@@ -26,12 +27,13 @@ keystone user-create --name ${FIRST_USER} --tenant ${FIRST_TENANT} --pass ${FIRS
 nova floating-ip-bulk-create --pool ${FIRST_POOL} ${FIRST_FLOATING}
 mkdir -p /cluster/${FIRST_CLUSTER}
 cp -Tr /cluster/${SKEL}/ /cluster/${FIRST_CLUSTER}/
-mkdir -p /home/${FIRST_CLUSTER}
+mkdir -p /nfshome/${FIRST_CLUSTER}
 
 mkdir -p /cluster/${FIRST_CLUSTER}/etc/munge
 [ -e  /cluster/${FIRST_CLUSTER}/etc/munge/munge.key ] && rm /cluster/${FIRST_CLUSTER}/etc/munge/munge.key
 dd if=/dev/urandom bs=1 count=1024 > /cluster/${FIRST_CLUSTER}/etc/munge/munge.key
-chown -R munge:munge /cluster/${FIRST_CLUSTER}/etc/munge
+# FIXME munge userid is hardcoded to 1002 now.
+chown -R 1002:1002 /cluster/${FIRST_CLUSTER}/etc/munge
 chmod u=rwx,go= /cluster/${FIRST_CLUSTER}/etc/munge
 chmod u=r,go=   /cluster/${FIRST_CLUSTER}/etc/munge/munge.key
 
@@ -47,6 +49,7 @@ cp ${LOGIN_SETUP} ${LOGIN_DATA}
 
 sed -e "s/FLOATING_IP=127.0.0.1/FLOATING_IP=${FIRST_FLOATING}/g" \
     -e "s/vc-a/${FIRST_CLUSTER}/g" \
+    -e "s/UTC/$(date +%Z)/g" \
     -i "${LOGIN_DATA}"
 
 sed -e "s/<TENANT>/${FIRST_TENANT}/g" \
@@ -54,6 +57,9 @@ sed -e "s/<TENANT>/${FIRST_TENANT}/g" \
     -e "s/<PASSWORD>/${FIRST_PASS}/g" \
     -e "s/<OPENSTACK>/$(hostname -I | awk '{print $1}')/g" \
     /trinity/openstack/keystonerc > /root/keystonerc_${FIRST_TENANT}
+
+# Copy to failover node (not pretty)
+scp /root/keystonerc_${FIRST_TENANT} controller-2.cluster:/root/keystonerc_${FIRST_TENANT}
 source /root/keystonerc_${FIRST_TENANT}
 
 nova secgroup-add-rule default tcp 1 65535 0.0.0.0/0
