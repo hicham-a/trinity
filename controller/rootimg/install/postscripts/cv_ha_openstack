@@ -114,6 +114,7 @@ nova network-create \
        --fixed-cidr 192.168.32.0/24 \
        --bridge-interface ${PRI_NIC} \
        --bridge ${BRIDGE} \
+       --visibility public \
        ${NETWORK_LABEL}
 
 #-- Download the base login node image (CentOS cloud image) and upload it to glance
