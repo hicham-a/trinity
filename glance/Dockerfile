@@ -3,7 +3,7 @@ MAINTAINER abhishek.mukherjee@clustervision.com
 
 RUN yum -y swap -- remove systemd-container* -- install systemd systemd-libs
 RUN yum -y -q install --setopt=tsflags=nodocs epel-release && \ 
-    yum -y -q install --setopt=tsflags=nodocs http://rdo.fedorapeople.org/openstack-juno/rdo-release-juno.rpm && \
+    yum -y -q install --setopt=tsflags=nodocs http://rdo.fedorapeople.org/openstack-liberty/rdo-release-liberty.rpm && \
     yum -y -q install --setopt=tsflags=nodocs openstack-selinux openstack-utils openstack-glance python-glanceclient && \ 
     yum -y -q install --setopt=tsflags-nodocs python-pip && \
     yum -y update && yum clean all

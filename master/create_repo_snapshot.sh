@@ -1,6 +1,6 @@
 #!/bin/bash
 set -x
-OSTACKRELEASE="openstack-juno"
+OSTACKRELEASE="openstack-liberty"
 DATE=$(date +%Y%m%d)
 set +x
 if ! grep -Fq $OSTACKRELEASE /etc/yum.repos.d/rdo-release.repo; then
