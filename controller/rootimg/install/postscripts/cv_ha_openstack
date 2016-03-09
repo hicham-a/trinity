@@ -131,7 +131,6 @@ glance image-create \
     --name "${LOGIN_IMAGE}" \
     --disk-format "${CLOUD_IMAGE_FORMAT}" \
     --container-format "${CLOUD_CONTAINER_FORMAT}" \
-    --is-public True \
     --file "${CLOUD_IMAGE}"
 
 systemctl daemon-reload
