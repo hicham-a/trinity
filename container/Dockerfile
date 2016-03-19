@@ -30,3 +30,4 @@ ADD rpms /rpms
 RUN yum install -y /rpms/*.rpm
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
