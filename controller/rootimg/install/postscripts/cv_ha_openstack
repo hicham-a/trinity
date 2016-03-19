@@ -66,11 +66,14 @@ pcs -f config resource create glance systemd:glance op monitor interval="37s"
 pcs -f config resource create nova-controller systemd:nova-controller op monitor interval="37s"
 
 pcs -f config resource group add grp_OpenStack rabbitmq keystone glance nova-controller
-pcs -f config constraint colocation add grp_OpenStack ip
+pcs -f config resource clone grp_OpenStack clone-node-max=1 notify=false
+
+# This is no longer required, since we run grp_OpenStack active/active.
+# pcs -f config constraint colocation add grp_OpenStack ip
 pcs -f config constraint order start fs_drbd then start galera
 # This is only required when we run xCAT from inside galera
-#pcs -f config constraint order start galera then start xCAT
-pcs -f config constraint order start galera then start keystone
+# pcs -f config constraint order start galera then start xCAT
+pcs -f config constraint order start galera-clone then start keystone
 pcs -f config constraint order start keystone then start glance
 pcs -f config constraint order start keystone then start nova-controller
 
