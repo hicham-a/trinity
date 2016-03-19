@@ -5,4 +5,5 @@
 
 systemctl start docker
 systemctl start trinity
+systemctl start openvswitch
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log
