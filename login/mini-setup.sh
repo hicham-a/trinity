@@ -61,8 +61,9 @@ fi
 #--------------------------------------------------------------------------
 # Set the timezone
 #--------------------------------------------------------------------------
-timedatectl set-timezone UTC
-echo "export TZ=UTC" > /etc/profile.d/timezone.sh
+TIMEZONE=$(lsdef -t site -i timezone | grep timezone | awk -F= '{print $2}')
+timedatectl set-timezone ${TIMEZONE}
+echo "export TZ=${TIMEZONE}" > /etc/profile.d/timezone.sh
 
 #--------------------------------------------------------------------------
 # Install LDAP
