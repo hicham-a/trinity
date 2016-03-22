@@ -105,6 +105,8 @@ sed -e "s/<TENANT>/admin/g" \
     -e "s/<PASSWORD>/system/g" \
     -e "s/<OPENSTACK>/10.141.255.254/g" \
     /trinity/openstack/keystonerc > /root/keystonerc_admin
+chmod go-rw /root/keystonerc_admin
+scp /root/keystonerc_admin controller-2.cluster:/root/keystonerc_admin
 source /root/keystonerc_admin
 
 sed -e "s/eno2/${ETH1}/g" \
