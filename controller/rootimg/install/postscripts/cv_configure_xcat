@@ -123,6 +123,7 @@ createrepo /install/post/otherpkgs/centos7/x86_64/
 #----------------------------------------------------------------------------------------
 systemctl start docker
 systemctl start docker-registry
+systemctl start replicator.timer
 if [ -z ${SITEMASTER} ]; then
     docker build -t controller:5050/trinity /trinity/container
 else
