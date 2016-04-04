@@ -113,6 +113,8 @@ sed -e "s/eno2/${ETH1}/g" \
     -i /etc/trinity/trinity_api.conf
 
 #-- Create the Flat Network
+systemctl start openstack-nova-network
+
 NETWORK_LABEL="novanetwork"
 nova network-create \
        --fixed-range-v4 192.168.32.0/24 \
