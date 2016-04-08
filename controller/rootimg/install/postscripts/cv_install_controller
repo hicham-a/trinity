@@ -35,6 +35,7 @@ dd if=/dev/zero of=/dev/mapper/vg_root-lv_drbd bs=1M count=1024
 if ! grep 10.141.255.253 /etc/hosts; then echo "10.141.255.253 controller-1 controller-1.cluster" >> /etc/hosts; fi
 if ! grep 10.141.255.252 /etc/hosts; then echo "10.141.255.252 controller-2 controller-2.cluster" >> /etc/hosts; fi
 if ! grep 10.141.255.254 /etc/hosts; then echo "10.141.255.254 controller controller.cluster" >> /etc/hosts; fi
+hostnamectl set-hostname controller-${N}.cluster
 
 # If we can use the IB interface for DRBD we will do so.
 if ping -c1 10.149.255.$octet > /dev/null 2>&1; then
@@ -111,7 +112,9 @@ killall dhclient
 systemctl disable firewalld
 systemctl stop firewalld
 
-read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
+#read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
+ETH1=$(ip route get 8.8.8.8 | grep -oP 'dev \K\S+')
+ETH2=$(ip route get 10.141.0.0 | grep -oP 'dev \K\S+')
 # setup NAT, so nodes can access the internet (see manual step 1.f)
 systemctl enable iptables 
 systemctl start iptables
