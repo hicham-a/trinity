@@ -112,6 +112,7 @@ else
     ssh controller-1.cluster pcs cluster auth $(hostname) -u hacluster -p system
     ssh controller-1.cluster pcs cluster node add $(hostname)
     pcs cluster auth
+    scp -r controller-1.cluster/root/.xcat /root
 fi
 pcs cluster start
 
