@@ -47,11 +47,6 @@ echo pcs resource cleanup | at now +5 minutes
 systemctl enable pacemaker
 systemctl enable corosync
 
-#Make xCAT available via the floating IP.
-if grep -v XCATHOST /etc/profile.d/xcat.sh; then
-    echo "export XCATHOST=controller.cluster:3001" >> /etc/profile.d/xcat.sh
-fi
-
 for i in {30..0}; do
     if pcs resource | grep "lsb:xcatd" | grep "Started $(hostname)"; then
         break

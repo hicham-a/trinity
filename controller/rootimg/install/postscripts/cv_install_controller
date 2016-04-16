@@ -255,4 +255,9 @@ mkdef -t policy 6 name=trinity rule=allow
 sed  -e "/<Directory \/>/,/<\/Directory>/ s/Require/#Require/" -i /etc/httpd/conf/httpd.conf
 systemctl restart httpd 
 
+#Make xCAT available via the floating IP.
+if grep -v XCATHOST /etc/profile.d/xcat.sh; then
+    echo "export XCATHOST=controller.cluster:3001" >> /etc/profile.d/xcat.sh
+fi
+
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log
