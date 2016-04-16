@@ -963,7 +963,7 @@ def startup():
   hw='hw-'
   vc='vc-'
   headers={"Content-Type":"application/json", "Accept":"application/json"} # setting this by hand for now
-  query = {'userName': self.trinity_user, 'password':self.trinity_password, 'userPW': self.trinity_password }
+  query = {'userName': trinity_user, 'password': trinity_password, 'userPW': trinity_password }
 
   # Get the cpucount for all the nodes
   # asuming that all nodes belong to the group compute
