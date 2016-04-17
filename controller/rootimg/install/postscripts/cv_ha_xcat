@@ -47,8 +47,8 @@ echo pcs resource cleanup | at now +5 minutes
 systemctl enable pacemaker
 systemctl enable corosync
 
-for i in {30..0}; do
-    if pcs resource | grep "lsb:xcatd" | grep "Started $(hostname)"; then
+for i in {300..0}; do
+    if pcs resource | grep "lsb:xcatd" | grep "Started"; then
         break
     fi
     echo waiting for xCAT to come up
