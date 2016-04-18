@@ -37,6 +37,7 @@ pcs -f config constraint colocation add grp_xCAT fs_drbd
 pcs -f config constraint colocation add conserver grp_xCAT 500
 
 pcs -f config constraint order start fs_drbd then start symlinks_xCAT
+pcs -f config constraint order start ip then start named-clone
 pcs -f config constraint order start symlinks_xCAT then start grp_xCAT
 pcs -f config constraint order start symlinks_xCAT then start conserver
 
