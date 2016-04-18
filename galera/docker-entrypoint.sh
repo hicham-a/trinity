@@ -1,8 +1,8 @@
 #!/bin/bash
 ##description    : Starts galera cluster
 ##                 The primary node will first try to connect to an active cluster. If there is no
-                   cluster currently active, it will restart itself in bootstrap mode, forming
-                   an the first node of the primary component itself.
+##                 cluster currently active, it will restart itself in bootstrap mode, forming
+##                 an the first node of the primary component itself.
 ##author         : Hans Then
 ##email          : hans.then@clustervision.com
 
