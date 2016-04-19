@@ -65,10 +65,13 @@ timedatectl set-timezone UTC
 echo "export TZ=UTC" > /etc/profile.d/timezone.sh
 
 #--------------------------------------------------------------------------
-# Install LDAP
+# Setup LDAP authentication
 #--------------------------------------------------------------------------
-/postscripts/cv_install_slapd
-systemctl start slapd
+cp -rLT /trinity/openldap/rootimg/usr /usr
+cp -rLT /trinity/openldap/rootimg/etc/*.conf /etc/
+
+authconfig --enablemkhomedir --enableldapauth --ldapbasedn=dc=cluster \
+     --ldapserver=controller --update
 
 #--------------------------------------------------------------------------
 # SSH keys for root
