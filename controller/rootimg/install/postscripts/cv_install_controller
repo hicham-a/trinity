@@ -221,6 +221,9 @@ if grep -v XCATHOST /etc/profile.d/xcat.sh; then
     echo "export XCATHOST=controller.cluster:3001" >> /etc/profile.d/xcat.sh
 fi
 
+systemctl enable replicator.timer
 systemctl start replicator.timer
+systemctl enable memcached
+systemctl start memcached
 
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log
