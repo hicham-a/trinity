@@ -1,11 +1,11 @@
-for i in 1 2 3 4 5 6 7 8 9 10; do
+for i in {1..30}; do
    if ! ping -c 1 -W 10 $SITEMASTER > /dev/null; then
-      echo Attempt $i to ping $SITEMASTER failed
-      sleep 2
+      echo No network connection $i
+      sleep 5
    else
-      echo Network accessible
+      echo Network connection established
       exit 0
    fi
 done
-echo Unable to ping $SITEMASTER, network on fire?
-exit 1
+echo Error: Unable to establish network connection.
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log

@@ -1,0 +1,9 @@
+#!/usr/bin/bash
+##title          : cv_start_trinity
+##description    : Start trinity
+##email          : Hans Then <hans.then@clustervision.com>
+
+systemctl start openvswitch
+systemctl start docker
+systemctl start trinity
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log

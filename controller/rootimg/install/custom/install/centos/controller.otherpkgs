@@ -1,1 +1,46 @@
 xCAT
+# required for mysql setup
+perl-DBD-MySQL
+mysql
+mysql-connector-odbc
+unixODBC
+mod_ssl
+perl-JSON
+docker
+docker-registry
+epel-release
+
+openstack-selinux
+openstack-utils
+openstack-nova-compute
+openstack-nova-network
+openstack-nova-api
+sysfsutils
+
+libvirt-daemon-config-nwfilter
+libvirt-daemon-driver-nwfilter
+
+python-keystoneclient
+python-glanceclient
+python-novaclient
+python-cinderclient
+openstack-dashboard
+memcached
+python-pip
+python-memcached
+python-retrying
+python-bottle
+python-cherrypy
+
+#-- packages required for HA --#
+drbdlinks
+pacemaker
+pcs
+fence-agents-all
+drbd84-utils-8.9.2
+kmod-drbd84-8.4.6
+
+# Test utilities
+sshpass
+jq
+httpie

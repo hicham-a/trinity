@@ -1,0 +1,20 @@
+#! /usr/bin/bash
+##title          : cv_install_clusterbats
+##description    : Install the clustervision automated testing framework.
+##                 You need to edit the params file in /trinity/testing. (to be written)
+##author         : Themis Athanassiadou
+##email          : themis.athanassiadou@clustervision.com
+
+if [[ ! -x bats ]]; then
+    cd /root
+    git clone https://github.com/sstephenson/bats.git
+    bats/install.sh /usr/local
+fi
+
+if [[ ! -d /root/clusterbats/ ]]; then
+    cd /root
+    git clone http://github.com/clustervision/clusterbats
+fi
+pip install python-hostlist
+
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log

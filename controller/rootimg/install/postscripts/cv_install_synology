@@ -1,7 +1,7 @@
 #---------------------------------------------------------------------------------------------------------------------------
 # Configure the synology device
 #---------------------------------------------------------------------------------------------------------------------------
-yum -y install sssd
+yum -y -q install sssd
 echo "syn1:/volume1/shared/home  /home  nfs  defaults  0  0" >> /etc/fstab
 mount -a
 mkdir -p /etc/sssd
@@ -51,4 +51,4 @@ cat > /etc/sudoers.d/synology << EOF
 %Engineering ALL=(ALL) NOPASSWD: ALL
 EOF
 
-echo "$0 finished" >> /var/log/postinstall.log
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log

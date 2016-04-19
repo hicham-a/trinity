@@ -12,7 +12,6 @@ setup (
   package_dir={'trinity_api':'src'},
   scripts=['bin/trinity_api','bin/wrapper_trinity_api'],
   data_files=[
-    ('/etc/init.d',['init/trinity_api']),
     ('/etc/trinity',['conf/trinity_api.conf'])
   ]
 )

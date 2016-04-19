@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+##title          : cv_build_master_modules
+##description    : Builds the modules environment on the master
+##                 This requires an ssh key added to your account for this machine.
+##author         : Hans Then
+##email          : hans.then@clustervision.com
+
+if [[ ! -d /root/modules ]]; then
+    cd /root
+    git clone ssh://git@github.com/clustervision/modules
+fi
+
+cd /root/modules
+git pull
+
+yum -y install redhat-lsb environment-modules
+
+osname=$(lsb_release -si)
+osmajorver=$(lsb_release -sr | cut -d. -f1)
+
+mkdir -p /trinity/clustervision/${osname}/${osmajorver}
+
+./justdoit.sh

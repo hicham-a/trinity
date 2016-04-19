@@ -1,39 +1,33 @@
 #!/bin/bash
-echo "Starting Trinity"
-
-# disable the docker bridge
 ip link set docker0 down 2>/dev/null|| true
 brctl delbr docker0 2>/dev/null || true
 
 # Determine our container name
 NAME=$(hostname -s | sed s/node/c/)
 
-while [ 1 ]; do 
+while : ; do 
     # Determine in which virtual cluster this node is active
-    #for VC in vc-{a..l}; do
     for VC in $(ls /cluster | grep "^vc-"); do
-        if host $NAME.$VC; then found=1; break; fi
+        if host $NAME.$VC > /dev/null 2>&1 ; then found=1; break; fi
     done
 
     if [ -z "$found" ]; then
-        echo "Could not determine cluster membership for this node. Sleeping now."
-        sleep 5
+        sleep 60
         continue;
     fi
 
-    IP=$(host ${NAME}.${VC} | awk -F' ' '{print $4}')
-    GW=$(echo $IP | awk -F. '{ print $1"."$2".255.254" }')
+    # Better use gethostip
+    IP=$(gethostip -d ${NAME}.${VC})
+    GW=$(gethostip -d login.${VC})
  
     # Check a few directories and files
     if [ ! -d /cluster/${VC} ]; then
-        echo "No cluster directory found for ${VC}."; 
         sleep 5
         continue;
     fi
     
-    if ! ping -c 5 -W 5 login.${VC}; then
-        echo "No login node found for ${VC}."; 
-        sleep 5
+    if ! ping -c 5 -W 5 login.${VC} >/dev/null 2>&1 ; then
+        sleep 60
         continue;
     fi
     # All tests succeeded, just get on with it.
@@ -48,10 +42,23 @@ else
    IMAGE=trinity
 fi
 
-# if there is a newer image, remove the container
-if docker pull controller:5050/${IMAGE} | tail -1 | grep "Downloaded newer"; then 
-    docker stop trinity
-    docker rm trinity
+# check if we have infiniband
+if [ "$(ls -A /sys/class/infiniband)" ]; then
+    IB_DEVICES=$(find /dev/infiniband -printf "--device=%p ")
+else
+    IB_DEVICES=""
+fi
+
+# check if we have infiniband
+if [ -e /dev/ipath ]; then
+    IPATH=$(find /dev/ipath -printf "--device=%p ")
+else
+    IPATH=""
+fi
+
+# Check if we want to inject files into the container
+if [ -d "/trinity/site-local/container/files" ]; then
+    INJECT=$(find /trinity/site-local/container/files -type f -printf "-v %p:/%P ")
 fi
 
 # determine the ethernet device name
@@ -69,18 +76,16 @@ case $state in
     *)
         docker run \
            --net=none \
-           --device=/dev/infiniband/issm0 \
-           --device=/dev/infiniband/rdma_cm \
-           --device=/dev/infiniband/ucm0  \
-           --device=/dev/infiniband/umad0 \
-           --device=/dev/infiniband/uverbs0 \
-           -v /trinity/clustervision:/trinity/clustervision \
+           ${IB_DEVICES} \
+           ${IPATH} \
            -v /root:/root \
+           -v /trinity/clustervision:/trinity/clustervision \
            -v /home/${VC}:/home \
            -v /cluster/${VC}:/cluster \
            -v /cluster/${VC}/etc/slurm:/etc/slurm \
            -v /cluster/${VC}/etc/munge:/etc/munge \
            -v /cluster/${VC}/.modulespath:/usr/share/Modules/init/.modulespath \
+           ${INJECT} \
            --hostname=${NAME}.${VC} \
            --dns-search=${VC} \
            --name=trinity \

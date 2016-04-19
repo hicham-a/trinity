@@ -3,10 +3,6 @@
 #----------------------------------------------------------------------------
 # Install OpenLDAP on the controller node
 #----------------------------------------------------------------------------
-yum -y install openldap openldap-clients openldap-servers
-yum -y install python-ldap python-retrying
-yum -y install nss-pam-ldapd authconfig
-
 cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
 
 rm -rf /etc/openldap/slapd.d
@@ -44,31 +40,26 @@ uidNumber: 150
 EOF
 
 #----------------------------------------------------------------------------
-# Change access rights to allow for PAM users to authenticate
-#----------------------------------------------------------------------------
-ldapmodify -Y EXTERNAL -H ldapi:/// << EOF
-dn: olcDatabase={2}hdb,cn=config
-changetype: modify
-add: olcAccess
-olcAccess: to attrs=userPassword by self write
-  by anonymous auth
-  by * none
--
-add: olcAccess
-olcAccess: to * by self write
-  by * read
-EOF
-
-#----------------------------------------------------------------------------
 # Setup PAM
 #----------------------------------------------------------------------------
-yum -y install nss-pam-ldapd authconfig
+yum -y -q install nss-pam-ldapd authconfig
 
-#authconfig-tui --kickstart --enableldapauth --ldapbasedn=dc=cluster \
-#     --ldapserver=localhost 
+# configure the ldap server. Not sure this is needed.
+cat >> /etc/pam_ldap.conf << EOF
+uri ldap://localhost/
+base dc=cluster
+ssl no
+tls_cacertdir /etc/openldap/cacerts
+pam_password md5
+EOF
+
+# setup nssswitch
+sed -e 's/^group:.*$/group:\t\tfiles ldap/g' \
+    -e 's/^passwd:.*$/passwd:\t\tfiles ldap/g' \
+    -e 's/^shadow:.*$/shadow:\t\tfiles ldap/g' \
+    -i /etc/nsswitch.conf 
+
 authconfig --enablemkhomedir --enableldapauth --ldapbasedn=dc=cluster \
      --ldapserver=localhost --update
 
-echo "$0 finished" >> /var/log/postinstall.log
-exit 0
-
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log

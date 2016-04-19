@@ -19,11 +19,6 @@ iptables -D FORWARD -j REJECT --reject-with icmp-host-prohibited
 iptables -D INPUT -j REJECT --reject-with icmp-host-prohibited
 service iptables save
 
-cat > /etc/resolv.conf << EOF
-search clustervision.com
-nameserver 192.168.66.1
-EOF
-
 #---------------------------------------------------------------------------------------
 # Get the Trinity git repository
 #---------------------------------------------------------------------------------------
@@ -99,16 +94,17 @@ exportfs -a
 #--------------------------------------------------------------------------------------
 echo "Creating installation tree"
 # updates and extras are required to install docker
-yum -y install https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno-1.noarch.rpm
-yum -y install --enablerepo=extras epel-release
+yum -y -q install https://repos.fedorapeople.org/repos/openstack/openstack-juno/rdo-release-juno.rpm
+yum -y -q install --enablerepo=extras epel-release
 wget http://sourceforge.net/projects/xcat/files/yum/2.9/xcat-core/xCAT-core.repo -O /etc/yum.repos.d/xCAT-core.repo
 wget http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo -O /etc/yum.repos.d/xCAT-dep.repo
 mkdir /trinity/iso
-wget http://linux.cs.uu.nl/centos/7/isos/x86_64/CentOS-7-x86_64-Everything-1503-01.iso -q -O /trinity/iso/CentOS-7-x86_64-Everything-1503-01.iso
+wget -c http://mirror.denit.net/centos/7/isos/x86_64/CentOS-7-x86_64-Everything-1511.iso \
+     -P /trinity/iso/
+
 copycds -n centos7 -o /trinity/iso/*.iso
 
 /root/trinity/master/create_repo_snapshot.sh
 
-echo "$0 finished" >> /var/log/postinstall.log
-exit 0
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log
 

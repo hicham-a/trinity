@@ -1,10 +1,15 @@
+#!/usr/bin/bash
+##title          : cv_configure_prinic
+##description    : This script create a config file for the primary nic 
+##                 (so admins can do systemctl restart network)
+##email          : Hans Then <hans.then@clustervision.com>
+
 ETH1=$(ip route | grep default | awk  '{print $5}' | head -1)
 cat > /etc/sysconfig/network-scripts/ifcfg-$ETH1 << EOF
 ONBOOT=yes
 BOOTPROTO=dhcp
 DEVICE=$ETH1
-MTU=9000
 EOF
 
-ifup $ETH1
-echo "$0 finished" >> /var/log/postinstall.log
+systemctl restart network
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log
