@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 IP=10.141.255.254
 KS_CONT="keystone"
-docker exec ${KS_CONT} keystone --os-token system --os-endpoint http://${IP}:35357/v2.0 user-create --name nova --pass system
+obol -H ldap://controller -w system user add nova --password system --cn nova --sn nova --givenName nova
 docker exec ${KS_CONT} keystone --os-token system --os-endpoint http://${IP}:35357/v2.0 user-role-add --user nova --tenant service --role admin
 docker exec ${KS_CONT} keystone --os-token system --os-endpoint http://${IP}:35357/v2.0 service-create --name nova --type compute --description "OpenStack Compute"
 SERVICE_ID=$(docker exec ${KS_CONT} keystone --os-token system --os-endpoint http://${IP}:35357/v2.0 service-list | awk '/ compute / {print $2}')
