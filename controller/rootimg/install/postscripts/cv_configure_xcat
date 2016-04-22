@@ -89,7 +89,7 @@ makeconservercf
 #-------------------------------------------------------------------------------------
 # Copy the modules environment
 #-------------------------------------------------------------------------------------
-cp -LrT /tmp/trinity/clustervision /trinity/clustervision &
+cp -rT /tmp/trinity/clustervision /trinity/clustervision &
 cp /tmp/trinity/version /trinity/version
 if [[ -f /tmp/trinity/site ]]; then
     cp /tmp/trinity/site /trinity/site
