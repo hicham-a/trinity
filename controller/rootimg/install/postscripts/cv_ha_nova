@@ -5,20 +5,9 @@
 ##email          : hans.then@clustervision
 
 pcs cluster cib config
-pcs -f config resource create nova-compute systemd:openstack-nova-compute op monitor interval="37s"
-pcs -f config resource create nova-network systemd:openstack-nova-network op monitor interval="37s"
-pcs -f config resource create nova-metadata-api systemd:openstack-nova-metadata-api op monitor interval="37s"
-pcs -f config resource group add grp_NovaCompute nova-compute nova-network nova-metadata-api
-pcs -f config resource clone grp_NovaCompute clone-max=3 clone-node-max=1 notify=false
-
 pcs -f config resource create trinity-api systemd:trinity-api op monitor interval="37s"
 pcs -f config constraint colocation add trinity-api ip
 pcs -f config constraint order start xCAT then start trinity-api
 pcs -f config constraint order start httpd then start trinity-api
-
-pcs -f config constraint order stop grp_OpenStack then stop fs_drbd
-pcs -f config constraint order stop grp_xCAT then stop fs_drbd
-pcs -f config constraint order stop fs_drbd then demote ms_drbd
-
 pcs cluster cib-push config
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log
