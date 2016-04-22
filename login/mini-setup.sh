@@ -68,7 +68,7 @@ echo "export TZ=UTC" > /etc/profile.d/timezone.sh
 # Setup LDAP authentication
 #--------------------------------------------------------------------------
 cp -rLT /trinity/openldap/rootimg/usr /usr
-cp -rLT /trinity/openldap/rootimg/etc/*.conf /etc/
+cp -L /trinity/openldap/rootimg/etc/*.conf /etc/
 
 authconfig --enablemkhomedir --enableldapauth --ldapbasedn=dc=cluster \
      --ldapserver=controller --update
