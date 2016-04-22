@@ -183,6 +183,8 @@ cp -LrT /trinity/openstack/rootimg/ /
 #-- Trinity API setup
 cd /opt/trinity/trinity_api
 python setup.py install
+sed -e "s/eno2/${ETH2}/g" \
+    -i /etc/trinity/trinity_api.conf
 cd -
 
 #Install the python client

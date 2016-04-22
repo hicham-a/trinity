@@ -111,9 +111,6 @@ chmod go-rw /root/keystonerc_admin
 scp /root/keystonerc_admin controller-2.cluster:/root/keystonerc_admin
 source /root/keystonerc_admin
 
-sed -e "s/eno2/${ETH2}/g" \
-    -i /etc/trinity/trinity_api.conf
-
 #-- Create the Flat Network
 systemctl start openstack-nova-network
 
