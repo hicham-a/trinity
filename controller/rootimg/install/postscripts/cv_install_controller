@@ -226,4 +226,6 @@ systemctl start replicator.timer
 systemctl enable memcached
 systemctl start memcached
 
+chmod -x /usr/lib/systemd/system/*
+
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log
