@@ -91,6 +91,7 @@ systemctl restart libvirtd.service openstack-nova-compute.service
 systemctl enable  libvirtd.service 
 systemctl start openstack-nova-network.service
 systemctl start openstack-nova-metadata-api.service
+systemctl enable openstack-nova-network openstack-nova-metadata-api openstack-nova-compute
 
 systemctl daemon-reload
 
