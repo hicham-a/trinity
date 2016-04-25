@@ -7,7 +7,10 @@ cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
 
 rm -rf /etc/openldap/slapd.d
 cp -rLT /trinity/openldap/rootimg /
+
 chown -R ldap. /etc/openldap/
+chmod 600 /etc/openldap/{slapd,cv_local}.conf /etc/openldap/certs/ssl/key
+
 systemctl enable slapd 
 systemctl start slapd
 
@@ -45,6 +48,7 @@ EOF
 #----------------------------------------------------------------------------
 yum -y -q install sssd authconfig
 
+chmod 600 /etc/sssd/sssd.conf
 systemctl enable sssd
 systemctl start sssd
 
