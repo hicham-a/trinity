@@ -38,7 +38,7 @@ virt-customize -a ${LOGIN_IMG} \
     --run-command "systemctl enable slurm munge" \
     --edit "/etc/ssh/sshd_config: s/[#]*PasswordAuthentication no/PasswordAuthentication yes/g" \
     --edit "/etc/sysconfig/network-scripts/ifcfg-eth0: s/^PEERDNS=.*/PEERDNS=\"no\"/g" \
-    --install oddjob-mkhomedir,nss-pam-ldapd,authconfig \
+    --install oddjob-mkhomedir,sssd,authconfig \
     --edit "/etc/oddjobd.conf.d/oddjobd-mkhomedir.conf: s/0022/0077/g" \
     --run-command "authconfig --enablemkhomedir --update" \
     --run-command "systemctl enable oddjobd" \

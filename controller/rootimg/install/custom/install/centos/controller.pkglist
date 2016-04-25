@@ -47,7 +47,6 @@ openldap
 openldap-clients
 openldap-servers
 python-ldap
-nss-pam-ldapd
 authconfig
 
 

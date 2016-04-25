@@ -7,6 +7,7 @@ cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
 
 rm -rf /etc/openldap/slapd.d
 cp -rLT /trinity/openldap/rootimg /
+chown -R ldap. /etc/openldap/
 systemctl enable slapd 
 systemctl start slapd
 
@@ -42,24 +43,11 @@ EOF
 #----------------------------------------------------------------------------
 # Setup PAM
 #----------------------------------------------------------------------------
-yum -y -q install nss-pam-ldapd authconfig
+yum -y -q install sssd authconfig
 
-# configure the ldap server. Not sure this is needed.
-cat >> /etc/pam_ldap.conf << EOF
-uri ldap://localhost/
-base dc=cluster
-ssl no
-tls_cacertdir /etc/openldap/cacerts
-pam_password md5
-EOF
+systemctl enable sssd
+systemctl start sssd
 
-# setup nssswitch
-sed -e 's/^group:.*$/group:\t\tfiles ldap/g' \
-    -e 's/^passwd:.*$/passwd:\t\tfiles ldap/g' \
-    -e 's/^shadow:.*$/shadow:\t\tfiles ldap/g' \
-    -i /etc/nsswitch.conf 
-
-authconfig --enablemkhomedir --enableldapauth --ldapbasedn=dc=cluster \
-     --ldapserver=localhost --update
+authconfig --enablemkhomedir --enablesssd --enablesssdauth --update
 
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log
