@@ -1,94 +1,144 @@
 #! /usr/bin/bash
-##title          : cv_install_controller
-##description    : Installs an xCAT controller node. Additionally it also configures
-##                 the xCAT web service 
-##author         : Hans Then & Abhishek Mukherjee
+##description    : Setup the first round of High Availability.
+##	           Basic pacemaker and xCAT configuration required on both nodes.
+##author         : Hans Then 
 ##email          : hans.then@clustervision
-##                 abhishek.mukherjee@clustervision.com
 
+#-----------------------------------------------------------------------------------------------
+# Determine if this will be the active or passive node. An odd node will become 
+# the active node. Any even node will become the passive node. 
+#
+# Adapt the network configuration accordingly.
+#-----------------------------------------------------------------------------------------------
+n=$(echo $NODE | egrep -o '[[:digit:]]*' | head -n1)
+# normalize to 1 or 2
+N=$((((n-1)%2)+1))
 
-# see http://stackoverflow.com/questions/3173131/redirect-copy-of-stdout-to-log-file-from-within-bash-script-itself
-#exec > >(tee /var/log/postinstall.log)
-#exec 2>&1
+# set the new ip addresses
+octet=$((254-$N))
 
-# Save the local nameserver
-NAMESERVER=$(grep nameserver /etc/resolv.conf | cut -d' ' -f2)
-echo $NAMESERVER
+# update network scripts
+filename=$(grep -l IPADDR=10.141.255.254 /etc/sysconfig/network-scripts/ifcfg-*)
+set -x
+if [ ! -z $filename ]; then 
+    echo "SWitching IP addresses"
+    sed -e "s/\(IPADDR.\?\)=\(10\.14[18]\.255\)\.254/\1=\2.$octet/" -i $filename
+    echo "Changing ip addresses to allow floating"
+    echo controller-$N.cluster > /etc/hostname
+    hostname controller-$N.cluster 
+    dev=$(echo $filename | awk -F- '{print $3}')
+    ip addr del 10.141.255.254/16 dev $dev
+    ip addr del 10.148.255.254/16 dev $dev
+    ip addr add 10.141.255.$octet/16 dev $dev
+    ip addr add 10.148.255.$octet/16 dev $dev
+    echo "Checking IP addresses"
+    ip addr add 10.149.255.$octet/16 dev ib0
+    ip link set ib0 up
+    ip addr show dev $dev
+else
+    echo IP address 254 appears to be floating already. Did you run this script earlier?
+fi
 
-#--------------------------------------------------------------------------------------
-# install xcat
-#--------------------------------------------------------------------------------------
+echo system | passwd hacluster --stdin
+echo drbd > /etc/modules-load.d/drbd.conf
+
+#------------------------------------------------------------
+# configure drbd
+#------------------------------------------------------------
+# remove the drbd volume from mounting
+sed -i -e "/vg_root-lv_drbd/d" /etc/fstab
+umount /drbd
+
+# Clear the disk
+echo Clearing drbd logical volume, this may take some time.
+dd if=/dev/zero of=/dev/mapper/vg_root-lv_drbd bs=1M count=1024
+
+# make sure the host names can be resolved
+if ! grep 10.141.255.253 /etc/hosts; then echo "10.141.255.253 controller-1 controller-1.cluster" >> /etc/hosts; fi
+if ! grep 10.141.255.252 /etc/hosts; then echo "10.141.255.252 controller-2 controller-2.cluster" >> /etc/hosts; fi
+if ! grep 10.141.255.254 /etc/hosts; then echo "10.141.255.254 controller controller.cluster" >> /etc/hosts; fi
+
+# If we can use the IB interface for DRBD we will do so.
+if ping -c1 10.149.255.$octet > /dev/null 2>&1; then
+    ip1=10.149.255.253
+    ip2=10.149.255.252
+else
+    ip1=10.141.255.253
+    ip2=10.141.255.252
+fi
+
+cat <<EOF >/etc/drbd.d/ha_disk.res
+resource ha_disk {
+       net {
+         after-sb-0pri discard-younger-primary;
+         after-sb-1pri discard-secondary;
+         after-sb-2pri disconnect;
+       }
+       on controller-1.cluster {
+         device    /dev/drbd1;
+         disk      /dev/mapper/vg_root-lv_drbd;
+         address   ${ip1}:7789;
+         meta-disk internal;
+       }
+       on controller-2.cluster {
+         device    /dev/drbd1;
+         disk      /dev/mapper/vg_root-lv_drbd;
+         address   ${ip2}:7789;
+         meta-disk internal;
+       }
+}
+EOF
+
+drbdadm create-md ha_disk
+modprobe drbd
+drbdadm up ha_disk
+
+#-----------------------------------------------------------------------------------------------
+# Install pacemaker
+#-----------------------------------------------------------------------------------------------
+systemctl start pcsd
+systemctl enable pcsd
+
+pcs cluster auth $(hostname) -u hacluster -p system
+if [[ $N = 1 ]]; then
+    pcs cluster setup --name ha_cluster $(hostname)
+else
+    for i in {1..100}; do
+        ssh controller-1 pcs status && break
+        echo "waiting for master to come up"
+        sleep 1m
+    done
+    [[ $i = 100 ]] && echo "TIMEOUT: waiting for master node to come up"
+    ssh controller-1.cluster pcs cluster auth $(hostname) -u hacluster -p system
+    ssh controller-1.cluster pcs cluster node add $(hostname)
+    pcs cluster auth
+fi
+pcs cluster start
+
+systemctl enable pacemaker
+systemctl enable corosync
+systemctl enable opensm
+systemctl start opensm
+systemctl enable ntpd
+systemctl start ntpd
+
+#----------------------------------------------------------------------------------
+# xCAT setup required on both nodes
+#----------------------------------------------------------------------------------
 systemctl stop NetworkManager
 systemctl disable NetworkManager
 killall dhclient
-# disable the dhcp based ntp
-rm /etc/dhcp/dhclient.d/ntp.sh
-systemctl restart network
 
-mkdir /tmp/trinity
-mount ${SITEMASTER}:/trinity /tmp/trinity       
-mkdir /trinity
+# Fix for #356
+systemctl disable firewalld
+systemctl stop firewalld
 
-# copy all required module files etc to the right locations
-# note to self: only /trinity/env needs be mounted inside the container
-# FIXME: this takes an awful amount of time
-cp --dereference --recursive  --preserve /tmp/trinity/clustervision /trinity &
-
-#--------------------------------------------------------------------------------------
-# create runimages
-#--------------------------------------------------------------------------------------
-for file in $(ls /install/runimages); do
-    if [ -d /install/runimages/${file} ]; then 
-        tar czf /install/runimages/${file}.tgz -C /install/runimages/${file}/ .
-    fi
-done
-
-
-#--------------------------------------------------------------------------------------
-# copy default database configuration
-# and patch the installation
-#--------------------------------------------------------------------------------------
-source /etc/profile.d/xcat.sh
-mkdir -p /tmp/xcattables
 read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
-for table in $(ls /tmp/trinity/controller/xcat/tables); do
-    sed -e "s/\<eno1\>/$ETH1/g" -e "s/\<eno2\>/$ETH2/g"  -e "s/\<eno3\>/$ETH3/g" /tmp/trinity/controller/xcat/tables/$table > /tmp/xcattables/$table;
-done
-if [ -n $NAMESERVER ]; then
-   sed -i -e "s/\"forwarders\",\"8.8.8.8,8.8.4.4\",,/\"forwarders\",\"$NAMESERVER\"/" /tmp/xcattables/site.csv
-   echo "Changing $NAMESERVER"
-fi 
-
-restorexCATdb -p /tmp/xcattables  
-
-# Fix for #149
-ip addr a 10.141.255.254/16 dev $ETH2
-cd /opt/xcat/share/xcat/netboot/centos
-ln -s ../rh/dracut_033 .
-ln -s ../rh/dracut .
-
-cd /
-cat /tmp/trinity/controller/xcat/patches/*.patch | patch -p0
-systemctl restart xcatd
-makedhcp -n
-makehosts -n
-makedns -n
-
-cat << EOF > /etc/resolv.conf
-domain cluster
-search cluster
-nameserver localhost
-EOF
-
-#--------------------------------------------------------------------------------------
-# correct any network settings
-#--------------------------------------------------------------------------------------
-
 # setup NAT, so nodes can access the internet (see manual step 1.f)
-# FIXME: maybe move iptables save output to the rootimg profile.
-chkconfig iptables on
-service iptables start
+systemctl enable iptables 
+systemctl start iptables
 modprobe iptable_nat
+
 iptables -A FORWARD -i $ETH2 -j ACCEPT
 iptables -t nat -A POSTROUTING -o $ETH1 -j MASQUERADE
 iptables -D FORWARD -j REJECT --reject-with icmp-host-prohibited
@@ -96,118 +146,113 @@ iptables -D INPUT -j REJECT --reject-with icmp-host-prohibited
 service iptables save
 
 #--------------------------------------------------------------------------------------
-# copy required files from the master node to the controller node
-#--------------------------------------------------------------------------------------
-cp -LrT /tmp/trinity/controller/rootimg /
-cp /tmp/trinity/version /trinity/version
-
-#--------------------------------------------------------------------------------------
 # setup routing for the virtual clusters
 #--------------------------------------------------------------------------------------
 ip route add 172.16.0.0/12 dev $ETH2
-mv /etc/sysconfig/network-scripts/route-eno2 /etc/sysconfig/network-scripts/route-${ETH2} 2> /dev/null
+echo "172.16.0.0/12 dev $ETH2" > /etc/sysconfig/network-scripts/route-${ETH2} 
 
 #--------------------------------------------------------------------------------------
 # Additional network processing
 #--------------------------------------------------------------------------------------
-# remove the default route from other devices
-for file in /etc/sysconfig/network-scripts/ifcfg-{$ETH2,$ETH3}; do
-    sed -i $file -e "s/DEFROUTE=\(.*\)/DEFROUTE=no/"
-done
+sed -i /etc/sysconfig/network-scripts/ifcfg-${ETH2} -e "s/DEFROUTE=\(.*\)/DEFROUTE=no/"
+sed -i /etc/sysconfig/network-scripts/ifcfg-${ETH1} -e "s/DEFROUTE=\(.*\)/DEFROUTE=yes/"
 
-
-# disable peerdns
-sed -i /etc/sysconfig/network-scripts/ifcfg-$ETH1 -e "s/DEFROUTE=\(.*\)/DEFROUTE=yes/" -e "s/PEERDNS=\(.*\)/PEERDNS=no/"
-
-# Fix for #85
+last=$(ip route get 10.141.255.254 | head -1 | awk -F' ' '{print $NF}' | awk -F. '{print $NF}')
+if [[ ! -z "$ETH2" ]]; then
 cat >> /etc/sysconfig/network-scripts/ifcfg-$ETH2 << EOF
-IPADDR1=10.148.255.254
+IPADDR1=10.148.255.${last}
 PREFIX1=16
-GATEWAY1=10.148.255.254
+GATEWAY1=10.148.255.${last}
 EOF
-ip a a 10.148.255.254/16 dev $ETH2
+fi
 
-systemctl restart network
-systemctl enable ntpd
-systemctl start ntpd
+if ! systemctl restart network; then
+    sleep 3
+    systemctl start network
+fi
 
-#--------------------------------------------------------------------------------------
-# Start opensm on the controller
-#--------------------------------------------------------------------------------------
-yum -y groupinstall "Infiniband Support"
-yum -y install opensm
-yum -y install infiniband-diags
+setenforce 0
+sestatus
 
-systemctl enable opensm
-systemctl start opensm
+#-----------------------------------------------------------------------------------------
+# Patch xCAT. Needs to be done on both nodes.
+#-----------------------------------------------------------------------------------------
+if [ ! -z $SITEMASTER ]; then
+    mkdir /tmp/trinity
+    mount ${SITEMASTER}:/trinity /tmp/trinity       
+fi
 
-#--------------------------------------------------------------------------------------
-# now setup NFS exports
-#--------------------------------------------------------------------------------------
-systemctl enable nfs-server
-systemctl start nfs-server
-
-exportfs -a
-
-#--------------------------------------------------------------------------------------
-# Selective updates
-# Create installation tree
-#--------------------------------------------------------------------------------------
-iso=$(ls -c /tmp/trinity/iso/*.iso | head -1)
-echo "Creating installation tree from $iso"
-copycds -o -n centos7 $iso
-mkdir -p /install/post/otherpkgs/centos7/x86_64
-reposync -n -r xcat-otherpkgs0 -p /install/post/otherpkgs/centos7/x86_64/
-createrepo /install/post/otherpkgs/centos7/x86_64/
-
-genimage centos7-x86_64-netboot-trinity
-packimage centos7-x86_64-netboot-trinity
+cd /opt/xcat/share/xcat/netboot/centos
+ln -s ../rh/dracut_033 .
+ln -s ../rh/dracut .
+cd /
+cat /tmp/trinity/controller/xcat/patches/*.patch | patch -p0
+systemctl restart xcatd
 
 #--------------------------------------------------------------------------------------
-# install docker and docker-registry
-# and create the trinity image for the compute nodes
+# copy required files from the master node to the controller node
 #--------------------------------------------------------------------------------------
-yum -y install docker docker-registry
-# FIXME: move this to the rootimg profile
-sed -i 's/REGISTRY_PORT=.*/REGISTRY_PORT=5050/' /etc/sysconfig/docker-registry
-# FIXME: this is not idempotent
-sed -i 's/OPTIONS=\(.*\)/OPTIONS=--insecure-registry controller:5050 --bip=10.146.255.254\/16 --fixed-cidr=10.146.255.255\/16 \1/' /etc/sysconfig/docker
-
-systemctl enable docker docker-registry
-systemctl start docker docker-registry
-docker build -t controller:5050/trinity /trinity/container
-docker push controller:5050/trinity
+cp -LrT /tmp/trinity/controller/rootimg /
+cp /tmp/trinity/version /trinity/version
+if [[ -f /tmp/trinity/site ]]; then
+    cp /tmp/trinity/site /trinity/site
+fi
+mkdir -p /var/lib/docker-registry
 
 #--------------------------------------------------------------------------------------
-# cleanup
+# Setup ib
 #--------------------------------------------------------------------------------------
+sed -e "s/\(IPADDR.\?\)=\(10\.149\.255\)\.254/\1=\2.${last}/" -i /etc/sysconfig/network-scripts/ifcfg-ib0
+ifup ib0
 
-#umount /tmp/trinity
-#rmdir /tmp/trinity
+#------------------------------------------------------------------------------
+# Install and configure Horizon
+#------------------------------------------------------------------------------
+cp -LrT /trinity/horizon/rootimg/ /
+chown -R apache:apache /usr/share/openstack-dashboard/static
+if ! grep conf.modules.d/ /etc/httpd/conf/httpd.conf; then
+    echo 'Include "/etc/httpd/conf.modules.d/*.conf"' >> /etc/httpd/conf/httpd.conf
+fi
 
-#--------------------------------------------
-# Install the xCAT web service
-#--------------------------------------------
-# The xCAT web service requires the following
-yum -y install mod_ssl
-service httpd restart
-yum -y install perl-JSON
+#-----------------------------------------------------------------
+# Install the API server, client and dashboard additions
+#-----------------------------------------------------------------
+cp -LrT /trinity/openstack/rootimg/ /
 
-# Set up the xCAT web service
-useradd trinity
-echo "trinity" | passwd trinity --stdin
-source /etc/profile.d/xcat.sh
-export HOME=/root
-tabch key=xcat,username=trinity passwd.password=trinity
-mkdef -t policy 6 name=trinity rule=allow
-sed  -e "/<Directory \/>/,/<\/Directory>/ s/Require/#Require/" -i /etc/httpd/conf/httpd.conf
-service httpd restart
-
-#-----------------------------------------------
-# Nice to have, clone the git repo into the /root directory
-#-----------------------------------------------
-cd /root
-git clone https://github.com/clustervision/trinity.git
+#-- Trinity API setup
+cd /opt/trinity/trinity_api
+python setup.py install
 cd -
 
-echo "$0 finished" >> /var/log/postinstall.log
+#Install the python client
+cd /opt/trinity/trinity_client
+python setup.py install
+cd -
+
+#-- Install the dashboard additions
+cd /opt/trinity/trinity_dashboard
+sh setup.sh
+cd -
+
+set -x
+# FIXME: use obol for this.
+useradd -u 1002 -U munge --no-create-home
+
+mkdir -p /var/log/trinity
+# FIXME: rather hackish, ensure this directory exists on both nodes.
+mkdir -p /nfshome
+systemctl daemon-reload
+
+#---------------------------------------------------------------------------------------
+# Set up the xCAT web service
+#---------------------------------------------------------------------------------------
+source /etc/profile.d/xcat.sh
+export HOME=/root
+# FIXME: use obol for this.
+useradd trinity
+echo system | passwd trinity --stdin
+mkdef -t policy 6 name=trinity rule=allow
+sed  -e "/<Directory \/>/,/<\/Directory>/ s/Require/#Require/" -i /etc/httpd/conf/httpd.conf
+systemctl restart httpd 
+
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log

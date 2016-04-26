@@ -6,7 +6,7 @@
 
 site="monitoring"
 yum -y remove sendmail
-yum -y install postfix dovecot
+yum -y -q install postfix dovecot
 setsebool -P httpd_can_sendmail on
 
 # edit /etc/postfix/main.cf
@@ -57,5 +57,5 @@ service dovecot restart
 chkconfig postfix on
 chkconfig dovecot on
 
-echo "$0 finished" >> /var/log/postinstall.log
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log
 

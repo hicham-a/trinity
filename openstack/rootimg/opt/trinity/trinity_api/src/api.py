@@ -9,7 +9,6 @@ import re
 import subprocess
 import base64
 import time
-#from config import *
 
 conf_file='/etc/trinity/trinity_api.conf'
 config=SafeConfigParser()
@@ -40,7 +39,6 @@ class TrinityAPI(object):
     if (not (self.token or hasattr(self,'password'))) and self.request.auth:
       (self.username,self.password)=self.request.auth
     self.errors()
-#    self.query = {'userName':self.trinity_user, 'password':self.trinity_password, 'pretty':'1'}
     self.query = {'userName':self.trinity_user, 'password':self.trinity_password}
     self.headers={"Content-Type":"application/json", "Accept":"application/json"} # setting this by hand for now
     self.authenticate()    
@@ -52,9 +50,6 @@ class TrinityAPI(object):
       for option in config.options(section):
         value=config.get(section,option)
         setattr(self,option,value)
-    # special for the non-strings
-    #self.trinity_port=config.getint('trinity','trinity_port')
-    #self.trinity_debug=config.getboolean('trinity','trinity_debug')  
 
   # Get value for a given key from the JSON body of request  
   def set_attrs_from_json(self):
@@ -70,7 +65,7 @@ class TrinityAPI(object):
     self.xcat_error='xCAT error'
 
   
- # Authenticate against Keystone. 
+  # Authenticate against Keystone. 
   def authenticate(self):
     if self.has_authenticated: 
       return
@@ -132,7 +127,6 @@ class TrinityAPI(object):
   def detailed_overview(self):
     global state_has_changed
     global cached_detailed_overview
-#    print state_has_changed 
     if not state_has_changed:
       return cached_detailed_overview
  
@@ -186,7 +180,7 @@ class TrinityAPI(object):
       groups=[]
       if members: groups=[x.strip() for x in members.split(',')]
       for group in groups:
-      # Assumes that the node is only a part of one hw and one vc 
+        # Assumes that the node is only a part of one hw and one vc 
         if group.startswith(self.hw): 
           info['hardware']=group[lhw:] 
         if group.startswith(self.vc): 
@@ -198,7 +192,6 @@ class TrinityAPI(object):
   def nodes_info(self, node_list):
     node_string=",".join(node_list)
     xcat_nodes=self.xcat('GET','/nodes/'+node_string)
-#    info={'hardware': None, 'cluster': None}
     lhw=len(self.hw)
     lvc=len(self.vc)
     info_dict={}
@@ -208,7 +201,7 @@ class TrinityAPI(object):
       groups=[]
       if members: groups=[x.strip() for x in members.split(',')]
       for group in groups:
-      # Assumes that the node is only a part of one hw and one vc 
+        # Assumes that the node is only a part of one hw and one vc 
         if group.startswith(self.hw): 
           info_dict[node]['hardware']=group[lhw:] 
         if group.startswith(self.vc): 
@@ -315,7 +308,7 @@ class TrinityAPI(object):
               adds_list.append(node)
       else:
         h_nodes=self.hardware_nodes(hardware)
-# Not DRY
+        # Not DRY
         if d_nodes > h_nodes['unallocated']:
           ret['error']=self.no_nodes
           return ret
@@ -330,8 +323,8 @@ class TrinityAPI(object):
         payload={'members': node_string}
         r=self.xcat(verb='PUT',path='/groups/'+xcat_cluster,payload=payload)
       else:
-      # workaround for empty nodelist (deleting cluster)
-      # Note: the group definition will still survive
+        # workaround for empty nodelist (deleting cluster)
+        # Note: the group definition will still survive
         node_string=old_list[0]
         last_node=old_list[0]
         payload={'members': node_string}
@@ -343,8 +336,6 @@ class TrinityAPI(object):
         node_groups=",".join(node_groups_list)
         payload={"groups":node_groups}
         r=self.xcat(verb='PUT',path='/nodes/'+last_node,payload=payload)
-        
-#        r=self.xcat(verb='DELETE',path='/nodes/'+xcat_cluster)
         
       if hasattr(r,'status_code'):   
         if r.status_code == requests.codes.ok:
@@ -362,16 +353,7 @@ class TrinityAPI(object):
     ret['addsList']=adds_list 
     return ret
 
- 
-   
-#  def cluster_update_containers(cluster,new_container_image):
-#    self.authenticate()
-#    ret={}
-#    ret['statusOK']=False
-#    if not(self.has_access and (self.is_admin or self.tenant == cluster)):
-#      return ret
-#    node_list=self.group_nodes(name=cluster, startkey=self.vc)
-    
+
   def mon_info(self):
     self.authenticate()
     ret={}
@@ -386,12 +368,10 @@ class TrinityAPI(object):
     
 
 ######################################################################### 
-
 trinity = Bottle()
 
 @trinity.get('/trinity/v<version:float>/')
 def welcome(version=1):
-#  req=TrinityAPI(request)
   return "Welcome to the Trinity API"
 
 @trinity.get('/trinity/v<version:float>/version')
@@ -466,14 +446,12 @@ def list_clusters(version=1):
   req=TrinityAPI(request)
   clusters=req.detailed_overview()['cluster'].keys()
   return {'statusOK': True, 'clusters': clusters}
-#  return req.groups(name='clusters',startkey=req.vc)
 
 @trinity.get('/trinity/v<version:float>/hardwares')
 def list_hardwares(version=1):
   req=TrinityAPI(request)
   hardwares=req.detailed_overview()['hardware'].keys()
   return {'statusOK': True, 'hardwares': hardwares}
-#  return req.groups(name='hardwares',startkey=req.hw)
 
 @trinity.get('/trinity/v<version:float>/nodes')
 def list_nodes(version=1):
@@ -503,7 +481,6 @@ def show_cluster(cluster,version=1):
     amount=len(set(hc_overview['cluster'][cluster]).intersection(set(hc_overview['hardware'][hardware])))
     c_overview['hardware'][hardware]=amount
   return c_overview   
-#  return req.cluster_nodes(cluster)    
 
 @trinity.get('/trinity/v<version:float>/hardwares/<hardware>')
 def show_hardware(hardware,version=1):
@@ -522,7 +499,6 @@ def show_hardware(hardware,version=1):
   h_overview['unallocated']=len(h_overview['list_unallocated'])  
   h_overview['allocated']=h_overview['total']-h_overview['unallocated']   
   return h_overview    
-#  return req.hardware_nodes(hardware)
 
 @trinity.get('/trinity/v<version:float>/clusters/<cluster>/hardware')
 def show_hardware_details(cluster,version=1):
@@ -540,22 +516,10 @@ def modify_cluster(cluster,version=1):
   state_has_changed=True
   req=TrinityAPI(request)
   ret={}
-#  ret['statusOK']=False
-#  clusters=req.groups(name='clusters',startkey=req.vc)
-#  if not clusters['statusOK']:
-#    return ret
   ret['statusOK']=True
   clusters=req.detailed_overview()['cluster'].keys()
-#  if cluster in clusters['clusters']:
   if cluster in clusters:
     cluster_exists = True
-    # Remove the cluster containers from the dns table 
-    # otherwise we will be left with stale entries
-#    vc_cluster=req.vc+cluster
-#    verb='DELETE'
-#    payload={}
-#    path='/nodes/'+vc_cluster+'/dns' 
-#    req.xcat(verb=verb,path=path,payload=payload)
 
     ret=update_cluster(req,cluster)
     slurm_needs_update=False
@@ -571,23 +535,16 @@ def modify_cluster(cluster,version=1):
       cluster_home=os.path.join(req.cluster_path,vc_cluster) 
       if not os.path.isdir(cluster_home):
         os.makedirs(cluster_home) 
-#      src_root=req.cluster_path
       src_root=req.template_dir
       vc_cluster=req.vc + cluster
-#      dest_root=os.path.join(req.cluster_path,
-#                             req.clusters_dir,
-#                             cluster)
       dest_root=os.path.join(req.cluster_path,
-#                             req.clusters_dir,
                              vc_cluster)
-#      excludes=[req.clusters_dir]
       excludes=[]
       copy_with_excludes(src_root,dest_root,excludes)
       # create munge user on the physical node it does not exist
       # then create a munge key
       subprocess.call('! id munge && useradd -u 1002 -U munge',shell=True)
       munge_dir_path=os.path.join(req.cluster_path,vc_cluster,req.munge_key_dir)
-#      munge_key_path=os.path.join(req.cluster_path,vc_cluster,req.munge_key_file)
       munge_key_path=os.path.join(munge_dir_path,req.munge_key_file)
       if os.path.isfile(munge_key_path):
         os.remove(munge_key_path)
@@ -602,11 +559,8 @@ def modify_cluster(cluster,version=1):
       subprocess.call('chmod u=rw,go=rx '+req.cluster_path+'/'+vc_cluster+'/etc/slurm/slurm.conf',shell=True) 
       subprocess.call('chmod u=rw,go=r '+req.cluster_path+'/'+vc_cluster+'/etc/slurm/slurm-nodes.conf',shell=True) 
       subprocess.call('chmod ug=rw,o=r '+req.cluster_path+'/'+vc_cluster+'/etc/slurm/slurm-user.conf',shell=True) 
-#      subprocess.call('chmod u+rw '+munge_key_path,shell=True)
-#      subprocess.call('chmod uga-rwx '+munge_key_path,shell=True)
       slurm_needs_update=True 
  
-#     Create the cluster modules and apps directories
       apps=os.path.join(req.cluster_path,vc_cluster,'apps')
       modulefiles=os.path.join(req.cluster_path,vc_cluster,'modulefiles')
       if not os.path.isdir(apps):
@@ -614,61 +568,29 @@ def modify_cluster(cluster,version=1):
       if not os.path.isdir(modulefiles):
         os.makedirs(modulefiles)
 
-  
-##  cont_list=[]
-##  if slurm_needs_update:
-##    for node in ret['nodeList']:
-#      containers are nodes 
-#      cont=node.replace(req.node_pref,req.cont_pref)
-##      cont=node
-##      cont_list.append(cont) 
-##    cont_string=','.join(cont_list)
-##    vc_cluster=req.vc + cluster
-#    slurm=os.path.join(req.cluster_path,
-#                       req.clusters_dir,
-#                       cluster,
-#                       req.slurm_node_file)
-##    slurm=os.path.join(req.cluster_path,
-#                       req.clusters_dir,
-##                       vc_cluster,
-##                       req.slurm_node_file)
-##    part_string='PartitionName='+req.cont_part+' Nodes='+cont_string+' Default=Yes MaxTime=INFINITE State=UP'
-##    part_string='PartitionName='+req.cont_part+' Nodes='+cont_string+' Default=Yes'
-##    changes={'NodeName':'NodeName='+cont_string,
-##             'PartitionName':part_string}
-##    replace_lines(slurm,changes)
-
   if slurm_needs_update:    
     vc_cluster=req.vc + cluster
     slurm=os.path.join(req.cluster_path,
                        vc_cluster,
                        req.slurm_node_file)
     fop=open(slurm,'w')
-    for cont in ret['nodeList']:
+    nodes = sorted(ret['nodeList'])
+    for cont in nodes: 
       node_name=cont
       cpu_count=all_nodes_info[cont]['cpucount']
       slurm_string='NodeName='+node_name+' CPUS='+cpu_count+' State=UNKNOWN'
       fop.write(slurm_string+'\n')
-    cont_string=','.join(ret['nodeList'])
+    cont_string=','.join(nodes)
     part_string='PartitionName='+req.cont_part+' Nodes='+cont_string+' Default=Yes MaxTime=INFINITE State=UP'
     fop.write(part_string+'\n')
     fop.close()   
       
-
-    
-#    conf_update(slurm,'NodeName',cont_string,sep='=')
-#    conf_update(slurm,'PartitionName',req.cont_part+' Nodes='+cont_string+' Default=Yes',sep='=')
-
-##---------------------------------------------------------------------
-## In this part we update makehosts, makedns etc for the cluster
-## We assume that the cluster name is a,b,c...l
-##---------------------------------------------------------------------
+  ##---------------------------------------------------------------------
+  ## In this part we update makehosts, makedns etc for the cluster
+  ##---------------------------------------------------------------------
   vc_cluster=req.vc + cluster
-  #should not hardcoded!!!
   vc_net='vc_'+cluster+'_net'
   login_cluster='login-'+cluster
-  # This will not work if cluster is not a single char!!!!!  
-  ##  second_octet=str(16+ord(cluster)-ord('a'))
 
   # Get the network info
   path="/tables/networks/rows"
@@ -687,7 +609,6 @@ def modify_cluster(cluster,version=1):
         break
 
   if not cluster_exists :
-
     # create vc-<cluster> entry in the hosts table
     # The verb is PUT because the nodes already exist
     verb='PUT' 
@@ -744,10 +665,7 @@ def modify_cluster(cluster,version=1):
     verb='DELETE'
     payload={}
     path='/nodes/'+cont_subs_string+'/dns' 
-#    req.xcat(verb=verb,path=path,payload=payload)
     r=requests.delete(req.xcat_host+path,verify=False,params=req.query)
-#    cmd="curl -k -X DELETE \'"+req.xcat_host+path+"?userName="+req.trinity_user+"&password="+req.trinity_password+"\'"
-#    subprocess.call(cmd,shell=True)
     verb='POST'
     payload={"command":["docker stop trinity; docker rm trinity"]}
     path='/nodes/'+node_subs_string+'/nodeshell'
@@ -773,31 +691,11 @@ def modify_cluster(cluster,version=1):
     payload={"command":["docker stop trinity; docker rm trinity; service trinity restart"]}
     path='/nodes/'+node_adds_string+'/nodeshell'
     req.xcat(verb=verb,path=path,payload=payload)
-  
-
-#  verb='POST'
-#  payload={}
-#  path='/nodes/'+vc_cluster+'/host' 
-#  req.xcat(verb=verb,path=path,payload=payload)
-#  path='/nodes/'+vc_cluster+'/dns' 
-#  req.xcat(verb=verb,path=path,payload=payload)
-#  # restart containers
-#  changed_nodes_list=[]
-#  for cont in adds_list+subs_list:
-#    changed_node=cont.replace(req.cont_pref,req.node_pref,1)
-#  changed_nodes_string=",".join(changed_nodes_list)  
-#  verb='POST'
-#  # payload={"command":["service trinity force-reload"]}
-#  payload={"command":["docker stop trinity; docker rm trinity; service trinity restart"]}
-#  # limited by the max url length supported by Triniy API and xCAT API
-#  path='/nodes/'+changed_nodes_string+'/nodeshell'
-#  req.xcat(verb=verb,path=path,payload=payload)
-#  req.create_login_node()
   state_has_changed=True
 
-#----------------------------------------------------------------------
-# Now create the login node
-#----------------------------------------------------------------------
+  #----------------------------------------------------------------------
+  # Now create the login node
+  #----------------------------------------------------------------------
   login_ip="172."+second_octet+".255.254"
   returncode=subprocess.call("ping -c 1 "+login_ip, shell=True)
   if returncode != 0:
@@ -841,7 +739,6 @@ def modify_cluster(cluster,version=1):
     headers.update(req.headers)
     r=requests.get(path,headers=headers)
     for user in r.json()["users"]:
-#      if user["username"] == "admin":
       if user["username"] == "trinity_dummy_user":
         user_id=user["id"]
         break
@@ -933,9 +830,8 @@ def modify_cluster(cluster,version=1):
     login_data=fop.read()
     fop.close()
     replacements={
-      # "controller=10.141.255.254":"controller=controller",
-      # "FLOATING_IP=127.0.0.1": "FLOATING_IP="+"172."+second_octet+".255.254",
-      "vc-a":vc_cluster
+      "vc-a":vc_cluster,
+      "UTC":time.tzname[1]
     }
     for i,j in replacements.iteritems():
       print i,j
@@ -957,17 +853,11 @@ def modify_cluster(cluster,version=1):
     }
     r = requests.post(path, data=json.dumps(payload), headers=headers)
     instance_id=r.json()["server"]["id"]
-#    print instance_id
 
     # This is added to add a small delay between creating the instance 
     # and associating a floating ip, otherwise we get the following message
     # "No nw_info cache associated with instance"
     time.sleep(5)
-#    path=req.nova_host+'/'+tenant_id+'/servers/'+instance_id
-#    headers={"X-Auth-Project-Id":cluster, "X-Auth-Token":tenant_token}
-#    headers.update(req.headers)
-#    r = requests.get(path, headers=headers)
-
 
     path=req.nova_host+'/'+tenant_id+'/servers/'+instance_id+'/action'
     headers={"X-Auth-Project-Id":cluster, "X-Auth-Token":tenant_token}
@@ -978,8 +868,6 @@ def modify_cluster(cluster,version=1):
       }
     } 
     r = requests.post(path, data=json.dumps(payload), headers=headers)
-#    print path
-#    print r.json()
   
     path=req.keystone_admin+'/tenants/'+tenant_id+'/users/'+user_id+'/roles/OS-KSADM/'+role_id
     headers={"X-Auth-Token":req.token}
@@ -1123,11 +1011,8 @@ def startup():
       network_map.update({second_octet:network["domain"]})
 
   state_has_changed=False
-
-#  print hc_overview
   trinity.run(host=trinity_host, port=trinity_port, debug=trinity_debug, server=trinity_server)
   
 
 if __name__=="__main__":
    startup()
-#  trinity.run(host=trinity_host, port=trinity_port, debug=trinity_debug, server=trinity_server)

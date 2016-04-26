@@ -1,5 +1,6 @@
 #Please make sure there is a space between @ and group name
 wget
+curl
 ntp
 nfs-utils
 net-snmp
@@ -8,6 +9,8 @@ yp-tools
 openssh-server
 util-linux-ng
 net-tools
+httpd
+mod_wsgi
 
 # X fwding
 xorg-x11-xauth
@@ -26,4 +29,28 @@ pciutils
 createrepo
 net-snmp-utils
 
+redhat-lsb
+
+strace
+tcpdump
+telnet
+minicom
+screen
+
 #
+git
+vim-enhanced
+mlocate
+
+# slapd
+openldap
+openldap-clients
+openldap-servers
+python-ldap
+authconfig
+
+
+# Infiniband
+opensm
+infiniband-diags
+@ Infiniband Support

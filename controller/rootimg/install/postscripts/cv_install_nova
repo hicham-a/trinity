@@ -12,14 +12,14 @@ main(){
   # Parameters and constants
   NODE_IP=$(hostname -I| awk '{print $1}')
 
-# Set SeLinux to permissive mode
+  # Set SeLinux to permissive mode
   setenforce 0
 
-# Stop NetworkManager  
+  # Stop NetworkManager  
   systemctl stop NetworkManager
   systemctl disable NetworkManager
   killall dhclient
-  systemctl start network
+  systemctl restart network
 
   systemctl stop openstack-nova-compute.service openstack-nova-network.service openstack-nova-metadata-api.service
 
@@ -60,9 +60,9 @@ main(){
   mount -a
   chown -R nova:nova /var/lib/nova
 
-#-------------------------------------------------
-# Configure the openstack-nova-compute component
-#-------------------------------------------------
+  #-------------------------------------------------
+  # Configure the openstack-nova-compute component
+  #-------------------------------------------------
   echo "----Configuring openstack-nova-compute: editing /etc/nova/nova.conf----"  
   # Set up the message broker (rabbit_mq)
   # -- NOTE: The rpc_password needs to be identical to that in the openstack controller
@@ -104,9 +104,9 @@ main(){
   systemctl restart libvirtd.service openstack-nova-compute.service
   systemctl enable  libvirtd.service openstack-nova-compute.service
 
-#-------------------------------------------------
-# Configure the openstack-nova-network component
-#-------------------------------------------------
+  #-------------------------------------------------
+  # Configure the openstack-nova-network component
+  #-------------------------------------------------
   echo "----Configuring openstack-nova-network: editing /etc/nova/nova.conf----"  
   # Parameters and constants
   read ETH1 ETH2 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -2)
@@ -132,7 +132,6 @@ main(){
   systemctl start openstack-nova-metadata-api.service  
 
 }
-
 
 # Main script
 main "$@"

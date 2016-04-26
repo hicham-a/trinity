@@ -1,0 +1,26 @@
+#! /usr/bin/bash
+##title          : cv_setup_xcatdb
+##description    : Changes the xcat database to a (dockerized) mariadb or galera
+##author         : Hans Then 
+##email          : hans.then@clustervision
+
+
+if docker ps | grep galera; then
+    container=galera
+else if docker ps | grep mariadb; then
+    container=mariadb
+fi
+
+source /etc/profile.d/xcat.sh
+dumpxCATdb -p /tmp/xcattables
+
+docker exec ${container} /usr/bin/mysql -psystem -e "create database xcatdb;"
+docker exec ${container} /usr/bin/mysql -psystem -e "CREATE USER xcatadmin IDENTIFIED BY 'system';"
+docker exec ${container} /usr/bin/mysql -psystem -e "GRANT ALL on xcatdb.* TO xcatadmin@'%' IDENTIFIED BY 'system';"
+
+echo "mysql:dbname=xcatdb;host=controller|xcatadmin|system" > /etc/xcat/cfgloc
+XCATBYPASS=y restorexCATdb -p /tmp/xcattables
+systemctl restart xcatd
+
+echo "The xcat db is now running from a dockerized ${container}"
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+##description    : Protects the external port to allow only SSH
+##author         : Hans Then
+##email          : hans.then@clustervision.com
+
+ETH1=$(ip route | grep default | awk  '{print $5}' | head -1)
+iptables -A INPUT -i $ETH1 -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A INPUT -i $ETH1 -p tcp --dport 22 -j ACCEPT
+iptables -A INPUT -i $ETH1 -j DROP
+service iptables save
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log

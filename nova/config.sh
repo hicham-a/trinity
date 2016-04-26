@@ -8,13 +8,13 @@
 LOGFILE=/var/log/postinstall.log
 
 # [openstack controller]
-OPENSTACK_CONTROLLER=10.141.0.3
+OPENSTACK_CONTROLLER=10.141.255.254
 
 # [rabbitmq]
 RPC_PASS=guest
 
 # [nova]
-NOVA_PASS=b3cbd81297c64321
+NOVA_PASS=system
 
 # [cinder]
 CINDER_PASS=system

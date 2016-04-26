@@ -7,12 +7,12 @@
 ##                 The volume group will always be mounted under /var.
 ##email          : Hans Then <hans.then@clustervision.com>
 
-if [ $(lvs --noheadings | awk -F' ' '{print $1}') == $PROFILE ]; then
+if [ "$(lvs --noheadings | grep -v docker-pool | awk -F' ' '{print $1}')" == "$PROFILE" ]; then
    echo "$0 already configured" >> /var/log/postinstall.log
 else
    # remove existing volume groups
    umount -a -t ext4
-   for vg in $(vgs --noheadings | grep -v "No Volumes" | awk -F' ' '{print $1}'); do 
+   for vg in $(vgs --noheadings | grep -v "No Volumes" | grep -v docker-pool | awk -F' ' '{print $1}'); do 
       vgchange -a n $vg
       vgremove -f $vg
    done
@@ -34,15 +34,12 @@ else
    cp -rT /var /tmp/var
    umount /tmp/var
 fi
+# Fix for #608
+mkdir -p /.var/lib
+mv /var/lib/rpm /.var/lib/
 echo "/dev/storage/$PROFILE	/var/ 	ext4	defaults,errors=remount-ro  0  2" >> /etc/fstab 
 mount -a
-# Fix for #411 : symlink to stateless var
+# Fix for 411 : symlink to stateless var
 rm -rf /var/lib/rpm
 ln -s /.var/lib/rpm /var/lib/
-
-# FIXME: move this into a separate script
-systemctl start docker
-docker stop trinity 2> /dev/null
-docker rm trinity 2> /dev/null
-systemctl start trinity
-echo "$0 finished" >> /var/log/postinstall.log
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log

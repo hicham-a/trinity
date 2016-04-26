@@ -82,3 +82,15 @@ dmidecode
 
 #Fix for 210
 lvm2
+
+#Fix for #509
+yum-utils
+
+# Required for #577
+psmisc
+
+# Fix for #526
+mcelog
+
+# Required for gethostip
+syslinux

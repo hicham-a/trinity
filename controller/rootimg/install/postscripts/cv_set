@@ -1,0 +1,6 @@
+#!/bin/bash
+set
+
+echo "$0 finished" >> /var/log/postinstall.log
+exit 0
+

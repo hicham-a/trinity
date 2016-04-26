@@ -1,0 +1,17 @@
+[Unit]
+Description=Dockerized MariaDB
+Requires=docker.service
+After=docker.service
+Before=xcatd.service
+
+[Service]
+Restart=always
+ExecStartPre=-/usr/bin/docker create --net=host --privileged=true \
+             --name=mariadb --env=MYSQL_ROOT_PASSWORD=system \
+             --volume=/drbd/mariadb_data:/var/lib/mysql controller:5050/mariadb
+ExecStart=/usr/bin/docker start -a mariadb
+ExecStop=/usr/bin/docker stop -t 300 mariadb
+TimeoutSec=600
+
+[Install]
+WantedBy=multi-user.target

@@ -29,7 +29,7 @@ def version(request):
   return c.version()
 
 def overview(request):
-  excluded_tenants=['services','admin','demo']
+  excluded_tenants=['services','service','admin','demo']
   c=trinityclient(request)
   hardwares_list=c.hardwares_list()
   clusters_list=c.clusters_list()

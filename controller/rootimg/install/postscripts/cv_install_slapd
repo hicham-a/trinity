@@ -3,14 +3,16 @@
 #----------------------------------------------------------------------------
 # Install OpenLDAP on the controller node
 #----------------------------------------------------------------------------
-yum -y install openldap openldap-clients openldap-servers
-yum -y install python-ldap python-retrying
-yum -y install nss-pam-ldapd authconfig
-
 cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
 
 rm -rf /etc/openldap/slapd.d
 cp -rLT /trinity/openldap/rootimg /
+
+chown -R ldap. /etc/openldap/
+chmod 600 /etc/openldap/{slapd,cv_local}.conf /etc/openldap/certs/ssl/key
+
+sed -i 's,^SLAPD_URLS=.*,SLAPD_URLS="ldapi:/// ldap:/// ldaps:///",' /etc/sysconfig/slapd
+
 systemctl enable slapd 
 systemctl start slapd
 
@@ -43,32 +45,17 @@ objectClass: uidNext
 uidNumber: 150
 EOF
 
-#----------------------------------------------------------------------------
-# Change access rights to allow for PAM users to authenticate
-#----------------------------------------------------------------------------
-ldapmodify -Y EXTERNAL -H ldapi:/// << EOF
-dn: olcDatabase={2}hdb,cn=config
-changetype: modify
-add: olcAccess
-olcAccess: to attrs=userPassword by self write
-  by anonymous auth
-  by * none
--
-add: olcAccess
-olcAccess: to * by self write
-  by * read
-EOF
+obol -w system group add power-users
 
 #----------------------------------------------------------------------------
 # Setup PAM
 #----------------------------------------------------------------------------
-yum -y install nss-pam-ldapd authconfig
+yum -y -q install sssd authconfig
 
-#authconfig-tui --kickstart --enableldapauth --ldapbasedn=dc=cluster \
-#     --ldapserver=localhost 
-authconfig --enablemkhomedir --enableldapauth --ldapbasedn=dc=cluster \
-     --ldapserver=localhost --update
+chmod 600 /etc/sssd/sssd.conf
+systemctl enable sssd
+systemctl start sssd
 
-echo "$0 finished" >> /var/log/postinstall.log
-exit 0
+authconfig --enablemkhomedir --enablesssd --enablesssdauth --update
 
+echo "$0 finished @ $(date)" >> /var/log/postinstall.log
