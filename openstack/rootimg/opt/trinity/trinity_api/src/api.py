@@ -23,7 +23,7 @@ trinity_password=config.get('xcat','trinity_password')
 node_pref=config.get('cluster','node_pref')
 cont_pref=config.get('cluster','cont_pref')
 
-xcat_version = subprocess.check_output('lsxcatd -v', shell=True):
+xcat_version = subprocess.check_output('/opt/xcat/bin/lsxcatd -v', shell=True)
 version = re.search(r'Version \d+\.(\d+)(\.\d+)?\s', xcat_version)
 if version and int(version.group(1)) < 11:
     password_parm = 'password'
