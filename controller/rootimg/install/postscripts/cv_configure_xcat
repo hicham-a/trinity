@@ -15,6 +15,7 @@ if [ ! -z $SITEMASTER ]; then
     echo "Creating installation tree"
     source /etc/profile.d/xcat.sh
     copycds -n centos7 -o $(ls -cr /tmp/trinity/iso/*.iso | head -1) > /dev/null
+    XCAT_VERSION=$(lsxcatd -a | head -n1 | awk '{print $2}')
 else
     echo No master found, checking for a git repository.
     SCRIPT=$(readlink -f $0)
@@ -28,14 +29,14 @@ else
     (git branch | grep "*"; git rev-parse --short HEAD; git status --porcelain) > /tmp/trinity/version
     cd -
 
-    XCAT_VERSION=$(lsxcatd -a | head -n1 | awk '{print $2}')
+    XCAT_VERSION=2.11
     # setup repositories
     yum -y -q install $(grep -v ^# $REPODIR/controller/rootimg/install/custom/install/centos/controller.pkglist)
     yum -y -q install epel-release
     yum -y -q install http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
-    wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/${XCAT_VERSION}/xcat-core/xCAT-core.repo \
+    wget --no-check-certificate https://xcat.org/files/xcat/repos/yum/${XCAT_VERSION}/xcat-core/xCAT-core.repo \
          -O /etc/yum.repos.d/xCAT-core.repo
-    wget --no-check-certificate http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo -O /etc/yum.repos.d/xCAT-dep.repo
+    wget --no-check-certificate https://xcat.org/files/xcat/repos/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo -O /etc/yum.repos.d/xCAT-dep.repo
     yum -y -q install https://repos.fedorapeople.org/repos/openstack/EOL/openstack-juno/rdo-release-juno-1.noarch.rpm
     sed -i "/^baseurl/s/openstack-juno/EOL\/openstack-juno/" /etc/yum.repos.d/rdo-release.repo
     yum -y -q install $(grep -v ^# $REPODIR/controller/rootimg/install/custom/install/centos/controller.otherpkgs)
@@ -107,8 +108,8 @@ sed -i "/^baseurl/s/openstack-juno/EOL\/openstack-juno/" /etc/yum.repos.d/rdo-re
 yum -y -q install http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
 yum-config-manager --disable xcat-otherpkgs* local-centos* > /dev/null
 yum-config-manager --enable base epel extras updates openstack-juno > /dev/null
-yum-config-manager --add-repo http://sourceforge.net/projects/xcat/files/yum/${XCAT_VERSION}/xcat-core/xCAT-core.repo > /dev/null
-yum-config-manager --add-repo http://sourceforge.net/projects/xcat/files/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo > /dev/null
+yum-config-manager --add-repo https://xcat.org/files/xcat/repos/yum/${XCAT_VERSION}/xcat-core/xCAT-core.repo > /dev/null
+yum-config-manager --add-repo https://xcat.org/files/xcat/repos/yum/xcat-dep/rh7/x86_64/xCAT-dep.repo > /dev/null
 
 echo "Syncing repositories, this may take some time"
 if [ -z $SITEMASTER ]; then
