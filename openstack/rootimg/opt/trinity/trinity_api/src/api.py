@@ -9,6 +9,7 @@ import re
 import subprocess
 import base64
 import time
+import tzlocal
 
 conf_file='/etc/trinity/trinity_api.conf'
 config=SafeConfigParser()
@@ -25,7 +26,7 @@ cont_pref=config.get('cluster','cont_pref')
 
 xcat_version = subprocess.check_output('/opt/xcat/bin/lsxcatd -v', shell=True)
 version = re.search(r'Version \d+\.(\d+)(\.\d+)?\s', xcat_version)
-if version and int(version.group(1)) < 11:
+if version and int(version.group(1)) < 10:
     password_parm = 'password'
 else:
     password_parm = 'userPW'
@@ -838,7 +839,7 @@ def modify_cluster(cluster,version=1):
     fop.close()
     replacements={
       "vc-a":vc_cluster,
-      "UTC":time.tzname[1]
+      "UTC":tzlocal.get_localzone().zone or 'UTC'
     }
     for i,j in replacements.iteritems():
       print i,j
