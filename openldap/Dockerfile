@@ -1,5 +1,14 @@
 FROM centos:latest
-RUN yum -y swap -- remove systemd-container* -- install systemd systemd-libs
-RUN yum -y -q install openldap-servers
+MAINTAINER hicham.amrati@clustervision.com
+
+RUN yum -y install openldap-servers
 RUN cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
-ADD slapd.d /etc/openldap/slapd.d
+
+COPY rootimg /
+
+VOLUME /var/lib/ldap
+
+EXPOSE 389
+EXPOSE 636
+
+ENTRYPOINT ["slapd", "-h", "ldap:/// ldaps:///", "-u", "ldap", "-g", "ldap", "-d0"]

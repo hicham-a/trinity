@@ -3,15 +3,17 @@
 #----------------------------------------------------------------------------
 # Install OpenLDAP on the controller node
 #----------------------------------------------------------------------------
-cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
+systemctl start docker
 
-rm -rf /etc/openldap/slapd.d
-cp -rLT /trinity/openldap/rootimg /
+if [ -z ${SITEMASTER} ]; then
+    docker build --rm=true -t controller:5050/opendlap /trinity/openldap
+else
+    docker pull ${SITEMASTER}:5050/openldap
+    docker tag ${SITEMASTER}:5050/openldap controller:5050/openldap
+fi
 
-chown -R ldap. /etc/openldap/
-chmod 600 /etc/openldap/{slapd,cv_local}.conf /etc/openldap/certs/ssl/key
-
-sed -i 's,^SLAPD_URLS=.*,SLAPD_URLS="ldapi:/// ldap:/// ldaps:///",' /etc/sysconfig/slapd
+cp -LrT /tmp/trinity/openldap/host/rootimg /
+cp /tmp/trinity/openldap/rootimg/usr/sbin/obol /usr/local/sbin/
 
 systemctl enable slapd 
 systemctl start slapd

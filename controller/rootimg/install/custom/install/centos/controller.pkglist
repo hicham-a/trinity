@@ -43,9 +43,7 @@ vim-enhanced
 mlocate
 
 # slapd
-openldap
 openldap-clients
-openldap-servers
 python-ldap
 authconfig
 

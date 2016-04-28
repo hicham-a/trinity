@@ -1,0 +1,13 @@
+[Unit]
+Description=Dockerized OpenLDAP
+
+[Service]
+Restart=always
+ExecStartPre=-/usr/bin/mkdir /var/lib/ldap
+ExecStartPre=/usr/bin/chown -R ldap:ldap /var/lib/ldap
+ExecStartPre=-/usr/bin/docker create -p 389:389 -p 636:636 -v /var/lib/ldap:/var/lib/ldap --name=openldap controller:5050/openldap
+ExecStart=/usr/bin/docker start openldap
+ExecStop=/usr/bin/docker stop -t 2 openldap
+
+[Install]
+WantedBy=multi-user.target
