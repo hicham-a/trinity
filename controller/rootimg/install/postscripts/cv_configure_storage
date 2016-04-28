@@ -24,7 +24,7 @@ else
       pvcreate /dev/$disk
    done
    # create a volume group and logical volumes
-   vgcreate -f storage $(for d in $disks; do echo -n /dev/$disk; echo -n " " ; done)
+   vgcreate -f storage $(for disk in $disks; do echo -n /dev/$disk; echo -n " " ; done)
    vgchange -a y storage
    lvcreate -l 90%VG -n $PROFILE storage
    # create a file system and initialize it from the image
