@@ -9,6 +9,10 @@
 #--------------------------------------------------------------------------------------
 # Install Trinity stuff
 #--------------------------------------------------------------------------------------
+
+# wait for pacemaker to setup controller's floating ip
+while ! ping -c1 controller.cluster &>/dev/null; do :; done
+
 # determine if a master is used to install this node:
 if [ ! -z $SITEMASTER ]; then
     echo master is present
