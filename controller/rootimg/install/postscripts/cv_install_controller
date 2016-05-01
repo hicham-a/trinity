@@ -86,6 +86,7 @@ for table in $(ls /tmp/trinity/controller/xcat/tables); do
 done
 
 restorexCATdb -p /tmp/xcattables  
+chtab key=timezone site.value=$(timedatectl | grep "Time zone" | grep -oP "Time zone: \K\S+")
 
 cd /opt/xcat/share/xcat/netboot/centos
 
