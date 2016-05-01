@@ -224,6 +224,7 @@ else
     docker tag ${SITEMASTER}:5050/trinity controller:5050/trinity
 fi
 docker push controller:5050/trinity &
+chmod -x /usr/lib/systemd/system/*
 
 #--------------------------------------------
 # Install the xCAT web service
