@@ -21,7 +21,9 @@ RUN mkdir -p /var/run/sshd && \
     chmod -rx /var/run/sshd && \
     ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key && \
     ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key && \
-    sed -ri 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/g' /etc/ssh/sshd_config
+    sed -i -e 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/g' \
+           -e 's/AcceptEnv XMODIFIERS/AcceptEnv TZ XMODIFIERS/g' \
+        /etc/ssh/sshd_config
 
 RUN pip install supervisor
 COPY rootimg /
