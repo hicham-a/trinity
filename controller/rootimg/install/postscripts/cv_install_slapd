@@ -21,6 +21,10 @@ systemctl start slapd
 #----------------------------------------------------------------------------
 # Setup the local database
 #----------------------------------------------------------------------------
+
+# wait for slapd
+while ! nc localhost 389 < /dev/null 2>/dev/null; do sleep 1; done
+
 ldapadd -D cn=Manager,dc=local -w system << EOF
 dn: dc=local
 dc: local

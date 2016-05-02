@@ -13,4 +13,7 @@ VOLUME /var/lib/ldap
 EXPOSE 389
 EXPOSE 636
 
-ENTRYPOINT ["slapd", "-f", "/etc/openldap/slapd.conf", "-h", "ldap:/// ldaps:///", "-u", "ldap", "-g", "ldap", "-d0"]
+RUN chmod +x /docker-entrypoint.sh
+
+CMD ["slapd", "-f", "/etc/openldap/slapd.conf", "-h", "ldap:/// ldaps:///", "-u", "ldap", "-g", "ldap", "-d1"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
