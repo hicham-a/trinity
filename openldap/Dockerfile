@@ -6,7 +6,7 @@ RUN cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
 
 COPY rootimg /
 RUN chown -R ldap. /etc/openldap/ && \
-    chmod 600 /etc/openldap/{slapd,cv_local}.conf /etc/openldap/certs/ssl/key
+    chmod 600 /etc/openldap/{slapd,cv_local,cv_synrepl}.conf /etc/openldap/certs/ssl/key
 
 VOLUME /var/lib/ldap
 

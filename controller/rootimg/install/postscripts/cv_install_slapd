@@ -19,13 +19,17 @@ systemctl enable slapd
 systemctl start slapd
 
 #----------------------------------------------------------------------------
-# Setup the local database
+# Setup the local database on the main controller
 #----------------------------------------------------------------------------
+n=$(echo $NODE | egrep -o '[[:digit:]]*' | head -n1)
+# normalize to 1 or 2
+N=$((((n-1)%2)+1))
 
-# wait for slapd
-while ! nc localhost 389 < /dev/null 2>/dev/null; do sleep 1; done
-
-ldapadd -D cn=Manager,dc=local -w system << EOF
+if [[ $N = 1 ]]; then
+    # wait for slapd
+    while ! nc localhost 389 < /dev/null 2>/dev/null; do sleep 1; done
+    
+    ldapadd -D cn=Manager,dc=local -w system << EOF
 dn: dc=local
 dc: local
 objectClass: domain
@@ -51,10 +55,11 @@ objectClass: uidNext
 uidNumber: 150
 EOF
 
-obol -w system group add power-users
+    obol -w system group add power-users
+fi
 
 #----------------------------------------------------------------------------
-# Setup PAM
+# Setup SSSD
 #----------------------------------------------------------------------------
 yum -y -q install sssd authconfig
 
