@@ -37,6 +37,7 @@ yum -y -q install epel-release
 yum -y -q install python-pip
 pip install bottle
 pip install cherrypy
+pip install tzlocal
 
 #-- Trinity API setup
 cd /opt/trinity/trinity_api
