@@ -25,6 +25,10 @@ RUN mkdir -p /var/run/sshd && \
            -e 's/AcceptEnv XMODIFIERS/AcceptEnv TZ XMODIFIERS/g' \
         /etc/ssh/sshd_config
 
+RUN rm /etc/rsyslog.d/listen.conf && \
+    sed -i "s/^\$OmitLocalLogging on/#\$OmitLocalLogging on/" \
+     /etc/rsyslog.conf
+
 RUN pip install supervisor
 COPY rootimg /
 
