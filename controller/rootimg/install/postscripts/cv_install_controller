@@ -28,7 +28,7 @@ else
 
     # Fix #379
     cd $REPODIR
-    (git branch | grep "*"; git rev-parse --short HEAD; git status --porcelain) > /tmp/trinity/version
+    (git branch | grep "*"; git describe; git status --porcelain) > /tmp/trinity/version
     cd -
 
     # setup repositories

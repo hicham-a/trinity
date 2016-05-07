@@ -53,6 +53,7 @@ virt-customize -a ${LOGIN_IMG} \
     --install python-ldap,python-retrying,xorg-x11-xauth,bind-utils,python-pip,git,jq,traceroute,tcpdump
                                
 virt-copy-in -a ${LOGIN_IMG} /trinity/login/rootimg/* /
+virt-copy-in -a ${LOGIN_IMG} /trinity/version/* /login-image-version
 
 # Diagnostics
 virt-cat -a ${LOGIN_IMG} /etc/ssh/sshd_config | grep PasswordAuthentication
