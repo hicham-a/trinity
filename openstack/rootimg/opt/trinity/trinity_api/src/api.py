@@ -10,6 +10,7 @@ import subprocess
 import base64
 import time
 import tzlocal
+from retrying import retry
 
 conf_file='/etc/trinity/trinity_api.conf'
 config=SafeConfigParser()
@@ -581,17 +582,21 @@ def modify_cluster(cluster,version=1):
     slurm=os.path.join(req.cluster_path,
                        vc_cluster,
                        req.slurm_node_file)
-    fop=open(slurm,'w')
-    nodes = sorted(ret['nodeList'])
-    for cont in nodes: 
-      node_name=cont
-      cpu_count=all_nodes_info[cont]['cpucount']
-      slurm_string='NodeName='+node_name+' CPUS='+cpu_count+' State=UNKNOWN'
-      fop.write(slurm_string+'\n')
-    cont_string=','.join(nodes)
-    part_string='PartitionName='+req.cont_part+' Nodes='+cont_string+' Default=Yes MaxTime=INFINITE State=UP'
-    fop.write(part_string+'\n')
-    fop.close()   
+    @retry(stop_max_attempt_number=7)
+    def try_write():
+      fop=open(slurm,'w')
+      nodes = sorted(ret['nodeList'])
+      for cont in nodes:
+        node_name=cont
+        cpu_count=all_nodes_info[cont]['cpucount']
+        slurm_string='NodeName='+node_name+' CPUS='+cpu_count+' State=UNKNOWN'
+        fop.write(slurm_string+'\n')
+      cont_string=','.join(nodes)
+      part_string='PartitionName='+req.cont_part+' Nodes='+cont_string+' Default=Yes MaxTime=INFINITE State=UP'
+      fop.write(part_string+'\n')
+      fop.close()
+    try_write()
+
       
   ##---------------------------------------------------------------------
   ## In this part we update makehosts, makedns etc for the cluster
