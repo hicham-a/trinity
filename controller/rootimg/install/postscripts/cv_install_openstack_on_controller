@@ -58,8 +58,8 @@ sed -e "s/127.0.0.1/10.141.255.254/g" \
 mkdir -p /var/log/trinity
 
 # Start the API
-service trinity_api start
-chkconfig trinity_api on
+systemctl start trinity-api
+systemctl enable trinity-api
 
 #-- Install the python client
 cd /opt/trinity/trinity_client
