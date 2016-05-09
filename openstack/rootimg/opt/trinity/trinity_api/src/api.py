@@ -11,6 +11,7 @@ import base64
 import time
 import tzlocal
 from retrying import retry
+from novaclient import client as novaclient
 
 conf_file='/etc/trinity/trinity_api.conf'
 config=SafeConfigParser()
@@ -24,6 +25,8 @@ trinity_user=config.get('xcat','trinity_user')
 trinity_password=config.get('xcat','trinity_password')
 node_pref=config.get('cluster','node_pref')
 cont_pref=config.get('cluster','cont_pref')
+keystone_admin_user=config.get('keystone', 'keystone_admin_user')
+keystone_admin_pass=config.get('keystone', 'keystone_admin_pass')
 
 xcat_version = subprocess.check_output('/opt/xcat/bin/lsxcatd -v', shell=True)
 version = re.search(r'Version \d+\.(\d+)(\.\d+)?\s', xcat_version)
@@ -582,7 +585,7 @@ def modify_cluster(cluster,version=1):
     slurm=os.path.join(req.cluster_path,
                        vc_cluster,
                        req.slurm_node_file)
-    @retry(stop_max_attempt_number=7)
+    @retry(stop_max_delay=10000,wait_fixed=1000)
     def try_write():
       fop=open(slurm,'w')
       nodes = sorted(ret['nodeList'])
@@ -596,6 +599,7 @@ def modify_cluster(cluster,version=1):
       fop.write(part_string+'\n')
       fop.close()
     try_write()
+    subprocess.call('echo slurm-nodes.conf was written',shell=True) 
 
       
   ##---------------------------------------------------------------------
@@ -604,6 +608,7 @@ def modify_cluster(cluster,version=1):
   vc_cluster=req.vc + cluster
   vc_net='vc_'+cluster+'_net'
   login_cluster='login-'+cluster
+
 
   # Get the network info
   path="/tables/networks/rows"
@@ -710,8 +715,9 @@ def modify_cluster(cluster,version=1):
   # Now create the login node
   #----------------------------------------------------------------------
   login_ip="172."+second_octet+".255.254"
-  returncode=subprocess.call("ping -c 1 "+login_ip, shell=True)
-  if returncode != 0:
+  nova = novaclient.Client('2', keystone_admin_user, keystone_admin_pass, 
+                           'admin', req.keystone_host, connection_pool=True)
+  if not nova.servers.list(search_opts={'all_tenants': 1, 'name': 'login-' + cluster}):
     login_pool=login_cluster
     path=req.nova_host+'/'+req.tenant_id+'/os-floating-ips-bulk'
     headers={"X-Auth-Project-Id":"admin", "X-Auth-Token":req.token}
