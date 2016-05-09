@@ -26,10 +26,9 @@ n=$(echo $NODE | egrep -o '[[:digit:]]*' | head -n1)
 N=$((((n-1)%2)+1))
 
 if [[ $N = 1 ]]; then
-    # wait for slapd
-    while ! nc localhost 389 < /dev/null 2>/dev/null; do sleep 1; done
-    
-    ldapadd -D cn=Manager,dc=local -w system << EOF
+
+    while :; do
+        ldapadd -D cn=Manager,dc=local -w system 2>/dev/null << EOF
 dn: dc=local
 dc: local
 objectClass: domain
@@ -54,6 +53,10 @@ cn: gid
 objectClass: uidNext
 uidNumber: 150
 EOF
+
+        [[ $? == 0 ]] && break;
+        sleep 5;
+    done
 
     obol -w system group add power-users
 fi

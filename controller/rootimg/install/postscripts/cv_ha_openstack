@@ -84,7 +84,7 @@ pcs cluster cib-push config
 #--------------------------------------------------------------------------
 
 # wait for slapd
-while ! nc localhost 389 < /dev/null 2>/dev/null; do sleep 1; done
+while :; do ldapsearch -x -b dc=local &>/dev/null; [[ $? != 255 ]] && break; sleep 1; done
 
 keystone_endpoint="http://controller.cluster:35357/v2.0"
 for i in {300..0}; do
