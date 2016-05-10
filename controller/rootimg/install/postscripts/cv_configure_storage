@@ -12,7 +12,7 @@ if [ "$(lvs --noheadings | grep -v docker-pool | awk -F' ' '{print $1}')" == "$P
 else
    # remove existing volume groups
    umount -a -t ext4
-   for vg in $(vgs --noheadings | grep -v "No Volumes" | grep -v docker-pool | awk -F' ' '{print $1}'); do 
+   for vg in $(vgs --noheadings | grep -v docker-pool | grep -v "No Volumes" | awk -F' ' '{print $1}'); do 
       vgchange -a n $vg
       vgremove -f $vg
    done

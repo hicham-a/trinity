@@ -5,16 +5,12 @@ RUN yum -y swap -- remove systemd-container* -- install systemd systemd-libs
 RUN yum -y -q install --setopt=tsflags=nodocs epel-release && \
     yum -y -q install --setopt=tsflags=nodocs https://repos.fedorapeople.org/repos/openstack/EOL/openstack-juno/rdo-release-juno-1.noarch.rpm
 RUN sed -i "/^baseurl/s/openstack-juno/EOL\/openstack-juno/" /etc/yum.repos.d/rdo-release.repo
-Run yum -y -q install --setopt=tsflags=nodocs openstack-selinux openstack-utils openstack-glance python-glanceclient && \
-    yum -y -q install --setopt=tsflags-nodocs python-pip && \
+RUN yum -y -q install --setopt=tsflags=nodocs openstack-selinux openstack-utils openstack-glance python-glanceclient && \
+    yum -y -q install --setopt=tsflags=nodocs python-pip && \
     yum -y update && yum clean all
 
 RUN pip install supervisor
 VOLUME /var/lib/glance
-
-
-# RUN chown glance:glance /etc/glance/glance-api.conf
-# RUN chown glance:glance /etc/glance/glance-registry.conf
 
 EXPOSE 9191 9292
 ENTRYPOINT ["/docker-entrypoint.sh"]
