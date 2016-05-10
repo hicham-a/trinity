@@ -19,7 +19,7 @@ if [ ! -z $SITEMASTER ]; then
     echo "Creating installation tree"
     source /etc/profile.d/xcat.sh
     copycds -n centos7 -o $(ls -cr /tmp/trinity/iso/*.iso | head -1) > /dev/null
-    XCAT_VERSION=$(lsxcatd -a | head -n1 | awk '{print $2}')
+    XCAT_VERSION=$(lsxcatd -a | awk -F '[ .]' '/^Version/ {printf "%s.%s", $2, $3}')
 else
     echo No master found, checking for a git repository.
     SCRIPT=$(readlink -f $0)
