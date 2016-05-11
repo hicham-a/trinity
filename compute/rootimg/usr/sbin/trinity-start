@@ -16,9 +16,8 @@ while : ; do
         continue;
     fi
 
-    # Better use gethostip
     IP=$(gethostip -d ${NAME}.${VC})
-    GW=$(gethostip -d login.${VC})
+    GW=$(gethostip -d gateway.${VC} 2>/dev/null || gethostip -d login.${VC})
  
     # Check a few directories and files
     if [ ! -d /cluster/${VC} ]; then

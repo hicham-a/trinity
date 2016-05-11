@@ -23,6 +23,13 @@ trinity_password=config.get('xcat','trinity_password')
 node_pref=config.get('cluster','node_pref')
 cont_pref=config.get('cluster','cont_pref')
 
+xcat_version = subprocess.check_output('lsxcatd -v', shell=True):
+version = re.search(r'Version \d+\.(\d+)(\.\d+)?\s', xcat_version)
+if version and int(version.group(1)) < 11:
+    password_parm = 'password'
+else:
+    password_parm = 'userPW'
+
 # Globals here
 # state_has_changed = False
 # cached_detailed_overview = {}
@@ -39,7 +46,7 @@ class TrinityAPI(object):
     if (not (self.token or hasattr(self,'password'))) and self.request.auth:
       (self.username,self.password)=self.request.auth
     self.errors()
-    self.query = {'userName':self.trinity_user, 'password':self.trinity_password}
+    self.query = {'userName': self.trinity_user, password_parm: self.trinity_password }
     self.headers={"Content-Type":"application/json", "Accept":"application/json"} # setting this by hand for now
     self.authenticate()    
 
@@ -963,7 +970,7 @@ def startup():
   hw='hw-'
   vc='vc-'
   headers={"Content-Type":"application/json", "Accept":"application/json"} # setting this by hand for now
-  query = {'userName':trinity_user, 'password':trinity_password}
+  query = {'userName': trinity_user, 'password': trinity_password, 'userPW': trinity_password }
 
   # Get the cpucount for all the nodes
   # asuming that all nodes belong to the group compute
