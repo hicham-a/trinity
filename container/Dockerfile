@@ -30,6 +30,8 @@ ADD rpms /rpms
 RUN yum install -y /rpms/*.rpm
 
 RUN chmod +x /docker-entrypoint.sh
+RUN chmod 600 /etc/sssd/sssd.conf
+
 RUN authconfig --enablemkhomedir --enablesssd --enablesssdauth --update
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
