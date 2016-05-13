@@ -68,7 +68,7 @@ echo "export TZ=UTC" > /etc/profile.d/timezone.sh
 # Setup LDAP authentication
 #--------------------------------------------------------------------------
 cp -rLT /trinity/openldap/rootimg/usr /usr
-cp -rL /trinity/openldap/rootimg/etc/sssd /etc/
+cp -rL /trinity/openldap/host/rootimg/etc/sssd /etc/
 chmod 600 /etc/sssd/sssd.conf
 
 systemctl enable sssd
