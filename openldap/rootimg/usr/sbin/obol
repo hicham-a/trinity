@@ -68,7 +68,7 @@ def user_add(b, username, cn, sn, givenName, password, shell, groups):
 
     if groups:
         for group in groups:
-            group_addusers(group, [username])
+            group_addusers(b, group, [username])
 
 
 def user_delete(b, username):
