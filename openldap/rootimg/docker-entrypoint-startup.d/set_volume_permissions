@@ -1,0 +1,4 @@
+#!/bin/bash
+
+chown -R ldap.ldap /var/lib/ldap
+

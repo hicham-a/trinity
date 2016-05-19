@@ -3,17 +3,32 @@
 #----------------------------------------------------------------------------
 # Install OpenLDAP on the controller node
 #----------------------------------------------------------------------------
-cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
+systemctl start docker
 
-rm -rf /etc/openldap/slapd.d
-cp -rLT /trinity/openldap/rootimg /
+if [ -z ${SITEMASTER} ]; then
+    docker build --rm=true -t controller:5050/opendlap /trinity/openldap
+else
+    docker pull ${SITEMASTER}:5050/openldap
+    docker tag ${SITEMASTER}:5050/openldap controller:5050/openldap
+fi
+
+cp -LrT /tmp/trinity/openldap/host/rootimg /
+cp /tmp/trinity/openldap/rootimg/usr/sbin/obol /usr/local/sbin/
+
 systemctl enable slapd 
 systemctl start slapd
 
 #----------------------------------------------------------------------------
-# Setup the initial database
+# Setup the local database on the main controller
 #----------------------------------------------------------------------------
-ldapadd -D cn=Manager,dc=local -w system << EOF
+n=$(echo $NODE | egrep -o '[[:digit:]]*' | head -n1)
+# normalize to 1 or 2
+N=$((((n-1)%2)+1))
+
+if [[ $N = 1 ]]; then
+
+    while :; do
+        ldapadd -D cn=Manager,dc=local -w system 2>/dev/null << EOF
 dn: dc=local
 dc: local
 objectClass: domain
@@ -39,27 +54,22 @@ objectClass: uidNext
 uidNumber: 150
 EOF
 
+        [[ $? == 0 ]] && break;
+        sleep 5;
+    done
+
+    obol -w system group add power-users
+fi
+
 #----------------------------------------------------------------------------
-# Setup PAM
+# Setup SSSD
 #----------------------------------------------------------------------------
-yum -y -q install nss-pam-ldapd authconfig
+yum -y -q install sssd authconfig
 
-# configure the ldap server. Not sure this is needed.
-cat >> /etc/pam_ldap.conf << EOF
-uri ldap://localhost/
-base dc=cluster
-ssl no
-tls_cacertdir /etc/openldap/cacerts
-pam_password md5
-EOF
+chmod 600 /etc/sssd/sssd.conf
+systemctl enable sssd
+systemctl start sssd
 
-# setup nssswitch
-sed -e 's/^group:.*$/group:\t\tfiles ldap/g' \
-    -e 's/^passwd:.*$/passwd:\t\tfiles ldap/g' \
-    -e 's/^shadow:.*$/shadow:\t\tfiles ldap/g' \
-    -i /etc/nsswitch.conf 
-
-authconfig-tui --kickstart --enableldapauth --ldapbasedn=dc=local \
-     --ldapserver=localhost 
+authconfig --enablemkhomedir --enablesssd --enablesssdauth --update
 
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log

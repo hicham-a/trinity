@@ -65,10 +65,16 @@ timedatectl set-timezone UTC
 echo "export TZ=UTC" > /etc/profile.d/timezone.sh
 
 #--------------------------------------------------------------------------
-# Install LDAP
+# Setup LDAP authentication
 #--------------------------------------------------------------------------
-/postscripts/cv_install_slapd
-systemctl start slapd
+cp -rLT /trinity/openldap/rootimg/usr /usr
+cp -rL /trinity/openldap/host/rootimg/etc/sssd /etc/
+chmod 600 /etc/sssd/sssd.conf
+
+systemctl enable sssd
+systemctl start sssd
+
+authconfig --enablemkhomedir --enablesssd --enablesssdauth --update
 
 #--------------------------------------------------------------------------
 # SSH keys for root
@@ -88,8 +94,6 @@ chmod ga-wx /root/.ssh/authorized_keys
 #---------------------------------------------------------------------------
 # Setup permissions
 #---------------------------------------------------------------------------
-obol -w system group add admin
-obol -w system group add power-users
 chown root:root /cluster/etc/slurm
 chmod ug=rwx,o=rx /cluster/etc/slurm
 chown root:admin /cluster/etc/slurm/slurm-user.conf  

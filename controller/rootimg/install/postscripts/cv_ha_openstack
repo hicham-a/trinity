@@ -82,6 +82,10 @@ pcs cluster cib-push config
 #--------------------------------------------------------------------------
 # Create keystone endpoints for glance etc
 #--------------------------------------------------------------------------
+
+# wait for slapd
+while :; do ldapsearch -x -b dc=local &>/dev/null; [[ $? != 255 ]] && break; sleep 1; done
+
 keystone_endpoint="http://controller.cluster:35357/v2.0"
 for i in {300..0}; do
     if curl -s ${keystone_endpoint}; then 

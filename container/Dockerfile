@@ -1,7 +1,7 @@
 FROM centos:latest
 MAINTAINER hans.then@clustervision.com
-RUN yum -y swap -- remove systemd-container* -- install systemd systemd-libs
-RUN yum -y -q install epel-release iproute
+RUN yum -y install systemd systemd-libs
+RUN yum -y -q install epel-release
 RUN yum -y -q groupinstall "Infiniband Support"
 
 RUN useradd munge -u 1002 -U && useradd slurm -u 1001 -U && \
@@ -9,9 +9,9 @@ RUN useradd munge -u 1002 -U && useradd slurm -u 1001 -U && \
     mkdir -m 755 -p /var/run/munge && \
     chown munge:munge /var/run/munge
 
-RUN yum -y -q install openssh-server openssh-clients python-pip vim-minimal \
+RUN yum -y -q install openssh-server openssh-clients python-pip \
     infiniband-diags munge rsyslog bind-utils perl perl-DBI perl-Switch \
-    openldap-clients nss-pam-ldapd authconfig environment-modules \
+    openldap-clients sssd authconfig environment-modules \
     infinipath-psm iproute \
     xauth xorg-x11-xauth \
     vim-enhanced \
@@ -30,6 +30,10 @@ ADD rpms /rpms
 RUN yum install -y /rpms/*.rpm
 
 RUN chmod +x /docker-entrypoint.sh
+RUN chmod 600 /etc/sssd/sssd.conf
+
+RUN authconfig --enablemkhomedir --enablesssd --enablesssdauth --update
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
 ENTRYPOINT ["/docker-entrypoint.sh"]
+

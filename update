@@ -95,8 +95,6 @@ copy(){
       LOCAL=/trinity/site-local/$1
       if [ -d "${LOCAL}/rootimg" ] ; then
         cp --dereference --recursive  --preserve ${LOCAL}/rootimg/. /
-      else
-        echo "No site-local rootimg found"
       fi
 
       #--------------------------------------------------
@@ -149,8 +147,6 @@ copy(){
       LOCAL=/trinity/site-local/$1
       if [ -d "${LOCAL}/rootimg" ] ; then
         cp --dereference --recursive  --preserve ${LOCAL}/rootimg/. /
-      else
-        echo "No site-local rootimg found"
       fi
     ;;
     *)
@@ -158,8 +154,6 @@ copy(){
       LOCAL=/trinity/site-local/$1
       if [ -d "${LOCAL}/rootimg" ] ; then
         cp --dereference --recursive  --preserve ${LOCAL}/rootimg/. /
-      else
-        echo "No site-local rootimg found"
       fi
     ;;
   esac  

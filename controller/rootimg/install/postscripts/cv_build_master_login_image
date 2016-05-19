@@ -38,15 +38,14 @@ virt-customize -a ${LOGIN_IMG} \
     --run-command "systemctl enable slurm munge" \
     --edit "/etc/ssh/sshd_config: s/[#]*PasswordAuthentication no/PasswordAuthentication yes/g" \
     --edit "/etc/sysconfig/network-scripts/ifcfg-eth0: s/^PEERDNS=.*/PEERDNS=\"no\"/g" \
-    --install oddjob-mkhomedir,nss-pam-ldapd,authconfig \
+    --install oddjob-mkhomedir,sssd,authconfig \
     --edit "/etc/oddjobd.conf.d/oddjobd-mkhomedir.conf: s/0022/0077/g" \
     --run-command "authconfig --enablemkhomedir --update" \
     --run-command "systemctl enable oddjobd" \
-    --install openldap,openldap-clients,openldap-servers \
+    --install openldap,openldap-clients \
     --mkdir /cluster \
     --mkdir /home \
     --edit "/etc/selinux/config: s/SELINUX=enforcing/SELINUX=permissive/" \
-    --run-command "authconfig --enablemkhomedir --update" \
     --install environment-modules,whatsup \
     --delete /usr/share/Modules/init/.modulespath \
     --link /cluster/.modulespath:/usr/share/Modules/init/.modulespath \

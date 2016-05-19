@@ -19,6 +19,7 @@
 REGISTRY="localhost:5050"
 TOPDIR="/trinity"
 profiles=(
+  "openldap"
   "mariadb"
   "galera"
   "rabbitmq"

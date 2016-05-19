@@ -23,7 +23,10 @@ LOGIN_IMAGE="login"
 SKEL=".skel"
 
 keystone tenant-create --name ${FIRST_TENANT}
-keystone user-create --name ${FIRST_USER} --tenant ${FIRST_TENANT} --pass ${FIRST_PASS}
+
+obol -H ldap://controller -w system user add ${FIRST_USER} --password ${FIRST_PASS} --cn ${FIRST_USER} --sn ${FIRST_USER} --givenName ${FIRST_USER}
+keystone user-role-add --user=${FIRST_USER} --tenant=${FIRST_TENANT} --role=_member_
+
 nova floating-ip-bulk-create --pool ${FIRST_POOL} ${FIRST_FLOATING}
 mkdir -p /cluster/${FIRST_CLUSTER}
 cp -Tr /cluster/${SKEL}/ /cluster/${FIRST_CLUSTER}/
