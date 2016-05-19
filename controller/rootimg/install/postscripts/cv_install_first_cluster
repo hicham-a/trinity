@@ -25,7 +25,6 @@ SKEL=".skel"
 keystone tenant-create --name ${FIRST_TENANT}
 
 obol -H ldap://controller -w system user add ${FIRST_USER} --password ${FIRST_PASS} --cn ${FIRST_USER} --sn ${FIRST_USER} --givenName ${FIRST_USER}
-keystone user-role-add --user=${FIRST_USER} --tenant=${FIRST_TENANT} --role=admin
 keystone user-role-add --user=${FIRST_USER} --tenant=${FIRST_TENANT} --role=_member_
 
 nova floating-ip-bulk-create --pool ${FIRST_POOL} ${FIRST_FLOATING}
