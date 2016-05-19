@@ -121,9 +121,6 @@ fi
 #--------------------------------------------------------------------------
 echo “login” > /etc/hostname
 hostname login
-chmod +x /usr/sbin/custom_hostname
-#systemctl start set-hostname.service
-systemctl enable set-hostname.service
 
 cat << EOF > /etc/resolv.conf
 search cluster. vc-a. cluster

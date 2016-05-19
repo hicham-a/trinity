@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-hostname login
-echo "login" > /etc/hostname
-
