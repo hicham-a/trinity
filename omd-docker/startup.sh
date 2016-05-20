@@ -1,2 +1,0 @@
-nohup omd start &
-
