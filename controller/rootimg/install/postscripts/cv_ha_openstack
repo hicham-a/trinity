@@ -27,26 +27,26 @@ fi
 
 "${mysql[@]}" <<-EOSQL
     SET @@SESSION.SQL_LOG_BIN=0;
-    set global max_connections = 1024;
+    set global max_connections = $MYSQL_MAX_CONNECTIONS;
 
     DELETE FROM mysql.user ;
-    CREATE USER 'root'@'%' IDENTIFIED BY 'system' ;
+    CREATE USER 'root'@'%' IDENTIFIED BY "$MYSQL_ROOT_PW" ;
     GRANT ALL ON *.* TO 'root'@'%' WITH GRANT OPTION ;
     DROP DATABASE IF EXISTS test ;
     FLUSH PRIVILEGES ;
 
     CREATE DATABASE keystone;
-    GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'localhost' IDENTIFIED BY 'system';
-    GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'%'         IDENTIFIED BY 'system';
+    GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'localhost' IDENTIFIED BY "$OPENSTACK_KEYSTONE_PW";
+    GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'%'         IDENTIFIED BY "$OPENSTACK_KEYSTONE_PW";
     CREATE DATABASE glance;
-    GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'localhost'     IDENTIFIED BY 'system';
-    GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'%'             IDENTIFIED BY 'system';
+    GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'localhost'     IDENTIFIED BY "$OPENSTACK_GLANCE_PW";
+    GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'%'             IDENTIFIED BY "$OPENSTACK_GLANCE_PW";
     CREATE DATABASE nova;
-    GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'localhost'         IDENTIFIED BY 'system';
-    GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'%'                 IDENTIFIED BY 'system';
+    GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'localhost'         IDENTIFIED BY "$OPENSTACK_NOVA_PW";
+    GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'%'                 IDENTIFIED BY "$OPENSTACK_NOVA_PW";
     CREATE DATABASE cinder;
-    GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'localhost'     IDENTIFIED BY 'system';
-    GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'%'             IDENTIFIED BY 'system';
+    GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'localhost'     IDENTIFIED BY "$OPENSTACK_CINDER_PW";
+    GRANT ALL PRIVILEGES ON cinder.* TO 'cinder'@'%'             IDENTIFIED BY "$OPENSTACK_CINDER_PW";
     FLUSH PRIVILEGES ;
 EOSQL
 
@@ -86,12 +86,12 @@ pcs cluster cib-push config
 # wait for slapd
 while :; do ldapsearch -x -b dc=local &>/dev/null; [[ $? != 255 ]] && break; sleep 1; done
 
-keystone_endpoint="http://controller.cluster:35357/v2.0"
+keystone_endpoint="http://controller.$CONTROLLER_DOMAIN:35357/v2.0"
 for i in {300..0}; do
     if curl -s ${keystone_endpoint}; then 
-        /tmp/trinity/keystone/keystone-setup.sh
-        /tmp/trinity/keystone/glance-setup.sh
-        /tmp/trinity/keystone/nova-setup.sh
+        $CONTROLLER_MASTER_FS/keystone/keystone-setup.sh
+        $CONTROLLER_MASTER_FS/keystone/glance-setup.sh
+        $CONTROLLER_MASTER_FS/keystone/nova-setup.sh
         echo "Applied keystone initialization scripts"
         break
     fi
@@ -100,20 +100,15 @@ for i in {300..0}; do
 done
 [[ ${i} == 0 ]] && echo "Timeout waiting for keystone to come up"
 
-#read ETH0 ETH1 ETH2 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
-ETH1=$(ip route get 8.8.8.8 | grep -oP 'dev \K\S+')
-ETH2=$(ip route get 10.141.0.0 | grep -oP 'dev \K\S+')
-
 BRIDGE="br100"
-PRI_NIC=${ETH2}
 source /etc/profile.d/xcat.sh
 sed -e "s/<TENANT>/admin/g" \
     -e "s/<USER>/admin/g" \
-    -e "s/<PASSWORD>/system/g" \
-    -e "s/<OPENSTACK>/10.141.255.254/g" \
+    -e "s/<PASSWORD>/$OPENSTACK_ADMIN_PW/g" \
+    -e "s/<OPENSTACK>/$CONTROLLER_FIP/g" \
     /trinity/openstack/keystonerc > /root/keystonerc_admin
 chmod go-rw /root/keystonerc_admin
-scp /root/keystonerc_admin controller-2.cluster:/root/keystonerc_admin
+scp /root/keystonerc_admin controller-2.$CONTROLLER_DOMAIN:/root/keystonerc_admin
 source /root/keystonerc_admin
 
 #-- Create the Flat Network
@@ -121,9 +116,9 @@ systemctl start openstack-nova-network
 
 NETWORK_LABEL="novanetwork"
 nova network-create \
-       --fixed-range-v4 192.168.32.0/24 \
-       --fixed-cidr 192.168.32.0/24 \
-       --bridge-interface ${PRI_NIC} \
+       --fixed-range-v4 $CONTROLLER_VM_SUBNET \
+       --fixed-cidr $CONTROLLER_VM_SUBNET \
+       --bridge-interface $CONTROLLER_OPENSTACK_NIC \
        --bridge ${BRIDGE} \
        ${NETWORK_LABEL}
 
@@ -132,7 +127,7 @@ nova network-create \
 mkdir -p /trinity/qcows/
 CLOUD_IMAGE="/trinity/qcows/login.qcow2"
 # FIXME: Find a better location. We cannot assume /tmp/trinity is still mounted here.
-cp /tmp/trinity/qcows/login.qcow2 ${CLOUD_IMAGE}
+cp $CONTROLLER_MASTER_FS/qcows/login.qcow2 ${CLOUD_IMAGE}
 CLOUD_IMAGE_FORMAT="qcow2"
 CLOUD_CONTAINER_FORMAT="bare"
 LOGIN_IMAGE="login"

@@ -12,11 +12,11 @@ setsebool -P httpd_can_sendmail on
 # edit /etc/postfix/main.cf
 cp /etc/postfix/main.cf /etc/postfix/main.cf.bak
 postconf -e "myhostname = $(hostname)"
-postconf -e "mydomain = $(domainname)"
+postconf -e "mydomain = $CONTROLLER_DOMAIN"
 postconf -e "myorigin = \$mydomain"
 postconf -e "inet_interfaces = all"
 postconf -e "mydestination = \$myhostname, localhost.\$mydomain, localhost"
-postconf -e "mynetworks = 10.141.0.0/16, 127.0.0.0/8"
+postconf -e "mynetworks = $CONTROLLER_SUBNET/$CONTROLLER_SUBNET_CIDR, 127.0.0.0/8"
 postconf -e "relay_domains = "
 postconf -e "home_mailbox = Maildir/"
 

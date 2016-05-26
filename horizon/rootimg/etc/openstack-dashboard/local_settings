@@ -12,7 +12,7 @@ TEMPLATE_DEBUG = DEBUG
 # with the list of host/domain names that the application can serve.
 # For more information see:
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = ['localhost', 'controller', 'controller.cluster']
+ALLOWED_HOSTS = ['localhost', 'controller', 'controller.{< controller.domain >}']
 
 # Set SSL proxy settings:
 # For Django 1.4+ pass this header from the proxy after terminating the SSL,
@@ -131,7 +131,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 #     ('http://cluster2.example.com:5000/v2.0', 'cluster2'),
 # ]
 
-OPENSTACK_HOST = "10.141.255.254"
+OPENSTACK_HOST = "{< controller.fip >}"
 OPENSTACK_KEYSTONE_URL = "http://%s:5000/v2.0" % OPENSTACK_HOST
 OPENSTACK_KEYSTONE_DEFAULT_ROLE = "_member_"
 

@@ -167,12 +167,7 @@ extras(){
 #      cp /trinity/version /trinity/$1/rootimg/install/postscripts/cv_trinity_version
       if [ "$2" = "--tables" ]; then
         source /etc/profile.d/xcat.sh
-        mkdir -p /tmp/xcattables
-        read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
-        for table in $(ls ${REPO}/tables); do
-          sed -e "s/\<eno1\>/$ETH1/g" -e "s/\<eno2\>/$ETH2/g"  -e "s/\<eno3\>/$ETH3/g" ${REPO}/tables/$table > /tmp/xcattables/$table;
-        done
-        restorexCATdb -Vp /tmp/xcattables     
+        restorexCATdb -Vp ${REPO}/tables
         return 0
       fi
     ;;

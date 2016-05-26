@@ -15,7 +15,6 @@
 #------------------------------------------------------------------------------
 systemctl start docker
 REGISTRY="controller:5050"
-TOPDIR="/trinity"
 profiles=(
   "galera"
   "rabbitmq"
@@ -23,16 +22,17 @@ profiles=(
   "glance"
   "nova_controller"        
 )
-keystone_endpoint="http://controller.cluster:35357/v2.0"
+keystone_endpoint="http://controller.$CONTROLLER_DOMAIN:35357/v2.0"
 
 for profile in "${profiles[@]}"; do
   if [ -z ${SITEMASTER} ]; then
       docker build --rm=true -t ${REGISTRY}/${profile} ${TOPDIR}/${profile}
+      cp -LrT ${TOPDIR}/${profile}/host/rootimg /
   else
-      docker pull ${SITEMASTER}:5050/${profile} 
-      docker tag ${SITEMASTER}:5050/${profile} ${REGISTRY}/${profile}
+      docker pull $CONTROLLER_DOCKER_REGISTRY:5050/${profile} 
+      docker tag $CONTROLLER_DOCKER_REGISTRY:5050/${profile} ${REGISTRY}/${profile}
+      cp -LrT $CONTROLLER_MASTER_FS/${profile}/host/rootimg /
   fi
       
-  cp -LrT /tmp/${TOPDIR}/${profile}/host/rootimg /
 done
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log

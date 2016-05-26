@@ -17,7 +17,7 @@ N=$((((n-1)%2)+1))
 octet=$((254-$N))
 
 set -x
-echo system | passwd hacluster --stdin
+echo $PACEMAKER_PW | passwd hacluster --stdin
 echo drbd > /etc/modules-load.d/drbd.conf
 
 #------------------------------------------------------------
@@ -32,18 +32,18 @@ echo Clearing drbd logical volume, this may take some time.
 dd if=/dev/zero of=/dev/mapper/vg_root-lv_drbd bs=1M count=1024
 
 # make sure the host names can be resolved
-if ! grep 10.141.255.253 /etc/hosts; then echo "10.141.255.253 controller-1 controller-1.cluster" >> /etc/hosts; fi
-if ! grep 10.141.255.252 /etc/hosts; then echo "10.141.255.252 controller-2 controller-2.cluster" >> /etc/hosts; fi
-if ! grep 10.141.255.254 /etc/hosts; then echo "10.141.255.254 controller controller.cluster" >> /etc/hosts; fi
-hostnamectl set-hostname controller-${N}.cluster
+if ! grep $CONTROLLER_ACTIVE_IP /etc/hosts; then echo "$CONTROLLER_ACTIVE_IP controller-1 controller-1.$CONTROLLER_DOMAIN" >> /etc/hosts; fi
+if ! grep $CONTROLLER_PASSIVE_IP /etc/hosts; then echo "$CONTROLLER_PASSIVE_IP controller-2 controller-2.$CONTROLLER_DOMAIN" >> /etc/hosts; fi
+if ! grep $CONTROLLER_FIP /etc/hosts; then echo "$CONTROLLER_FIP controller controller.$CONTROLLER_DOMAIN" >> /etc/hosts; fi
+hostnamectl set-hostname controller-${N}.$CONTROLLER_DOMAIN
 
 # If we can use the IB interface for DRBD we will do so.
-if ping -c1 10.149.255.$octet > /dev/null 2>&1; then
-    ip1=10.149.255.253
-    ip2=10.149.255.252
+if ping -c1 $CONTROLLER_ACTIVE_IB_IP > /dev/null 2>&1; then
+    ip1=$CONTROLLER_ACTIVE_IB_IP
+    ip2=$CONTROLLER_PASSIVE_IB_IP
 else
-    ip1=10.141.255.253
-    ip2=10.141.255.252
+    ip1=$CONTROLLER_ACTIVE_IP
+    ip2=$CONTROLLER_PASSIVE_IP
 fi
 
 cat <<EOF >/etc/drbd.d/ha_disk.res
@@ -53,13 +53,13 @@ resource ha_disk {
          after-sb-1pri discard-secondary;
          after-sb-2pri disconnect;
        }
-       on controller-1.cluster {
+       on controller-1.$CONTROLLER_DOMAIN {
          device    /dev/drbd1;
          disk      /dev/mapper/vg_root-lv_drbd;
          address   ${ip1}:7789;
          meta-disk internal;
        }
-       on controller-2.cluster {
+       on controller-2.$CONTROLLER_DOMAIN {
          device    /dev/drbd1;
          disk      /dev/mapper/vg_root-lv_drbd;
          address   ${ip2}:7789;
@@ -78,7 +78,7 @@ drbdadm up ha_disk
 systemctl start pcsd
 systemctl enable pcsd
 
-pcs cluster auth $(hostname) -u hacluster -p system
+pcs cluster auth $(hostname) -u hacluster -p $PACEMAKER_PW
 if [[ $N = 1 ]]; then
     pcs cluster setup --name ha_cluster $(hostname)
 else
@@ -88,10 +88,10 @@ else
         sleep 1m
     done
     [[ $i = 100 ]] && echo "TIMEOUT: waiting for master node to come up"
-    ssh controller-1.cluster pcs cluster auth $(hostname) -u hacluster -p system
-    ssh controller-1.cluster pcs cluster node add $(hostname)
+    ssh controller-1.$CONTROLLER_DOMAIN pcs cluster auth $(hostname) -u hacluster -p $PACEMAKER_PW
+    ssh controller-1.$CONTROLLER_DOMAIN pcs cluster node add $(hostname)
     pcs cluster auth
-    scp -r controller-1.cluster/root/.xcat /root
+    scp -r controller-1.$CONTROLLER_DOMAIN/root/.xcat /root
 fi
 pcs cluster start
 
@@ -113,16 +113,13 @@ killall dhclient
 systemctl disable firewalld
 systemctl stop firewalld
 
-#read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
-ETH1=$(ip route get 8.8.8.8 | grep -oP 'dev \K\S+')
-ETH2=$(ip route get 10.141.0.0 | grep -oP 'dev \K\S+')
 # setup NAT, so nodes can access the internet (see manual step 1.f)
 systemctl enable iptables 
 systemctl start iptables
 modprobe iptable_nat
 
-iptables -A FORWARD -i $ETH2 -j ACCEPT
-iptables -t nat -A POSTROUTING -o $ETH1 -j MASQUERADE
+iptables -A FORWARD -i $CONTROLLER_CLUSTER_NIC -j ACCEPT
+iptables -t nat -A POSTROUTING -o $CONTROLLER_PUBLIC_NIC -j MASQUERADE
 iptables -D FORWARD -j REJECT --reject-with icmp-host-prohibited
 iptables -D INPUT -j REJECT --reject-with icmp-host-prohibited
 service iptables save
@@ -130,8 +127,8 @@ service iptables save
 #--------------------------------------------------------------------------------------
 # setup routing for the virtual clusters
 #--------------------------------------------------------------------------------------
-ip route add 172.16.0.0/12 dev $ETH2
-echo "172.16.0.0/12 dev $ETH2" > /etc/sysconfig/network-scripts/route-${ETH2} 
+ip route add 172.16.0.0/12 dev $CONTROLLER_CLUSTER_NIC
+echo "172.16.0.0/12 dev $CONTROLLER_CLUSTER_NIC" > /etc/sysconfig/network-scripts/route-$CONTROLLER_CLUSTER_NIC
 
 if ! systemctl restart network; then
     sleep 3
@@ -145,24 +142,24 @@ sestatus
 # Patch xCAT. Needs to be done on both nodes.
 #-----------------------------------------------------------------------------------------
 if [ ! -z $SITEMASTER ]; then
-    mkdir /tmp/trinity
-    mount ${SITEMASTER}:/trinity /tmp/trinity       
+    mkdir $CONTROLLER_MASTER_FS
+    mount ${SITEMASTER}:/trinity $CONTROLLER_MASTER_FS
 fi
 
 cd /opt/xcat/share/xcat/netboot/centos
 ln -s ../rh/dracut_033 .
 ln -s ../rh/dracut .
 cd /
-cat /tmp/trinity/controller/xcat/patches/*.patch | patch -p0
+cat $CONTROLLER_MASTER_FS/controller/xcat/patches/*.patch | patch -p0
 systemctl restart xcatd
 
 #--------------------------------------------------------------------------------------
 # copy required files from the master node to the controller node
 #--------------------------------------------------------------------------------------
-cp -LrT /tmp/trinity/controller/rootimg /
-cp /tmp/trinity/version /trinity/version
-if [[ -f /tmp/trinity/site ]]; then
-    cp /tmp/trinity/site /trinity/site
+cp -LrT $CONTROLLER_MASTER_FS/controller/rootimg /
+cp $CONTROLLER_MASTER_FS/version /trinity/version
+if [[ -f $CONTROLLER_MASTER_FS/site ]]; then
+    cp $CONTROLLER_MASTER_FS/site /trinity/site
 fi
 mkdir -p /var/lib/docker-registry
 
@@ -183,8 +180,6 @@ cp -LrT /trinity/openstack/rootimg/ /
 #-- Trinity API setup
 cd /opt/trinity/trinity_api
 python setup.py install
-sed -e "s/eno2/${ETH2}/g" \
-    -i /etc/trinity/trinity_api.conf
 cd -
 
 #Install the python client
@@ -213,14 +208,14 @@ source /etc/profile.d/xcat.sh
 export HOME=/root
 # FIXME: use obol for this.
 useradd trinity
-echo system | passwd trinity --stdin
+echo $TRINITY_USER_PW | passwd trinity --stdin
 mkdef -t policy 6 name=trinity rule=allow
 sed  -e "/<Directory \/>/,/<\/Directory>/ s/Require/#Require/" -i /etc/httpd/conf/httpd.conf
 systemctl restart httpd 
 
 #Make xCAT available via the floating IP.
 if grep -v XCATHOST /etc/profile.d/xcat.sh; then
-    echo "export XCATHOST=controller.cluster:3001" >> /etc/profile.d/xcat.sh
+    echo "export XCATHOST=controller.$CONTROLLER_DOMAIN:3001" >> /etc/profile.d/xcat.sh
 fi
 
 systemctl enable replicator.timer

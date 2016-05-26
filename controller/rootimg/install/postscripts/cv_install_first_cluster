@@ -24,7 +24,7 @@ SKEL=".skel"
 
 keystone tenant-create --name ${FIRST_TENANT}
 
-obol -H ldap://controller -w system user add ${FIRST_USER} --password ${FIRST_PASS} --cn ${FIRST_USER} --sn ${FIRST_USER} --givenName ${FIRST_USER}
+obol -H ldap://controller -w $LDAP_ADMIN_PW user add ${FIRST_USER} --password ${FIRST_PASS} --cn ${FIRST_USER} --sn ${FIRST_USER} --givenName ${FIRST_USER}
 keystone user-role-add --user=${FIRST_USER} --tenant=${FIRST_TENANT} --role=_member_
 
 nova floating-ip-bulk-create --pool ${FIRST_POOL} ${FIRST_FLOATING}
@@ -63,7 +63,7 @@ sed -e "s/<TENANT>/${FIRST_TENANT}/g" \
 
 chmod go-rw /root/keystonerc_${FIRST_TENANT} 
 # Copy to failover node (not pretty)
-scp /root/keystonerc_${FIRST_TENANT} controller-2.cluster:/root/keystonerc_${FIRST_TENANT}
+scp /root/keystonerc_${FIRST_TENANT} controller-2.$CONTROLLER_DOMAIN:/root/keystonerc_${FIRST_TENANT}
 source /root/keystonerc_${FIRST_TENANT}
 
 #nova secgroup-add-rule default tcp 1 65535 0.0.0.0/0

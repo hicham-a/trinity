@@ -1,7 +1,7 @@
 #key,value,comments,disable
-"domain","cluster",,
+"domain","{< controller.domain >}",,
 "installdir","/install",,
-"master","10.141.255.254",,
+"master","{< controller.fip >}",,
 "forwarders","8.8.8.8,8.8.4.4",,
 "nameservers","<xcatmaster>",,
 "tftpdir","/tftpboot",,
@@ -9,6 +9,6 @@
 "xcatiport","3002",,
 "xcatconfdir","/etc/xcat",,
 "timezone","UTC",,
-"dhcpinterfaces","eno2",,
-"dnsinterfaces","eno2",,
+"dhcpinterfaces","{< controller.cluster_nic >}",,
+"dnsinterfaces","{< controller.cluster_nic >}",,
 "dnshandler","ddns",,

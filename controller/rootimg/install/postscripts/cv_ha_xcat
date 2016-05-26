@@ -12,8 +12,6 @@ systemctl stop docker-registry
 systemctl stop docker
 systemctl stop nfs-server
 
-dev=$(ip a | grep 10.148.255.253 | awk '{print $5}')
-
 pcs cluster cib config
 pcs -f config resource create symlinks_xCAT ocf:tummy:drbdlinks \
     configfile="/drbd/xcat.conf" op monitor interval="31s" \

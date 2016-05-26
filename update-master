@@ -1,0 +1,128 @@
+#!/usr/bin/env python
+
+import os
+import shlex
+import hashlib
+import ConfigParser
+from subprocess import check_output
+from argparse import ArgumentParser
+from jinja2 import Environment, FileSystemLoader
+
+
+def gen_ssha(secret):
+    """
+    This is a utility function we use to generate salted hashes
+    this will be used by jinja2 to render slapd templates
+    """
+    salt = os.urandom(4)
+
+    sha = hashlib.sha1(secret)
+    sha.update(salt)
+
+    b64_digest = '{SSHA}' + (sha.digest() + salt).encode('base64').strip()
+
+    return b64_digest
+
+
+def parse_conf(conf_file):
+    """
+    Parse the ini file located in conf_file
+    and generate a dict containing all the parameters
+    """
+    parser = ConfigParser.ConfigParser()
+    parser.read(conf_file)
+
+    conf = dict(parser._sections)
+    for section in conf:
+        conf[section] = dict(parser._defaults, **conf[section])
+        conf[section].pop('__name__', None)
+
+    return conf
+
+
+def update_files():
+    """
+    This will update the master node's file system
+    using files from the repository
+    """
+    check_output(['./update', 'master'])
+
+
+def update_xcat(conf):
+    """
+    Iterate over evey section in the conf dict to generate strings
+    in the format SECTION_PARAM=VALUE. These will be put in xCAT's site table
+    so that they will be available as environment variables to postscripts.
+    """
+    params = ''
+    for sec in conf:
+        for key in conf[sec]:
+            params += ' %s_%s=%s' % (sec.upper(), key.upper(), conf[sec][key])
+
+    check_output(shlex.split('/opt/xcat/bin/chdef -t site %s' % params))
+
+
+def render_templates(conf):
+    """
+    Go recursively over all the files in dirs excluding the files in exclude
+    and render any jinja2 templates that are found.
+    """
+    dirs = ['/install/custom/', '/install/postscripts/', '/trinity/']
+    exclude = ['clustervision', 'iso', 'qcows']
+
+    files = []
+    for i in dirs:
+        for path, dir_list, file_list in os.walk(i):
+            dir_list[:] = [d for d in dir_list if d not in exclude]
+            for f in file_list:
+                files.append(os.path.join(path, f))
+
+    # Rid the files list from their prefixes (dirs) as required by jinja2
+    tmpls = list(files)
+
+    for d in dirs:
+        tmpls[:] = [t[len(d):] if t.startswith(d) else t for t in tmpls]
+
+    env = Environment(loader=FileSystemLoader(dirs, encoding='ascii'),
+                      keep_trailing_newline=True,
+                      variable_start_string='{<',
+                      variable_end_string='>}')
+
+    env.filters['gen_ssha'] = gen_ssha
+
+    for i, t in enumerate(tmpls):
+        try:
+            tmpl = env.get_template(t)
+        except:
+            continue
+
+        with open(files[i], 'wb') as render:
+            render.write(tmpl.render(conf))
+
+
+description = 'Setup the master node based on a configuration file'
+options = ArgumentParser(description=description)
+options.add_argument('-f', metavar="config file", default='./conf.ini')
+
+if __name__ == '__main__':
+    args = options.parse_args()
+    conf_file = args.f
+
+    if not os.path.isfile(conf_file):
+        print('Configuration file not found!')
+        quit()
+
+    print('1/4 Parsing configuration file')
+    conf = parse_conf(conf_file)
+
+    print('2/4 Setting up the site table')
+    try:
+        update_xcat(conf)
+    except:
+        quit()
+
+    print('3/4 Updating the master node\'s files')
+    update_files()
+
+    print('4/4 Rendering templates')
+    render_templates(conf)

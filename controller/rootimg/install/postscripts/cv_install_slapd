@@ -8,12 +8,12 @@ systemctl start docker
 if [ -z ${SITEMASTER} ]; then
     docker build --rm=true -t controller:5050/opendlap /trinity/openldap
 else
-    docker pull ${SITEMASTER}:5050/openldap
-    docker tag ${SITEMASTER}:5050/openldap controller:5050/openldap
+    docker pull $CONTROLLER_DOCKER_REGISTRY:5050/openldap
+    docker tag $CONTROLLER_DOCKER_REGISTRY:5050/openldap controller:5050/openldap
 fi
 
-cp -LrT /tmp/trinity/openldap/host/rootimg /
-cp /tmp/trinity/openldap/rootimg/usr/sbin/obol /usr/local/sbin/
+cp -LrT $CONTROLLER_MASTER_FS/openldap/host/rootimg /
+cp $CONTROLLER_MASTER_FS/openldap/rootimg/usr/sbin/obol /usr/local/sbin/
 
 systemctl enable slapd 
 systemctl start slapd
@@ -28,7 +28,7 @@ N=$((((n-1)%2)+1))
 if [[ $N = 1 ]]; then
 
     while :; do
-        ldapadd -D cn=Manager,dc=local -w system 2>/dev/null << EOF
+        ldapadd -D cn=Manager,dc=local -w $LDAP_ADMIN_PW 2>/dev/null << EOF
 dn: dc=local
 dc: local
 objectClass: domain
@@ -58,7 +58,7 @@ EOF
         sleep 5;
     done
 
-    obol -w system group add power-users
+    obol -w $LDAP_ADMIN_PW group add power-users
 fi
 
 #----------------------------------------------------------------------------

@@ -17,8 +17,6 @@ mkfs -t ext4 /dev/drbd1
 #-------------------------------------------------------------------
 set -x
 
-dev=$(ip route | grep 10.141.0.0/16 | awk '{print $3}')
-
 # Set basic defaults
 pcs cluster cib config
 pcs -f config property set no-quorum-policy=ignore
@@ -28,7 +26,7 @@ pcs -f config resource defaults resource-stickiness=100
 # FIXME: we set this to false for now. Later in the installation process we will enable fencing.
 pcs -f config property set stonith-enabled=false
 
-pcs -f config resource create ip ocf:heartbeat:IPaddr2 ip="10.141.255.254" iflabel="xCAT" cidr_netmask="16" nic="$dev" op monitor interval="37s"
+pcs -f config resource create ip ocf:heartbeat:IPaddr2 ip="$CONTROLLER_FIP" iflabel="xCAT" cidr_netmask="$CONTROLLER_SUBNET_CIDR" nic="$CONTROLLER_CLUSTER_NIC" op monitor interval="37s"
 pcs -f config resource create drbd ocf:linbit:drbd drbd_resource=ha_disk
 pcs -f config resource master ms_drbd drbd master-max="1" master-node-max="1" clone-max="2" clone-node-max="1" notify="true"
 pcs -f config resource create fs_drbd ocf:heartbeat:Filesystem device="/dev/drbd/by-res/ha_disk" directory="/drbd" fstype="ext4" op monitor interval="57s"
@@ -40,7 +38,7 @@ pcs -f config constraint colocation add master ms_drbd with ip INFINITY
 pcs -f config constraint order promote ms_drbd then start fs_drbd
 
 # Give the first node a slight preference.
-pcs -f config constraint location ip prefers controller-1.cluster=50
+pcs -f config constraint location ip prefers controller-1.{< controller.domain >}=50
 
 pcs cluster cib-push config
 

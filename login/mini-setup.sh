@@ -7,7 +7,7 @@
 #---------------------------------------------------------------------------
 # Enable password authenication 
 #---------------------------------------------------------------------------
-echo "system" | passwd root --stdin
+echo "{< controller.system_pw >}" | passwd root --stdin
 sed -e 's/[#]*PasswordAuthentication no/PasswordAuthentication yes/g' -i /etc/ssh/sshd_config
 service sshd restart
 
@@ -15,7 +15,7 @@ service sshd restart
 #-------------------------------------------------------------------------
 # Wait until the floating ip is up
 #-------------------------------------------------------------------------
-controller="10.141.255.254"
+controller="{< controller.fip >}"
 access=1;
 while [ ${access} -ne "0" ]; 
    do ping -c 1 ${controller} ; access=$? ; sleep 1;
@@ -33,7 +33,7 @@ chmod -R 777 /tmp
 chmod +t /tmp
 
 if grep -v controller /etc/hosts; then
-    echo "10.141.255.254 controller controller.cluster" >> /etc/hosts
+    echo "{< controller.fip >} controller controller.{< controller.domain >}" >> /etc/hosts
 fi
 
 #---------------------------------------------------------------------------
@@ -119,12 +119,12 @@ fi
 #--------------------------------------------------------------------------
 # Set the hostname
 #--------------------------------------------------------------------------
-echo “login” > /etc/hostname
+echo "login" > /etc/hostname
 hostname login
 
 cat << EOF > /etc/resolv.conf
-search cluster. vc-a. cluster
-nameserver 10.141.255.254
+search {< controller.domain >}. vc-a. {< controller.domain >}
+nameserver {< controller.fip >}
 EOF
 
 systemctl stop ntpd

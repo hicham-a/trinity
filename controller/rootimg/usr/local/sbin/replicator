@@ -1,3 +1,3 @@
 #!/bin/bash
 
-while read line; do rsync -avz controller.cluster:${line} ${line}; done < /etc/replicator
+while read line; do rsync -avz controller.{< controller.domain >}:${line} ${line}; done < /etc/replicator

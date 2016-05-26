@@ -1,2 +1,2 @@
 #node,servicenode,netboot,tftpserver,tftpdir,nfsserver,monserver,nfsdir,installnic,primarynic,discoverynics,cmdinterface,xcatmaster,current_osimage,next_osimage,nimserver,routenames,nameservers,proxydhcp,comments,disable
-"compute",,"xnba",,,,,,,"mac",,,"10.141.255.254",,,,,,,,
+"compute",,"xnba",,,,,,,"mac",,,"{< controller.fip >}",,,,,,,,

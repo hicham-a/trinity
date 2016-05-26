@@ -1,6 +1,6 @@
 proc            /proc    proc   rw 0 0
 sysfs           /sys     sysfs  rw 0 0
 devpts          /dev/pts devpts rw,gid=5,mode=620 0 0
-controller:/cluster /cluster nfs rsize=8192,wsize=8192,timeo=14,intr
-controller:/trinity /trinity nfs rsize=8192,wsize=8192,timeo=14,intr
-controller:/nfshome /home nfs rsize=8192,wsize=8192,timeo=14,intr
+{< compute.nfs_server >}:/cluster /cluster nfs rsize=8192,wsize=8192,timeo=14,intr
+{< compute.nfs_server >}:/trinity /trinity nfs rsize=8192,wsize=8192,timeo=14,intr
+{< compute.nfs_server >}:/nfshome /home nfs rsize=8192,wsize=8192,timeo=14,intr

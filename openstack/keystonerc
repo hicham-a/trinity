@@ -1,7 +1,7 @@
 export OS_USERNAME=<USER>
 export OS_TENANT_NAME=<TENANT>
 export OS_PASSWORD=<PASSWORD>
-export OS_AUTH_URL=http://controller.cluster:5000/v2.0/
+export OS_AUTH_URL=http://controller.{< controller.domain >}:5000/v2.0/
 export OS_REGION_NAME=regionOne
 export PS1='[\u@\h \W(keystone_<TENANT>)]\$ '
 

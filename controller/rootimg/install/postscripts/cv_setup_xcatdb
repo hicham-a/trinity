@@ -14,11 +14,11 @@ fi
 source /etc/profile.d/xcat.sh
 dumpxCATdb -p /tmp/xcattables
 
-docker exec ${container} /usr/bin/mysql -psystem -e "create database xcatdb;"
-docker exec ${container} /usr/bin/mysql -psystem -e "CREATE USER xcatadmin IDENTIFIED BY 'system';"
-docker exec ${container} /usr/bin/mysql -psystem -e "GRANT ALL on xcatdb.* TO xcatadmin@'%' IDENTIFIED BY 'system';"
+docker exec ${container} /usr/bin/mysql -p$MYSQL_ROOT_PW -e "create database xcatdb;"
+docker exec ${container} /usr/bin/mysql -p$MYSQL_ROOT_PW -e "CREATE USER xcatadmin IDENTIFIED BY \'$XCAT_ADMIN_PW\';"
+docker exec ${container} /usr/bin/mysql -p$MYSQL_ROOT_PW -e "GRANT ALL on xcatdb.* TO xcatadmin@'%' IDENTIFIED BY \'$XCAT_ADMIN_PW\';"
 
-echo "mysql:dbname=xcatdb;host=controller|xcatadmin|system" > /etc/xcat/cfgloc
+echo "mysql:dbname=xcatdb;host=controller|xcatadmin|$XCAT_ADMIN_PW" > /etc/xcat/cfgloc
 XCATBYPASS=y restorexCATdb -p /tmp/xcattables
 systemctl restart xcatd
 

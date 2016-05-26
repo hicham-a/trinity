@@ -7,8 +7,8 @@
 if [ -z ${SITEMASTER} ]; then
     docker build --rm=true -t controller:5050/omd /trinity/omd
 else
-    docker pull ${SITEMASTER}:5050/omd
-    docker tag ${SITEMASTER}:5050/omd controller:5050/omd
+    docker pull $CONTROLLER_DOCKER_REGISTRY:5050/omd
+    docker tag $CONTROLLER_DOCKER_REGISTRY:5050/omd controller:5050/omd
 fi
 
 mkdir -p /cluster/omd/multisite.d
@@ -16,7 +16,7 @@ mkdir -p /cluster/omd/conf.d
 chown 997:1000 /cluster/omd/*
 chmod g+ws /cluster/omd/*
 
-cp -LrT /tmp/trinity/omd/host/rootimg /
+cp -LrT $CONTROLLER_MASTER_FS/omd/host/rootimg /
 systemctl start omd.service
 
 echo "$0 finished @ $(date)" >> /var/log/postinstall.log

@@ -13,7 +13,7 @@ rm /etc/httpd/modules ; ln -s /usr/lib64/httpd/modules /etc/httpd/modules
 rm /etc/httpd/run ; ln -s /var/run/httpd /etc/httpd/run
 
 mkdir -p /nfshome
-cp /tmp/trinity/controller/rootimg/drbd/xcat.conf /drbd/xcat.conf
+cp $CONTROLLER_MASTER_FS/controller/rootimg/drbd/xcat.conf /drbd/xcat.conf
 drbdlinks -c /drbd/xcat.conf initialize_shared_storage
 drbdlinks -c /drbd/xcat.conf start
 

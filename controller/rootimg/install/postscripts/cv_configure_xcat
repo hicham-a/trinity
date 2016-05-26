@@ -11,15 +11,14 @@
 #--------------------------------------------------------------------------------------
 
 # wait for pacemaker to setup controller's floating ip
-while ! ping -c1 controller.cluster &>/dev/null; do :; done
+while ! ping -c1 controller &>/dev/null; do :; done
 
 # determine if a master is used to install this node:
 if [ ! -z $SITEMASTER ]; then
     echo master is present
     echo "Creating installation tree"
     source /etc/profile.d/xcat.sh
-    copycds -n centos7 -o $(ls -cr /tmp/trinity/iso/*.iso | head -1) > /dev/null
-    XCAT_VERSION=$(lsxcatd -a | head -n1 | awk '{print $2}')
+    copycds -n centos7 -o $(ls -cr $CONTROLLER_MASTER_FS/iso/*.iso | head -1) > /dev/null
 else
     echo No master found, checking for a git repository.
     SCRIPT=$(readlink -f $0)
@@ -69,35 +68,24 @@ fi
 # copy default database configuration
 #--------------------------------------------------------------------------------------
 source /etc/profile.d/xcat.sh
-mkdir -p /tmp/xcattables
 
-# FIXME: make these configurable
-#read ETH1 ETH2 ETH3 <<<$(ls /sys/class/net/ | grep "^e" | sort | head -3)
-ETH1=$(ip route get 8.8.8.8 | grep -oP 'dev \K\S+')
-ETH2=$(ip route get 10.141.0.0 | grep -oP 'dev \K\S+')
-
-for table in $(ls /tmp/trinity/controller/xcat/tables); do
-    sed -e "s/\<eno1\>/$ETH1/g" -e "s/\<eno2\>/$ETH2/g" \
-            /tmp/trinity/controller/xcat/tables/$table > /tmp/xcattables/$table;
-done
-
-restorexCATdb -p /tmp/xcattables  
+restorexCATdb -p $CONTROLLER_MASTER_FS/controller/xcat/tables
 chtab key=timezone site.value=$(timedatectl | grep "Time zone" | grep -oP "Time zone: \K\S+")
 mknb x86_64
 
 makedhcp -n
 makehosts
 makedns -n
-cat /etc/named.conf
 makeconservercf
 
 #-------------------------------------------------------------------------------------
 # Copy the modules environment
 #-------------------------------------------------------------------------------------
-cp -rT /tmp/trinity/clustervision /trinity/clustervision &
-cp /tmp/trinity/version /trinity/version
-if [[ -f /tmp/trinity/site ]]; then
-    cp /tmp/trinity/site /trinity/site
+cp -rT $CONTROLLER_MASTER_FS/clustervision /trinity/clustervision &
+cp $CONTROLLER_MASTER_FS/version /trinity/version
+
+if [[ -f $CONTROLLER_MASTER_FS/site ]]; then
+    cp $CONTROLLER_MASTER_FS/site /trinity/site
 fi
 
 #--------------------------------------------------------------------------------------
@@ -138,8 +126,8 @@ systemctl start docker-registry
 if [ -z ${SITEMASTER} ]; then
     docker build -t controller:5050/trinity /trinity/container
 else
-    docker pull ${SITEMASTER}:5050/trinity
-    docker tag ${SITEMASTER}:5050/trinity controller:5050/trinity
+    docker pull $CONTROLLER_DOCKER_REGISTRY:5050/trinity
+    docker tag $CONTROLLER_DOCKER_REGISTRY:5050/trinity controller:5050/trinity
 fi
 docker push controller:5050/trinity &
 
