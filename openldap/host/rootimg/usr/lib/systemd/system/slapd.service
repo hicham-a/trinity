@@ -1,5 +1,7 @@
 [Unit]
 Description=Dockerized OpenLDAP
+Requires=docker.service
+After=docker.service
 
 [Service]
 Restart=always
